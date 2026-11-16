@@ -11,7 +11,7 @@ import {
     Building2, Mail, Phone, MapPin, Eye, EyeOff, Loader2,
     BadgeCheck, Zap, Headset, RefreshCcw, Fingerprint,
 } from "lucide-react";
-import { PLANS, type Plan } from "@/app/(main)/subscription/plans";
+// import { PLANS, type Plan } from "@/app/(main)/subscription/plans";
 import { ROUTES } from "@/lib/routes";
 
 /* ══════════════════ ANIMATED BACKGROUNDS ══════════════════ */

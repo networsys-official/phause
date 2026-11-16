@@ -11,7 +11,14 @@ import {
     ArrowRight, ArrowLeft, CreditCard, BadgeCheck, Star, Quote,
     GitCompare, HelpCircle, TrendingUp, Fingerprint, Layers, Cpu,
 } from "lucide-react";
-import { PLANS, BILLING_CYCLE_STORAGE_KEY, type Plan, formatPrice } from "./plans";
+import {
+    BILLING_CYCLE_STORAGE_KEY,
+    type Plan,
+    formatPrice,
+    mapApiPlanToPlan,
+} from "./plans";
+
+import { usePlanStore } from "@/store/plan.store";
 import { ROUTES } from "@/lib/routes";
 
 import SubscriptionModal from "./SubscriptionModal"
@@ -317,16 +324,28 @@ function PlanCard({
                         transition={{ duration: 0.7 }}
                         className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${a.badge} flex items-center justify-center shadow-[0_0_20px_rgba(0,216,201,0.3)]`}
                     >
-                        {plan.id === "sentinel-free" && <Shield className="w-6 h-6 text-phause-dark" />}
-                        {plan.id === "sentinel-starter" && <Rocket className="w-6 h-6 text-phause-dark" />}
-                        {plan.id === "sentinel-professional" && <ShieldCheck className="w-6 h-6 text-phause-dark" />}
-                        {plan.id === "sentinel-business" && <Building2 className="w-6 h-6 text-phause-dark" />}
-                        {plan.id === "sentinel-sovereign" && <Landmark className="w-6 h-6 text-phause-dark" />}
+                        {plan.name.toLowerCase().includes("free") && (
+                            <Shield className="w-6 h-6 text-phause-dark" />
+                        )}
+                        {plan.name.toLowerCase().includes("starter") && (
+                            <Rocket className="w-6 h-6 text-phause-dark" />
+                        )}
+                        {plan.name.toLowerCase().includes("professional") && (
+                            <ShieldCheck className="w-6 h-6 text-phause-dark" />
+                        )}
+                        {plan.name.toLowerCase().includes("enterprise") && (
+                            <Building2 className="w-6 h-6 text-phause-dark" />
+                        )}
+                        {!["free", "starter", "professional", "enterprise"].some(
+                            (name) => plan.name.toLowerCase().includes(name)
+                        ) && (
+                            <Landmark className="w-6 h-6 text-phause-dark" />
+                        )}
                     </motion.div>
                     <div>
                         <h3 className="text-xl font-extrabold">{plan.name}</h3>
                         <p className="text-xs text-phause-cyan font-semibold uppercase tracking-wider">
-                            {plan.id === "sentinel-free" ? "Tier 01" : plan.id === "sentinel-starter" ? "Tier 02" : plan.id === "sentinel-professional" ? "Tier 03" : plan.id === "sentinel-business" ? "Tier 04" : "Tier 05"}
+                            Tier {String(index + 1).padStart(2, "0")}
                         </p>
                     </div>
                 </div>
@@ -351,8 +370,8 @@ function PlanCard({
                             </span>
                             {!isCustom && (
                                 <span className="text-slate-400 text-sm mb-1.5">
-                                    / endpoint / month
-                                </span>
+    / month
+</span>
                             )}
                         </motion.div>
                     </AnimatePresence>
@@ -430,39 +449,122 @@ function PlanCard({
 }
 
 /* ══════════════════ PLANS GRID ══════════════════ */
-function PlansSection() {
-    const [cycle, setCycle] = useState<"monthly" | "yearly">("yearly");
-
-    useEffect(() => {
-        const saved = sessionStorage.getItem(BILLING_CYCLE_STORAGE_KEY);
-        if (saved === "monthly" || saved === "yearly") setCycle(saved);
-    }, []);
-
+function PlansSection({
+    plans,
+    isLoading,
+    error,
+}: {
+    plans: Plan[];
+    isLoading: boolean;
+    error: string | null;
+}) {
     return (
         <section className="relative py-28 overflow-hidden">
             <div className="absolute left-1/2 top-24 w-[700px] h-[500px] rounded-full bg-phause-cyan/8 blur-[160px] -translate-x-1/2" />
+
             <div className="max-w-[90rem] mx-auto px-6">
+
                 <SectionHeading
                     tag="Choose Your Shield"
-                    title={<>Five tiers of <span className="text-gradient">absolute defense</span></>}
-                    subtitle="From a weekend project to a global enterprise — there's a Sentinel tier built exactly for where you are right now."
+                    title={
+                        <>
+                            Plans that scale with{" "}
+                            <span className="text-gradient">your security</span>
+                        </>
+                    }
+                    subtitle="Choose the right protection for your team. Upgrade whenever your security requirements grow."
                 />
-                <BillingToggle cycle={cycle} onChange={setCycle} />
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-stretch">
-                    {PLANS.map((plan, i) => (
-                        <PlanCard key={plan.id} plan={plan} cycle={cycle} index={i} />
-                    ))}
+
+                {/* Billing information */}
+                <div className="flex justify-center mb-14">
+                    <div className="glass rounded-full px-6 py-3 flex items-center gap-3">
+                        <span className="w-2 h-2 rounded-full bg-phause-cyan animate-pulse" />
+                        <span className="text-sm font-semibold text-slate-300">
+                            Monthly Subscription Plans
+                        </span>
+                    </div>
                 </div>
 
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.4 }}
-                    className="text-center text-sm text-slate-500 mt-10"
-                >
-                    All paid plans include a 14-day free trial. No credit card required until day 15. Cancel anytime.
-                </motion.p>
+                {/* Error */}
+                {error && (
+                    <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-red-500/20 bg-red-500/10 text-center">
+                        <p className="text-red-400 text-sm">
+                            {error}
+                        </p>
+
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-3 text-sm font-semibold text-phause-cyan"
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
+
+                {/* Loading skeleton */}
+                {isLoading && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                        {Array.from({ length: 4 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="glass rounded-3xl p-8 animate-pulse min-h-[520px]"
+                            >
+                                <div className="w-12 h-12 rounded-2xl bg-white/10 mb-6" />
+                                <div className="h-5 w-32 bg-white/10 rounded mb-4" />
+                                <div className="h-3 w-full bg-white/10 rounded mb-2" />
+                                <div className="h-3 w-2/3 bg-white/10 rounded mb-10" />
+                                <div className="h-12 w-40 bg-white/10 rounded mb-8" />
+
+                                <div className="space-y-4">
+                                    {Array.from({ length: 5 }).map((_, j) => (
+                                        <div
+                                            key={j}
+                                            className="h-4 w-full bg-white/10 rounded"
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Plans */}
+                {!isLoading && !error && plans.length > 0 && (
+                    <motion.div
+                        layout
+                        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch"
+                    >
+                        {plans.map((plan, index) => (
+                            <PlanCard
+                                key={plan.id}
+                                plan={plan}
+                                cycle="monthly"
+                                index={index}
+                            />
+                        ))}
+                    </motion.div>
+                )}
+
+                {/* Empty state */}
+                {!isLoading && !error && plans.length === 0 && (
+                    <div className="glass rounded-3xl py-20 text-center">
+                        <Shield className="w-12 h-12 text-phause-cyan mx-auto mb-4" />
+
+                        <h3 className="text-xl font-bold mb-2">
+                            No Subscription Plans Available
+                        </h3>
+
+                        <p className="text-slate-400 text-sm">
+                            Please check back later.
+                        </p>
+                    </div>
+                )}
+
+                <p className="text-center text-sm text-slate-500 mt-10">
+                    Subscription limits and included features are determined
+                    by your selected plan.
+                </p>
+
             </div>
         </section>
     );
@@ -499,61 +601,121 @@ function ComparisonRow({
     );
 }
 
-function ComparisonTable() {
-    const rows: { label: string; values: (string | boolean)[] }[] = [
-        { label: "Protected Endpoints", values: ["Up to 5", "Up to 50", "Up to 500", "Up to 5,000", "Unlimited"] },
-        { label: "Monthly Event Ingestion", values: ["1M", "100M", "5B", "50B", "Unlimited"] },
-        { label: "Data Retention", values: ["7 days", "30 days", "1 year", "3 years", "Unlimited"] },
-        { label: "Behavioral ML Detection", values: [true, true, true, true, true] },
-        { label: "Automated Response Playbooks", values: [false, true, true, true, true] },
-        { label: "24/7 Human SOC", values: [false, false, true, true, true] },
-        { label: "Compliance Automation", values: [false, false, true, true, true] },
-        { label: "Threat Intel Feeds", values: [false, "Standard", "Standard", "Premium", "Premium + Custom"] },
-        { label: "Zero-Trust Identity Analytics", values: [false, false, false, true, true] },
-        { label: "Air-Gapped Deployment", values: [false, false, false, false, true] },
-        { label: "Post-Quantum Crypto Lab", values: [false, false, false, false, true] },
-        { label: "Support SLA", values: ["Community", "12h", "1h", "15m", "5m White-Glove"] },
+function ComparisonTable({
+    plans,
+}: {
+    plans: Plan[];
+}) {
+    const featureLabels = Array.from(
+        new Set(
+            plans.flatMap((plan) =>
+                plan.features.map((feature) => feature.label)
+            )
+        )
+    );
+
+    const rows: {
+        label: string;
+        values: (string | boolean)[];
+    }[] = [
+        {
+            label: "Maximum Campaigns",
+            values: plans.map((p) =>
+                p.maxCampaigns === 0
+                    ? "Unlimited"
+                    : p.maxCampaigns.toLocaleString()
+            ),
+        },
+        {
+            label: "Maximum Users",
+            values: plans.map((p) =>
+                p.maxUsers === 0
+                    ? "Unlimited"
+                    : p.maxUsers.toLocaleString()
+            ),
+        },
+        ...featureLabels.map((label) => ({
+            label,
+            values: plans.map((plan) => {
+                return (
+                    plan.features.find(
+                        (feature) => feature.label === label
+                    )?.included ?? false
+                );
+            }),
+        })),
     ];
 
     return (
         <section className="relative py-28 overflow-hidden">
+
             <div className="absolute right-0 top-1/3 w-[400px] h-[400px] rounded-full bg-phause-teal/8 blur-[140px]" />
+
             <div className="max-w-7xl mx-auto px-6">
+
                 <SectionHeading
                     tag="Side By Side"
-                    title={<>Compare every <span className="text-gradient">dimension</span></>}
-                    subtitle="Every capability, every tier, laid out with nothing hidden."
+                    title={
+                        <>
+                            Compare every{" "}
+                            <span className="text-gradient">dimension</span>
+                        </>
+                    }
+                    subtitle="Compare subscription limits and features to find the right plan."
                 />
+
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     className="glass rounded-3xl overflow-hidden"
                 >
+
                     <div className="overflow-x-auto">
+
                         <table className="w-full min-w-[900px]">
+
                             <thead>
                                 <tr className="border-b border-phause-cyan/20 bg-phause-cyan/[0.06]">
+
                                     <th className="py-5 px-5 text-left text-sm font-bold text-slate-400 sticky left-0 bg-[rgba(0,216,201,0.06)] z-10">
                                         Capability
                                     </th>
-                                    {PLANS.map((p) => (
-                                        <th key={p.id} className="py-5 px-5 text-center">
-                                            <span className={`text-sm font-extrabold ${p.popular ? "text-gradient" : "text-slate-200"}`}>
-                                                {p.name.replace("Sentinel ", "")}
+
+                                    {plans.map((plan) => (
+                                        <th
+                                            key={plan.id}
+                                            className="py-5 px-5 text-center"
+                                        >
+                                            <span className={`text-sm font-extrabold ${
+                                                plan.popular
+                                                    ? "text-gradient"
+                                                    : "text-slate-200"
+                                            }`}>
+                                                {plan.name}
                                             </span>
                                         </th>
                                     ))}
+
                                 </tr>
                             </thead>
+
                             <tbody>
-                                {rows.map((row, i) => (
-                                    <ComparisonRow key={row.label} label={row.label} values={row.values} highlight={i % 2 === 0} />
+                                {rows.map((row, index) => (
+                                    <ComparisonRow
+                                        key={row.label}
+                                        label={row.label}
+                                        values={row.values}
+                                        highlight={index % 2 === 0}
+                                    />
                                 ))}
                             </tbody>
+
                         </table>
+
                     </div>
                 </motion.div>
+
             </div>
         </section>
     );
@@ -857,15 +1019,42 @@ function FinalCTA() {
 
 /* ══════════════════ PAGE ══════════════════ */
 export default function SubscriptionPage() {
+    const {
+        plans: apiPlans,
+        isLoading,
+        error,
+        fetchPlans,
+    } = usePlanStore();
+
+    useEffect(() => {
+        fetchPlans();
+    }, [fetchPlans]);
+
+    // Convert backend response into UI-compatible plans.
+    const plans = apiPlans.map(mapApiPlanToPlan);
+
     return (
         <>
             <PageHero />
+
             <TrustStrip />
-            <PlansSection />
-            <ComparisonTable />
+
+            <PlansSection
+                plans={plans}
+                isLoading={isLoading}
+                error={error}
+            />
+
+            {!isLoading && !error && plans.length > 0 && (
+                <ComparisonTable plans={plans} />
+            )}
+
             <GuaranteeBanner />
+
             <RequestDemo />
+
             <FAQ />
+
             <FinalCTA />
         </>
     );
