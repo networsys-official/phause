@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
+import { getToken, clearToken } from "@/lib/auth";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -10,11 +12,29 @@ import { NAV_LINKS, ROUTES } from "@/lib/routes";
 import RegistrationModal from "@/components/registration/RegistrationModal";
 import LoginModal from "@/components/auth/LoginModal";
 
+const AUTH_CHANGE_EVENT = "phause-auth-change";
+
+function subscribeToAuthChanges(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  window.addEventListener(AUTH_CHANGE_EVENT, onChange);
+
+  return () => {
+    window.removeEventListener("storage", onChange);
+    window.removeEventListener(AUTH_CHANGE_EVENT, onChange);
+  };
+}
+
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const router = useRouter();
+  const isLoggedIn = useSyncExternalStore(
+    subscribeToAuthChanges,
+    () => Boolean(getToken()),
+    () => false,
+  );
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -60,22 +80,49 @@ export default function Navbar() {
             </motion.div>
           ))}
 
-          {/* Login Button */}
-          <button
-            type="button"
-            onClick={() => setLoginOpen(true)}
-            className="px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
-          >
-            Login
-          </button>
-
-          {/* Register Button */}
-          <motion.button whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.95 }} onClick={() => setRegistrationOpen(true)} className="relative flex items-center gap-1.5 overflow-hidden rounded-full px-6 py-2.5 text-sm font-bold text-phause-dark group">
+          {isLoggedIn ? (
+            <>
+              <button
+                type="button"
+                onClick={() => router.push(ROUTES.subscription)}
+                className="px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
+              >
+                Go to Workplace
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  clearToken();
+                  window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+                  router.refresh();
+                }}
+                className="ml-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => setLoginOpen(true)}
+                className="px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
+              >
+                Login
+              </button>
+              <motion.button
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setRegistrationOpen(true)}
+                className="relative flex items-center gap-1.5 overflow-hidden rounded-full px-6 py-2.5 text-sm font-bold text-phause-dark group"
+              >
               <span className="absolute inset-0 bg-gradient-to-r from-phause-cyan via-cyan-400 to-phause-teal bg-[length:200%_100%] transition-all duration-500 group-hover:bg-[position:100%_0]" />
               <span className="relative flex items-center gap-1.5">
                 Register <ArrowRight className="h-4 w-4" />
               </span>
-          </motion.button>
+              </motion.button>
+            </>
+          )}
         </div>
 
         {/* Mobile hamburger */}
