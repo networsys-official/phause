@@ -17,7 +17,7 @@ export function storeToken(token: string): void {
 export function getToken(): string | null {
   try {
     return sessionStorage.getItem(TOKEN_KEY);
-  } catch (e) {
+  } catch {
     return null;
   }
 }

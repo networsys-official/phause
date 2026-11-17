@@ -30,16 +30,35 @@ export const usePlanStore = create<PlanStore>((set) => ({
                 isLoading: false,
                 error: null,
             });
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Failed to fetch subscription plans:", error);
+
+            let message = "Unable to load subscription plans.";
+
+            if (error instanceof Error) {
+                message = error.message;
+            } else if (
+                typeof error === "object" &&
+                error !== null &&
+                "response" in error
+            ) {
+                const response = (
+                    error as {
+                        response?: {
+                            data?: {
+                                message?: string;
+                            };
+                        };
+                    }
+                ).response;
+
+                message = response?.data?.message ?? message;
+            }
 
             set({
                 plans: [],
                 isLoading: false,
-                error:
-                    error?.response?.data?.message ||
-                    error?.message ||
-                    "Unable to load subscription plans.",
+                error: message,
             });
         }
     },
