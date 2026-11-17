@@ -530,7 +530,7 @@ export default function RegisterPage() {
                     </p>
 
                     <motion.a
-                      href="/login"
+                      href="/auth/login"
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
                       className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal px-7 py-4 font-bold text-phause-dark shadow-[0_0_30px_rgba(0,216,201,0.15)]"

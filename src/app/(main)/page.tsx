@@ -7,8 +7,57 @@ import {
 import {
   Shield, ShieldCheck, Zap, Globe, Lock, Eye, Radar, Server,
   Cloud, Code2, Users, Award, ArrowRight, ChevronDown,
-  CheckCircle2, Star, Quote, Cpu, Workflow, Rocket,
+  CheckCircle2, Star, Quote, Cpu, Workflow, Rocket, LucideIcon,
 } from "lucide-react";
+import { getBlockProp } from "@/features/cms/page-builder";
+
+export function createFallbackItemTitle(prefix: string, index: number) {
+  return `${prefix} ${index + 1}`;
+}
+
+export function getDefaultHomeReasons() {
+  return [
+    { icon: Zap, title: createFallbackItemTitle("Reason", 0), desc: "A fallback reason to choose us." },
+    { icon: Cpu, title: createFallbackItemTitle("Reason", 1), desc: "A fallback reason to choose us." },
+    { icon: Users, title: createFallbackItemTitle("Reason", 2), desc: "A fallback reason to choose us." },
+    { icon: Code2, title: createFallbackItemTitle("Reason", 3), desc: "A fallback reason to choose us." },
+  ];
+}
+
+export function getDefaultHomeServices() {
+  return [
+    { icon: Radar, title: createFallbackItemTitle("Service", 0), desc: "Fallback service description." },
+    { icon: ShieldCheck, title: createFallbackItemTitle("Service", 1), desc: "Fallback service description." },
+    { icon: Cloud, title: createFallbackItemTitle("Service", 2), desc: "Fallback service description." },
+    { icon: Server, title: createFallbackItemTitle("Service", 3), desc: "Fallback service description." },
+    { icon: Lock, title: createFallbackItemTitle("Service", 4), desc: "Fallback service description." },
+    { icon: Eye, title: createFallbackItemTitle("Service", 5), desc: "Fallback service description." },
+  ];
+}
+
+export function getDefaultHomeOffers() {
+  return [
+    { title: createFallbackItemTitle("Offer", 0), desc: "Fallback offer description." },
+    { title: createFallbackItemTitle("Offer", 1), desc: "Fallback offer description." },
+    { title: createFallbackItemTitle("Offer", 2), desc: "Fallback offer description." },
+    { title: createFallbackItemTitle("Offer", 3), desc: "Fallback offer description." },
+    { title: createFallbackItemTitle("Offer", 4), desc: "Fallback offer description." },
+    { title: createFallbackItemTitle("Offer", 5), desc: "Fallback offer description." },
+  ];
+}
+
+export function getDefaultHomeSteps() {
+  return [
+    { icon: Eye, title: createFallbackItemTitle("Step", 0), desc: "Fallback process description." },
+    { icon: Workflow, title: createFallbackItemTitle("Step", 1), desc: "Fallback process description." },
+    { icon: Shield, title: createFallbackItemTitle("Step", 2), desc: "Fallback process description." },
+    { icon: Rocket, title: createFallbackItemTitle("Step", 3), desc: "Fallback process description." },
+  ];
+}
+
+export function createServiceNumber(index: number) {
+  return String(index + 1).padStart(2, "0");
+}
 
 /* ══════════════════ ANIMATED BACKGROUND ══════════════════ */
 function GridBackground() {
@@ -98,7 +147,18 @@ function SectionHeading({
 }
 
 /* ══════════════════ HERO ══════════════════ */
-function Hero() {
+function Hero({
+  eyebrow, title, description, ctaPrimary, ctaSecondary, ctaPrimaryHref, ctaSecondaryHref, stats,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  ctaPrimary: string;
+  ctaSecondary: string;
+  ctaPrimaryHref: string;
+  ctaSecondaryHref: string;
+  stats: Array<{ icon: typeof Shield; val: string; label: string }>;
+}) {
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, 120]);
   const y2 = useTransform(scrollY, [0, 500], [0, -80]);
@@ -108,7 +168,6 @@ function Hero() {
       <GridBackground />
       <ParticleField />
 
-      {/* Rotating ring decoration */}
       <motion.div style={{ y: y2 }} className="absolute top-1/4 right-[10%] hidden lg:block">
         <motion.div
           animate={{ rotate: 360 }}
@@ -133,7 +192,7 @@ function Hero() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-phause-cyan opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-phause-cyan" />
           </span>
-          Trusted by 500+ companies worldwide
+          {eyebrow}
         </motion.div>
 
         <motion.h1
@@ -142,26 +201,7 @@ function Hero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1.05] mb-6"
         >
-          Strengthen. <span className="text-gradient">Aware.</span>
-          <br />
-          <span className="relative inline-block">
-            Defend.
-            <motion.svg
-              className="absolute -bottom-3 left-0 w-full"
-              viewBox="0 0 300 14"
-              fill="none"
-            >
-              <motion.path
-                d="M4 10 Q 150 -6 296 8"
-                stroke="#00d8c9"
-                strokeWidth="5"
-                strokeLinecap="round"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1, delay: 1 }}
-              />
-            </motion.svg>
-          </span>
+          {title}
         </motion.h1>
 
         <motion.p
@@ -170,8 +210,7 @@ function Hero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10"
         >
-          Next-generation cybersecurity platform that detects, analyzes and
-          neutralizes threats before they ever reach your infrastructure.
+          {description}
         </motion.p>
 
         <motion.div
@@ -181,33 +220,28 @@ function Hero() {
           className="flex flex-wrap items-center justify-center gap-5"
         >
           <motion.a
-            href="#services"
+            href={ctaPrimaryHref}
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.95 }}
             className="group relative px-8 py-4 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold text-base overflow-hidden shadow-[0_0_40px_rgba(0,216,201,0.4)]"
           >
             <span className="flex items-center gap-2">
-              Get Protected Now
+              {ctaPrimary}
               <ArrowRight className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1.5" />
             </span>
           </motion.a>
           <motion.a
-            href="#about-us"
+            href={ctaSecondaryHref}
             whileHover={{ scale: 1.06 }}
             whileTap={{ scale: 0.95 }}
             className="px-8 py-4 rounded-full glass font-semibold text-base hover:border-phause-cyan/50 transition-colors flex items-center gap-2"
           >
-            <Eye className="w-5 h-5 text-phause-cyan" /> Explore Platform
+            <Eye className="w-5 h-5 text-phause-cyan" /> {ctaSecondary}
           </motion.a>
         </motion.div>
 
-        {/* Floating stats */}
         <div className="grid grid-cols-3 gap-4 md:gap-10 max-w-2xl mx-auto mt-20">
-          {[
-            { icon: Shield, val: "99.9%", label: "Threat Block Rate" },
-            { icon: Radar, val: "24/7", label: "Active Monitoring" },
-            { icon: Zap, val: "<50ms", label: "Response Time" },
-          ].map((s, i) => (
+          {stats.map((s, i) => (
             <motion.div
               key={s.label}
               initial={{ opacity: 0, y: 30 }}
@@ -223,7 +257,6 @@ function Hero() {
         </div>
       </motion.div>
 
-      {/* Scroll indicator */}
       <motion.a
         href="#about-us"
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
@@ -238,7 +271,15 @@ function Hero() {
 }
 
 /* ══════════════════ ABOUT ══════════════════ */
-function About() {
+function About({
+  tag, title, description, secondaryDescription, items,
+}: {
+  tag: string;
+  title: string;
+  description: string;
+  secondaryDescription: string;
+  items: Array<{ icon: typeof Award; text: string }>;
+}) {
   return (
     <section id="about-us" className="relative py-28 overflow-hidden">
       <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full bg-phause-cyan/8 blur-[150px]" />
@@ -250,30 +291,17 @@ function About() {
           transition={{ duration: 0.8 }}
         >
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-phause-cyan/10 text-phause-cyan border border-phause-cyan/20 mb-5">
-            About Us
+            {tag}
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold mb-6 leading-tight">
-            We Build Digital Fortresses for the <span className="text-gradient">Modern Enterprise</span>
+            {title}
           </h2>
-          <p className="text-slate-400 text-lg leading-relaxed mb-6">
-            Founded by security researchers and ethical hackers, Phause exists for one reason:
-            to make the digital world a safer place. We combine AI-driven threat intelligence
-            with human expertise to protect what matters most — your data, your reputation,
-            and your future.
-          </p>
-          <p className="text-slate-400 leading-relaxed mb-8">
-            From startups to Fortune 500 companies, our mission stays the same: stay ahead of
-            every threat, every time.
-          </p>
+          <p className="text-slate-400 text-lg leading-relaxed mb-6">{description}</p>
+          <p className="text-slate-400 leading-relaxed mb-8">{secondaryDescription}</p>
           <div className="grid grid-cols-2 gap-6">
-            {[
-              { icon: Award, text: "ISO 27001 Certified" },
-              { icon: Users, text: "150+ Security Experts" },
-              { icon: Globe, text: "40+ Countries Served" },
-              { icon: Cpu, text: "AI-Powered Defense" },
-            ].map((item, i) => (
+            {items.map((item, i) => (
               <motion.div
-                key={item.text}
+                key={`${item.text}-${i}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -287,7 +315,6 @@ function About() {
           </div>
         </motion.div>
 
-        {/* Animated visual */}
         <motion.div
           initial={{ opacity: 0, x: 60 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -346,37 +373,28 @@ function About() {
 }
 
 /* ══════════════════ COMPANY PHILOSOPHY ══════════════════ */
-function Philosophy() {
-  const cards = [
-    {
-      icon: Shield,
-      title: "Proactive Defense",
-      desc: "We don't wait for attacks. We hunt threats before they strike, turning vulnerability into strength.",
-    },
-    {
-      icon: Eye,
-      title: "Radical Transparency",
-      desc: "Real-time visibility into every security event. No hidden logs, no surprises — complete clarity.",
-    },
-    {
-      icon: Lock,
-      title: "Privacy by Design",
-      desc: "Your data is sacred. We build every system with encryption and privacy as the foundation, not an afterthought.",
-    },
-  ];
+function Philosophy({
+  cards,
+  title = "Security is not a product. It's a mindset.",
+  subtitle = "Three core principles guide everything we build, ship, and defend.",
+}: {
+  cards: Array<{ icon: typeof Shield; title: string; desc: string }>;
+  title?: string;
+  subtitle?: string;
+}) {
   return (
     <section className="relative py-28 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-phause-cyan/[0.03] to-transparent" />
       <div className="max-w-7xl mx-auto px-6">
         <SectionHeading
           tag="Our Philosophy"
-          title={<>Security is not a product. <br /> It's a <span className="text-gradient">mindset.</span></>}
-          subtitle="Three core principles guide everything we build, ship, and defend."
+          title={<>{title}</>}
+          subtitle={subtitle}
         />
         <div className="grid md:grid-cols-3 gap-8">
           {cards.map((card, i) => (
             <motion.div
-              key={card.title}
+              key={`${card.title}-${i}`}
               initial={{ opacity: 0, y: 50, rotateX: -15 }}
               whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
               viewport={{ once: true }}
@@ -403,26 +421,20 @@ function Philosophy() {
 }
 
 /* ══════════════════ WHY CHOOSE US ══════════════════ */
-function WhyChooseUs() {
-  const reasons = [
-    { icon: Zap, title: "Lightning-Fast Response", desc: "Sub-50ms automated threat neutralization — the fastest in the industry." },
-    { icon: Cpu, title: "AI-Powered Engine", desc: "Machine learning models trained on 50B+ security events, updated hourly." },
-    { icon: Users, title: "Human Experts 24/7", desc: "Elite security analysts watching over your infrastructure around the clock." },
-    { icon: Code2, title: "Zero-Downtime Deployment", desc: "Deploy protection without touching a single line of your existing code." },
-  ];
+function WhyChooseUs({ reasons }: { reasons: Array<{ icon: typeof Zap; title: string; desc: string }> }) {
   return (
     <section className="relative py-28">
       <div className="absolute right-0 top-1/3 w-[400px] h-[400px] rounded-full bg-cyan-500/8 blur-[130px]" />
       <div className="max-w-7xl mx-auto px-6">
         <SectionHeading
           tag="Why Choose Us"
-          title={<>Why the world's best teams <span className="text-gradient">choose Phause</span></>}
+          title={<>Why the world&apos;s best teams <span className="text-gradient">choose Phause</span></>}
           subtitle="Numbers don't lie. Here's what sets us apart from every other security vendor."
         />
         <div className="grid md:grid-cols-2 gap-8">
           {reasons.map((r, i) => (
             <motion.div
-              key={r.title}
+              key={`${r.title}-${i}`}
               initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -495,15 +507,7 @@ function CounterCard({
 }
 
 /* ══════════════════ SERVICES ══════════════════ */
-function Services() {
-  const services = [
-    { icon: Radar, title: "Threat Detection", desc: "Real-time AI scanning across all endpoints, networks and cloud assets." },
-    { icon: ShieldCheck, title: "Security Audits", desc: "Deep-dive penetration testing and compliance audits by certified experts." },
-    { icon: Cloud, title: "Cloud Protection", desc: "Zero-trust security architecture for AWS, Azure, GCP and hybrid clouds." },
-    { icon: Server, title: "Infrastructure Defense", desc: "Harden your servers, APIs and databases against zero-day exploits." },
-    { icon: Lock, title: "Data Encryption", desc: "End-to-end AES-256 encryption with automated key rotation." },
-    { icon: Eye, title: "SIEM Monitoring", desc: "Centralized log intelligence with instant anomaly alerting." },
-  ];
+function Services({ services }: { services: Array<{ icon: typeof Radar; title: string; desc: string }> }) {
   return (
     <section id="services" className="relative py-28 overflow-hidden">
       <div className="absolute left-0 top-1/2 w-[450px] h-[450px] rounded-full bg-phause-teal/10 blur-[140px]" />
@@ -516,7 +520,7 @@ function Services() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((s, i) => (
             <motion.div
-              key={s.title}
+              key={`${s.title}-${i}`}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -542,15 +546,7 @@ function Services() {
 }
 
 /* ══════════════════ WHAT WE OFFER ══════════════════ */
-function WhatWeOffer() {
-  const offers = [
-    { title: "Free Security Assessment", desc: "A 360° audit of your infrastructure — completely free, no strings attached." },
-    { title: "Dedicated Security Team", desc: "Your own squad of specialists assigned exclusively to your account." },
-    { title: "Compliance Made Easy", desc: "GDPR, HIPAA, SOC 2 and ISO — we handle the paperwork, you stay compliant." },
-    { title: "Incident Response SLA", desc: "Guaranteed response to critical incidents in under 15 minutes." },
-    { title: "Employee Training", desc: "Phishing simulations and security workshops for your entire team." },
-    { title: "Insurance Backed", desc: "$10M cyber insurance coverage included with every enterprise plan." },
-  ];
+function WhatWeOffer({ offers }: { offers: Array<{ title: string; desc: string }> }) {
   return (
     <section className="relative py-28">
       <div className="max-w-7xl mx-auto px-6">
@@ -562,7 +558,7 @@ function WhatWeOffer() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {offers.map((o, i) => (
             <motion.div
-              key={o.title}
+              key={`${o.title}-${i}`}
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
@@ -584,13 +580,7 @@ function WhatWeOffer() {
 }
 
 /* ══════════════════ WORKING PROCESS ══════════════════ */
-function WorkingProcess() {
-  const steps = [
-    { icon: Eye, title: "Discover", desc: "We map every asset, vulnerability and attack surface in your environment." },
-    { icon: Workflow, title: "Strategize", desc: "A custom defense blueprint built for your architecture and risk profile." },
-    { icon: Shield, title: "Deploy", desc: "Protection rolls out in hours — no downtime, no disruption to your team." },
-    { icon: Rocket, title: "Evolve", desc: "Continuous learning and adaptation keeps you ahead of emerging threats." },
-  ];
+function WorkingProcess({ steps }: { steps: Array<{ icon: typeof Eye; title: string; desc: string }> }) {
   return (
     <section className="relative py-28 overflow-hidden">
       <div className="absolute inset-x-0 top-1/2 h-px bg-gradient-to-r from-transparent via-phause-cyan/20 to-transparent hidden lg:block" />
@@ -603,7 +593,7 @@ function WorkingProcess() {
         <div className="grid md:grid-cols-4 gap-8 relative">
           {steps.map((s, i) => (
             <motion.div
-              key={s.title}
+              key={`${s.title}-${i}`}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -641,14 +631,7 @@ function WorkingProcess() {
 }
 
 /* ══════════════════ TESTIMONIALS ══════════════════ */
-function Testimonials() {
-  const testimonials = [
-    { name: "Sarah Mitchell", role: "CTO, FinEdge Capital", text: "Phause blocked a coordinated ransomware attack in under 30 seconds. They didn't just save our data — they saved our company.", stars: 5 },
-    { name: "David Chen", role: "VP Engineering, CloudNine", text: "The smoothest security integration I've experienced in 15 years. Deployed across 200 servers in a single afternoon, zero downtime.", stars: 5 },
-    { name: "Amara Okafor", role: "CISO, HealthFirst Group", text: "Their 24/7 team caught a data exfiltration attempt our previous vendor had missed for months. Unmatched expertise.", stars: 5 },
-    { name: "James Rodriguez", role: "CEO, Nexa Retail", text: "We passed our SOC 2 audit on the first attempt thanks to Phause's compliance tooling. Best investment we've made.", stars: 5 },
-    { name: "Priya Sharma", role: "Head of IT, Lumen Bank", text: "Employee training alone cut our phishing click rate from 18% to under 2%. The ROI is undeniable.", stars: 5 },
-  ];
+function Testimonials({ testimonials }: { testimonials: Array<{ name: string; role: string; text: string; stars: number }> }) {
 
   const doubled = [...testimonials, ...testimonials];
 
@@ -677,7 +660,7 @@ function Testimonials() {
               className="w-[380px] shrink-0 glass rounded-3xl p-8 hover:border-phause-cyan/40 transition-colors"
             >
               <Quote className="w-8 h-8 text-phause-cyan/40 mb-4" />
-              <p className="text-slate-300 leading-relaxed mb-6">"{t.text}"</p>
+              <p className="text-slate-300 leading-relaxed mb-6">&ldquo;{t.text}&rdquo;</p>
               <div className="flex items-center gap-1 mb-4">
                 {Array.from({ length: t.stars }).map((_, s) => (
                   <Star key={s} className="w-4 h-4 text-phause-cyan" fill="currentColor" />
@@ -701,14 +684,7 @@ function Testimonials() {
 }
 
 /* ══════════════════ FAQ ══════════════════ */
-function FAQ() {
-  const faqs = [
-    { q: "How long does implementation take?", a: "Most clients are fully protected within 2–4 hours. Our agent deploys automatically across cloud and on-premise environments with zero downtime." },
-    { q: "Do you support hybrid and multi-cloud setups?", a: "Yes. Phause natively supports AWS, Azure, GCP, on-premise data centers, and any combination of them through a single unified dashboard." },
-    { q: "What happens during a security breach?", a: "Our automated response engine isolates affected systems in under 50ms, while our 24/7 incident response team takes over containment, remediation, and forensic analysis." },
-    { q: "Is there a free trial?", a: "Absolutely. Every plan starts with a 14-day free trial including a full security assessment, plus our free audit for new customers." },
-    { q: "How is my data handled?", a: "All data is encrypted with AES-256 in transit and at rest. We're GDPR, SOC 2 Type II, and ISO 27001 compliant, and we never sell or share your data." },
-  ];
+function FAQ({ faqs }: { faqs: Array<{ q: string; a: string }> }) {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   return (
@@ -716,7 +692,7 @@ function FAQ() {
       <div className="max-w-4xl mx-auto px-6">
         <SectionHeading
           tag="FAQ"
-          title={<>Questions? <span className="text-gradient">We've got answers</span></>}
+          title={<>Questions? <span className="text-gradient">We&apos;ve got answers</span></>}
           subtitle="Everything you need to know before getting started with Phause."
         />
         <div className="space-y-4">
@@ -763,7 +739,9 @@ function FAQ() {
 }
 
 /* ══════════════════ CTA BANNER ══════════════════ */
-function CTABanner() {
+function CTABanner({
+  title, description, cta,
+}: { title: string; description: string; cta: string }) {
   return (
     <section className="relative py-20">
       <div className="max-w-5xl mx-auto px-6">
@@ -776,20 +754,15 @@ function CTABanner() {
           <div className="absolute inset-0 bg-gradient-to-br from-phause-cyan/20 via-phause-teal/10 to-transparent" />
           <div className="absolute inset-0 glass" />
           <div className="relative z-10">
-            <h2 className="text-3xl md:text-5xl font-extrabold mb-5">
-              Ready to become <span className="text-gradient">unhackable?</span>
-            </h2>
-            <p className="text-slate-400 text-lg max-w-xl mx-auto mb-8">
-              Join 500+ companies that sleep soundly at night. Start your free
-              security assessment today.
-            </p>
+            <h2 className="text-3xl md:text-5xl font-extrabold mb-5">{title}</h2>
+            <p className="text-slate-400 text-lg max-w-xl mx-auto mb-8">{description}</p>
             <motion.a
               href="#register"
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
               className="inline-flex items-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold text-lg shadow-[0_0_50px_rgba(0,216,201,0.5)]"
             >
-              Start Free Trial <ArrowRight className="w-5 h-5" />
+              {cta} <ArrowRight className="w-5 h-5" />
             </motion.a>
           </div>
         </motion.div>
@@ -800,18 +773,227 @@ function CTABanner() {
 
 /* ══════════════════ PAGE ══════════════════ */
 export default function Home() {
+  const [page, setPage] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    const loadPage = async () => {
+      const response = await fetch("/api/pages?slug=home");
+      const payload = await response.json();
+      setPage(payload.page ?? null);
+    };
+
+    loadPage();
+  }, []);
+
+  const normalizeBlockType = (value: string) => String(value).replace(/[_-]/g, "").toLowerCase();
+  const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+
+  const blockProps = (type: string): Record<string, unknown> => {
+    const target = normalizeBlockType(type);
+    const block = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === target);
+    return (block?.props as Record<string, unknown>) ?? {};
+  };
+
+  const customSectionByPosition = (position: number): Record<string, unknown> => {
+    const block = pageBlocks.find((item) => {
+      const itemProps = (item.props as Record<string, unknown>) ?? {};
+      const typeMatches = normalizeBlockType(String(item.type ?? "")) === "customsection";
+      const blockPosition = Number(getBlockProp(itemProps, "position", itemProps.position ?? 0));
+      return typeMatches && blockPosition === position;
+    });
+
+    return (block?.props as Record<string, unknown>) ?? {};
+  };
+
+  const defaults = {
+    hero: {
+      eyebrow: "Strengthen. Aware. Defend.",
+      title: "Strengthen. Aware.Defend.",
+      description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+      ctaPrimary: "Get Protected Now",
+      ctaSecondary: "Explore Platform",
+      stats: [
+        { icon: Shield, val: "99.9%", label: "Threat Block Rate" },
+        { icon: Radar, val: "24/7", label: "Active Monitoring" },
+        { icon: Zap, val: "<50ms", label: "Response Time" },
+      ],
+    },
+    about: {
+      tag: "About Us",
+      title: "We Build Digital Fortresses for the Modern Enterprise",
+      description: "Phause builds practical, resilient security programs for modern organizations that cannot afford downtime or uncertainty.",
+      secondaryDescription: "From governance and detection to response and resilience, we help teams protect what matters without slowing product velocity.",
+      items: [
+        { icon: Award, text: "Threat Intelligence" },
+        { icon: Users, text: "Human-led SOC" },
+        { icon: Globe, text: "Global coverage" },
+        { icon: Cpu, text: "AI-assisted defense" },
+      ],
+    },
+    philosophy: [
+      { icon: Shield, title: "Proactive Defense", desc: "We don't wait for attacks. We hunt threats before they strike, turning vulnerability into strength." },
+      { icon: Eye, title: "Radical Transparency", desc: "Real-time visibility into every security event. No hidden logs, no surprises — complete clarity." },
+      { icon: Lock, title: "Privacy by Design", desc: "Your data is sacred. We build every system with encryption and privacy as the foundation, not an afterthought." },
+    ],
+    reasons: getDefaultHomeReasons(),
+    services: getDefaultHomeServices(),
+    offers: getDefaultHomeOffers(),
+    steps: getDefaultHomeSteps(),
+    testimonials: [
+      { name: "Nina Brooks", role: "CISO, Northstar Labs", text: "Phause gave our team a security posture we could trust and explain to leadership without friction.", stars: 5 },
+      { name: "Martin Lee", role: "VP Infrastructure, Aster Grid", text: "The combination of rapid response and clear reporting made the difference during our busiest quarter.", stars: 5 },
+      { name: "Aisha Rawal", role: "Director, Vertex Ops", text: "We finally had visibility across cloud and identity risk without a thousand dashboards and no signal.", stars: 5 },
+      { name: "Omar Silva", role: "COO, Harbor Systems", text: "Their analysts acted like part of our team from day one and rebuilt trust across the whole security stack.", stars: 5 },
+      { name: "Ella Chen", role: "Security Lead, Lume Health", text: "The platform gave us speed, coverage, and confidence at a time when our environment was expanding quickly.", stars: 5 },
+    ],
+    faqs: [
+      { q: "Who is Phause built for?", a: "Phause is designed for modern organizations that need clear visibility, faster response, and stronger security without slowing delivery." },
+      { q: "How fast can we deploy?", a: "Most onboarding and control rollouts can begin within days, with phased implementation aligned to operational risk and business priorities." },
+      { q: "Do you support cloud and hybrid environments?", a: "Yes. Our security model is designed for multi-cloud, hybrid, and distributed environments across modern infrastructure stacks." },
+      { q: "What happens during an incident response?", a: "We coordinate triage, containment, evidence capture, and remediation with clear communication to your leadership and operations teams." },
+      { q: "Can we customize the plan?", a: "Absolutely. We tailor coverage, support, and controls to the scale, compliance obligations, and risk profile of your organization." },
+    ],
+    cta: {
+      title: "See smarter security in action.",
+      description: "Discover how Phause can help your team detect threats, simplify operations, and choose the right protection for your needs.",
+      cta: "Book a demo",
+    },
+  };
+
+  const heroBlock = blockProps("hero");
+  const aboutSection = customSectionByPosition(1);
+  const philosophyBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homePhilosophy");
+  const whyChooseBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeReasons");
+  const servicesBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeServices");
+  const offersBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeOffers");
+  const processBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeProcess");
+  const ctaBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeCta");
+
+  const philosophyData = Array.isArray(philosophyBlock?.items)
+    ? (philosophyBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
+        const record = typeof item === "object" && item ? item : {};
+        const iconMap: Record<string, LucideIcon> = { shield: Shield, eye: Eye, lock: Lock };
+        return {
+          icon: iconMap[String(record.icon ?? "shield").toLowerCase()] ?? [Shield, Eye, Lock][index % 3] ?? Shield,
+          title: typeof record.title === "string" ? record.title : createFallbackItemTitle("Principle", index),
+          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+        };
+      })
+    : defaults.philosophy;
+  const servicesData = Array.isArray(servicesBlock?.items)
+    ? (servicesBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
+        const record = typeof item === "object" && item ? item : {};
+        const iconMap: Record<string, LucideIcon> = { radar: Radar, shieldcheck: ShieldCheck, cloud: Cloud, server: Server, lock: Lock, eye: Eye };
+        return {
+          icon: iconMap[String(record.icon ?? "radar").toLowerCase()] ?? [Radar, ShieldCheck, Cloud, Server, Lock, Eye][index % 6] ?? Radar,
+          title: typeof record.title === "string" ? record.title : `Service ${index + 1}`,
+          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+        };
+      })
+    : defaults.services;
+  const offersData = Array.isArray(offersBlock?.items)
+    ? (offersBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
+        const record = typeof item === "object" && item ? item : {};
+        return {
+          title: typeof record.title === "string" ? record.title : `Offer ${index + 1}`,
+          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+        };
+      })
+    : defaults.offers;
+  const stepsData = Array.isArray(processBlock?.items)
+    ? (processBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
+        const record = typeof item === "object" && item ? item : {};
+        const iconMap: Record<string, LucideIcon> = { eye: Eye, workflow: Workflow, shield: Shield, rocket: Rocket };
+        return {
+          icon: iconMap[String(record.icon ?? "eye").toLowerCase()] ?? [Eye, Workflow, Shield, Rocket][index % 4] ?? Eye,
+          title: typeof record.title === "string" ? record.title : `Step ${index + 1}`,
+          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+        };
+      })
+    : defaults.steps;
+  const testimonialsData = Array.isArray(blockProps("testimonials")?.items)
+    ? (blockProps("testimonials").items as typeof defaults.testimonials)
+    : defaults.testimonials;
+  const faqData: Array<{ q: string; a: string }> = Array.isArray(blockProps("faq")?.items)
+    ? (blockProps("faq").items as Array<Record<string, unknown>>).map((item) => {
+        const record = typeof item === "object" && item ? item : {};
+        return {
+          q: typeof record.q === "string" ? record.q : typeof record.question === "string" ? record.question : "",
+          a: typeof record.a === "string" ? record.a : typeof record.answer === "string" ? record.answer : "",
+        };
+      })
+    : defaults.faqs;
+  const whyChooseUsData = Array.isArray(whyChooseBlock?.items)
+    ? (whyChooseBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
+        const record = typeof item === "object" && item ? item : {};
+        const iconMap: Record<string, LucideIcon> = { zap: Zap, cpu: Cpu, users: Users, code: Code2 };
+        return {
+          icon: iconMap[String(record.icon ?? "zap").toLowerCase()] ?? [Zap, Cpu, Users, Code2][index % 4] ?? Zap,
+          title: typeof record.title === "string" ? record.title : `Reason ${index + 1}`,
+          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+        };
+      })
+    : defaults.reasons;
+  const ctaBannerTitle = getBlockProp(ctaBlock ?? {}, "title", defaults.cta.title);
+  const ctaBannerDescription = getBlockProp(ctaBlock ?? {}, "description", defaults.cta.description);
+  const ctaBannerCta = getBlockProp(ctaBlock ?? {}, "buttonText", getBlockProp(ctaBlock ?? {}, "cta", defaults.cta.cta));
+  const philosophyTitle = getBlockProp(philosophyBlock ?? {}, "title", "Security is not a product. It's a mindset.");
+  const philosophySubtitle = getBlockProp(philosophyBlock ?? {}, "subtitle", "Three core principles guide everything we build, ship, and defend.");
+
+  const hero = {
+    eyebrow: getBlockProp(heroBlock, "eyebrow", defaults.hero.eyebrow),
+    title: getBlockProp(heroBlock, "title", defaults.hero.title),
+    description: getBlockProp(heroBlock, "description", defaults.hero.description),
+    ctaPrimary: getBlockProp(heroBlock, "buttonText", getBlockProp(heroBlock, "ctaPrimary", defaults.hero.ctaPrimary)),
+    ctaSecondary: getBlockProp(heroBlock, "secondaryButtonText", getBlockProp(heroBlock, "ctaSecondary", defaults.hero.ctaSecondary)),
+    ctaPrimaryHref: getBlockProp(heroBlock, "buttonLink", getBlockProp(heroBlock, "ctaPrimaryHref", "/subscription")),
+    ctaSecondaryHref: getBlockProp(heroBlock, "secondaryButtonLink", getBlockProp(heroBlock, "ctaSecondaryHref", "/about")),
+    stats: Array.isArray(blockProps("stats")?.items)
+      ? (blockProps("stats").items as Array<Record<string, unknown>>).map((item, index: number) => {
+          const record = typeof item === "object" && item ? item : {};
+          return {
+            icon: [Shield, Radar, Zap, Shield][index % 4] ?? Shield,
+            val: typeof record.value === "string" ? record.value : typeof record.value === "number" ? String(record.value) : defaults.hero.stats[index]?.val ?? "0",
+            label: typeof record.label === "string" ? record.label : defaults.hero.stats[index]?.label ?? "Metric",
+          };
+        })
+      : defaults.hero.stats,
+  };
+
+  const aboutItems = Array.isArray(aboutSection?.items)
+    ? aboutSection.items.map((item, index: number) => {
+        const record = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+        return {
+          icon: [Award, Users, Globe, Cpu][index % 4] ?? Award,
+          text: typeof record.title === "string" ? record.title : typeof record.label === "string" ? record.label : `Feature ${index + 1}`,
+        };
+      })
+    : defaults.about.items;
+
+  const aboutTitle = getBlockProp(aboutSection ?? {}, "title", defaults.about.title);
+
   return (
     <>
-      <Hero />
-      <About />
-      <Philosophy />
-      <WhyChooseUs />
-      <Services />
-      <WhatWeOffer />
-      <WorkingProcess />
-      <Testimonials />
-      <FAQ />
-      <CTABanner />
+      <Hero {...hero} />
+      <About
+        tag={getBlockProp(heroBlock, "eyebrow", defaults.about.tag)}
+        title={aboutTitle}
+        description={getBlockProp(aboutSection ?? {}, "description", defaults.about.description)}
+        secondaryDescription={getBlockProp(aboutSection ?? {}, "subtitle", defaults.about.secondaryDescription)}
+        items={aboutItems}
+      />
+      <Philosophy
+        cards={philosophyData}
+        title={philosophyTitle}
+        subtitle={philosophySubtitle}
+      />
+      <WhyChooseUs reasons={whyChooseUsData} />
+      <Services services={servicesData} />
+      <WhatWeOffer offers={offersData} />
+      <WorkingProcess steps={stepsData} />
+      <Testimonials testimonials={testimonialsData} />
+      <FAQ faqs={faqData} />
+      <CTABanner title={ctaBannerTitle} description={ctaBannerDescription} cta={ctaBannerCta} />
     </>
   );
 }

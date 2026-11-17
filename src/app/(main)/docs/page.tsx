@@ -592,8 +592,7 @@ function SearchDialog({
 
   useEffect(() => {
     if (open) {
-      setQuery("");
-      setTimeout(() => inputRef.current?.focus(), 30);
+      window.setTimeout(() => inputRef.current?.focus(), 30);
     }
   }, [open]);
 
@@ -678,16 +677,38 @@ function SearchDialog({
 /* ══════════════════ PAGE ══════════════════ */
 
 export default function DocsPage() {
-  const [active, setActive] = useState<string>(ORDER[0]);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    new Set(["installation"])
-  );
+  const [cmsDocs, setCmsDocs] = useState<Array<Record<string, unknown>>>([]);
+
+  useEffect(() => {
+    fetch("/api/cms/pages?slug=docs")
+      .then((response) => response.json())
+      .then((payload) => {
+        const block = Array.isArray(payload.page?.blocks)
+          ? payload.page.blocks.find((entry: Record<string, unknown>) => entry?.type === "CUSTOM_SECTION")
+          : null;
+        const items = Array.isArray(block?.props?.items) ? block.props.items : [];
+        setCmsDocs(items as Array<Record<string, unknown>>);
+      })
+      .catch(() => setCmsDocs([]));
+  }, []);
+
+  const [active, setActive] = useState<string>(() => {
+    if (typeof window === "undefined") return ORDER[0];
+    const slug = window.location.hash.replace("#", "");
+    return slug && DOC_MAP[slug] ? slug : ORDER[0];
+  });
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set(["installation"]);
+    const slug = window.location.hash.replace("#", "");
+    const group = slug && DOC_MAP[slug] ? findLocation(slug).groupId : undefined;
+    return group ? new Set([group, "installation"]) : new Set(["installation"]);
+  });
   const [mobileNav, setMobileNav] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [pageCopied, setPageCopied] = useState(false);
   const [activeHeading, setActiveHeading] = useState<string>("");
 
-  const doc = DOC_MAP[active];
+  const doc = DOC_MAP[active] ?? DOCS[0];
   const loc = findLocation(active);
   const index = ORDER.indexOf(active);
   const prev = index > 0 ? DOC_MAP[ORDER[index - 1]] : null;
@@ -713,16 +734,6 @@ export default function DocsPage() {
       return nextSet;
     });
 
-  /* Open the page named in the URL hash */
-  useEffect(() => {
-    const slug = window.location.hash.replace("#", "");
-    if (slug && DOC_MAP[slug]) {
-      setActive(slug);
-      const group = findLocation(slug).groupId;
-      if (group) setOpenGroups((prev) => new Set(prev).add(group));
-    }
-  }, []);
-
   /* Ctrl/Cmd + K opens search */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -745,11 +756,16 @@ export default function DocsPage() {
       .map((h) => document.getElementById(h.id))
       .filter(Boolean) as HTMLElement[];
     if (!els.length) return;
-    setActiveHeading(els[0].id);
+
+    const updateActiveHeading = (id: string) => {
+      setActiveHeading((current) => (current === id ? current : id));
+    };
+
+    updateActiveHeading(els[0].id);
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((e) => {
-          if (e.isIntersecting) setActiveHeading(e.target.id);
+          if (e.isIntersecting) updateActiveHeading(e.target.id);
         });
       },
       { rootMargin: "-20% 0px -70% 0px" }
@@ -790,6 +806,22 @@ export default function DocsPage() {
 
   return (
     <section className="relative pt-20">
+      {cmsDocs.length > 0 && (
+        <div className="mx-auto max-w-6xl px-6 pb-6">
+          <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">CMS docs</p>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {cmsDocs.map((docItem, index) => (
+                <div key={`${docItem.id ?? docItem.title ?? index}`} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+                  <div className="font-semibold text-white">{String(docItem.title ?? "Documentation item")}</div>
+                  <div className="mt-2 text-sm text-slate-300">{String(docItem.description ?? docItem.intro ?? "")}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── Docs top bar (sticky, sits under the site navbar) ─── */}
       <div className="sticky top-20 z-30 border-y border-white/[0.06] bg-slate-950/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-[90rem] items-center gap-3 px-4 py-3 sm:px-6">
@@ -1026,6 +1058,7 @@ export default function DocsPage() {
       </AnimatePresence>
 
       <SearchDialog
+        key={searchOpen ? "docs-search-open" : "docs-search-closed"}
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         onSelect={select}

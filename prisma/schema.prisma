@@ -1,0 +1,548 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String     @id @default(cuid())
+  name                String?
+  email               String     @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String
+  avatar              String?
+  role                Role       @default(VIEWER)
+  status              UserStatus @default(ACTIVE)
+  failedLoginAttempts Int        @default(0)
+  lockedUntil         DateTime?
+  lastLoginAt         DateTime?
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+  accounts            Account[]
+  sessions            Session[]
+
+  @@index([role, status])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Page {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  seoId       String?       @unique
+  AuditLog    AuditLog[]    @relation("PageAuditLog")
+  seo         Seo?          @relation(fields: [seoId], references: [id])
+  blocks      PageBlock[]
+
+  @@index([status, publishedAt])
+  @@index([createdAt])
+}
+
+model PageBlock {
+  id        String        @id @default(cuid())
+  pageId    String
+  type      PageBlockType
+  order     Int
+  props     Json
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  deletedAt DateTime?
+  version   Int           @default(0)
+  mediaId   String?
+  media     Media?        @relation(fields: [mediaId], references: [id])
+  page      Page          @relation(fields: [pageId], references: [id])
+
+  @@index([pageId, order])
+}
+
+model Post {
+  id               String        @id @default(cuid())
+  slug             String        @unique
+  title            String
+  excerpt          String?
+  body             String?
+  status           ContentStatus @default(DRAFT)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  publishedAt      DateTime?
+  deletedAt        DateTime?
+  version          Int           @default(0)
+  authorId         String?
+  seoId            String?       @unique
+  featuredImageId  String?
+  imageAlt         String?
+  ogImageId        String?
+  thumbnailImageId String?
+  AuditLog         AuditLog[]    @relation("PostAuditLog")
+  author           Author?       @relation(fields: [authorId], references: [id])
+  featuredImage    Media?        @relation("PostFeaturedImage", fields: [featuredImageId], references: [id])
+  ogImage          Media?        @relation("PostOgImage", fields: [ogImageId], references: [id])
+  seo              Seo?          @relation(fields: [seoId], references: [id])
+  thumbnailImage   Media?        @relation("PostThumbnailImage", fields: [thumbnailImageId], references: [id])
+  categories       Category[]    @relation("CategoryToPost")
+  tags             Tag[]         @relation("PostToTag")
+
+  @@index([status, publishedAt])
+  @@index([createdAt])
+}
+
+model Author {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  bio         String?
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("AuthorAuditLog")
+  posts       Post[]
+}
+
+model Category {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("CategoryAuditLog")
+  posts       Post[]        @relation("CategoryToPost")
+}
+
+model Tag {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("TagAuditLog")
+  posts       Post[]        @relation("PostToTag")
+}
+
+model Faq {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  question    String
+  answer      String
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("FaqAuditLog")
+
+  @@index([status, publishedAt])
+}
+
+model Feature {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  description String?
+  image       String?
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("FeatureAuditLog")
+}
+
+model Testimonial {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  quote       String
+  author      String
+  role        String?
+  company     String?
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("TestimonialAuditLog")
+}
+
+model GalleryItem {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String?
+  altText     String?
+  imageUrl    String
+  caption     String?
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("GalleryItemAuditLog")
+}
+
+model Navigation {
+  id          String           @id @default(cuid())
+  slug        String           @unique
+  label       String
+  href        String?
+  parentId    String?
+  status      ContentStatus    @default(DRAFT)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int              @default(0)
+  key         String           @unique
+  position    Int              @default(0)
+  rowVersion  Int              @default(0)
+  AuditLog    AuditLog[]       @relation("NavigationAuditLog")
+  items       NavigationItem[]
+
+  @@index([status, position])
+}
+
+model NavigationItem {
+  id           String        @id @default(cuid())
+  navigationId String
+  label        String
+  href         String
+  parentId     String?
+  position     Int           @default(0)
+  status       ContentStatus @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+  version      Int           @default(0)
+  rowVersion   Int           @default(0)
+  navigation   Navigation    @relation(fields: [navigationId], references: [id])
+
+  @@index([navigationId, position])
+}
+
+model Footer {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  copyright   String?
+  description String?
+  rowVersion  Int           @default(0)
+  AuditLog    AuditLog[]    @relation("FooterAuditLog")
+  links       FooterLink[]
+}
+
+model FooterLink {
+  id         String        @id @default(cuid())
+  footerId   String
+  label      String
+  href       String
+  position   Int           @default(0)
+  type       String        @default("LINK")
+  status     ContentStatus @default(DRAFT)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  deletedAt  DateTime?
+  version    Int           @default(0)
+  rowVersion Int           @default(0)
+  footer     Footer        @relation(fields: [footerId], references: [id])
+
+  @@index([footerId, position])
+}
+
+model Setting {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  key         String        @unique
+  value       String
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("SettingAuditLog")
+}
+
+model Seo {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  title         String?
+  description   String?
+  keywords      String?
+  canonical     String?
+  robots        String?
+  schema        Json?
+  ogTitle       String?
+  ogDescription String?
+  ogImage       String?
+  twitterCard   String?
+  status        ContentStatus @default(DRAFT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  publishedAt   DateTime?
+  deletedAt     DateTime?
+  version       Int           @default(0)
+  AuditLog      AuditLog[]    @relation("SeoAuditLog")
+  page          Page?
+  post          Post?
+}
+
+model Media {
+  id                 String        @id @default(cuid())
+  slug               String        @unique
+  filename           String
+  mimeType           String
+  url                String
+  altText            String?
+  status             ContentStatus @default(DRAFT)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  publishedAt        DateTime?
+  deletedAt          DateTime?
+  version            Int           @default(0)
+  caption            String?
+  checksum           String?       @unique
+  height             Int?
+  rowVersion         Int           @default(0)
+  size               Int?
+  tags               String[]      @default([])
+  title              String
+  width              Int?
+  AuditLog           AuditLog[]    @relation("MediaAuditLog")
+  pageBlocks         PageBlock[]
+  featuredPostLinks  Post[]        @relation("PostFeaturedImage")
+  ogPostLinks        Post[]        @relation("PostOgImage")
+  thumbnailPostLinks Post[]        @relation("PostThumbnailImage")
+
+  @@index([status, mimeType])
+  @@index([checksum])
+}
+
+model Form {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String
+  fields      Json
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("FormAuditLog")
+}
+
+model Lead {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  name        String?
+  email       String?
+  company     String?
+  message     String?
+  source      String?
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  publishedAt DateTime?
+  deletedAt   DateTime?
+  version     Int           @default(0)
+  AuditLog    AuditLog[]    @relation("LeadAuditLog")
+}
+
+model AuditLog {
+  id            String       @id @default(cuid())
+  entityType    String
+  entityId      String
+  action        AuditAction
+  actor         String?
+  metadata      Json?
+  createdAt     DateTime     @default(now())
+  pageId        String?
+  postId        String?
+  authorId      String?
+  categoryId    String?
+  tagId         String?
+  faqId         String?
+  featureId     String?
+  testimonialId String?
+  galleryItemId String?
+  navigationId  String?
+  footerId      String?
+  settingId     String?
+  seoId         String?
+  mediaId       String?
+  formId        String?
+  leadId        String?
+  author        Author?      @relation("AuthorAuditLog", fields: [authorId], references: [id])
+  category      Category?    @relation("CategoryAuditLog", fields: [categoryId], references: [id])
+  faq           Faq?         @relation("FaqAuditLog", fields: [faqId], references: [id])
+  feature       Feature?     @relation("FeatureAuditLog", fields: [featureId], references: [id])
+  footer        Footer?      @relation("FooterAuditLog", fields: [footerId], references: [id])
+  form          Form?        @relation("FormAuditLog", fields: [formId], references: [id])
+  galleryItem   GalleryItem? @relation("GalleryItemAuditLog", fields: [galleryItemId], references: [id])
+  lead          Lead?        @relation("LeadAuditLog", fields: [leadId], references: [id])
+  media         Media?       @relation("MediaAuditLog", fields: [mediaId], references: [id])
+  navigation    Navigation?  @relation("NavigationAuditLog", fields: [navigationId], references: [id])
+  page          Page?        @relation("PageAuditLog", fields: [pageId], references: [id])
+  post          Post?        @relation("PostAuditLog", fields: [postId], references: [id])
+  seo           Seo?         @relation("SeoAuditLog", fields: [seoId], references: [id])
+  setting       Setting?     @relation("SettingAuditLog", fields: [settingId], references: [id])
+  tag           Tag?         @relation("TagAuditLog", fields: [tagId], references: [id])
+  testimonial   Testimonial? @relation("TestimonialAuditLog", fields: [testimonialId], references: [id])
+}
+
+model ScrapeJob {
+  id         String    @id @default(cuid())
+  sourceUrl  String
+  status     String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  metadata   Json?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model CrawlUrl {
+  id        String    @id @default(cuid())
+  url       String    @unique
+  canonical String?
+  status    String
+  fetchedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([status, fetchedAt])
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  AUTHOR
+  VIEWER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+  LOCKED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
+}
+
+enum PageBlockType {
+  HERO
+  CTA
+  FEATURES
+  SERVICES
+  TESTIMONIALS
+  GALLERY
+  FAQ
+  STATS
+  PRICING
+  TEAM
+  RICHTEXT
+  VIDEO
+  CUSTOM_SECTION
+  CTA_BUTTON
+  CONTACT
+  FORM
+  SERVICES_HERO
+  SERVICES_FEATURES
+  SERVICES_PROCESS
+  SERVICES_AUDIENCES
+  SERVICES_BENEFITS
+  SERVICES_STATS
+  SERVICES_FAQ
+  SERVICES_CTA
+  HOME_PHILOSOPHY
+  HOME_REASONS
+  HOME_SERVICES
+  HOME_OFFERS
+  HOME_PROCESS
+  HOME_CTA
+  ABOUT_CAPABILITIES
+  ABOUT_VALUES
+  ABOUT_COMMITMENTS
+  ABOUT_TIMELINE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  PUBLISH
+  UNPUBLISH
+  DELETE
+  SCRAPE_IMPORT
+  SYNC
+}

@@ -1,17 +1,59 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, Clock3, Search } from "lucide-react";
+import { getBlockProp } from "@/features/cms/page-builder";
 import { blogCategories, blogPosts } from "@/lib/blog";
 
 export default function BlogPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
+  const [page, setPage] = useState<Record<string, unknown> | null>(null);
+  const [posts, setPosts] = useState(blogPosts);
+
+  useEffect(() => {
+    fetch("/api/cms/pages?slug=blog")
+      .then((response) => response.json())
+      .then((payload) => setPage(payload.page ?? null))
+      .catch(() => setPage(null));
+
+    fetch("/api/cms/blog")
+      .then((response) => response.json())
+      .then((payload) => {
+        if (Array.isArray(payload.items) && payload.items.length > 0) {
+          setPosts(
+            payload.items.map((post: Record<string, unknown>) => ({
+              slug: String(post.slug ?? ""),
+              title: String(post.title ?? ""),
+              excerpt: String(post.excerpt ?? ""),
+              category: "CMS",
+              date: new Date(String(post.createdAt || Date.now())).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+              readTime: "5 min read",
+              image: String((post.thumbnailImage as Record<string, unknown> | undefined)?.url ?? (post.featuredImage as Record<string, unknown> | undefined)?.url ?? "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1400&q=85"),
+              thumbnailImage: String((post.thumbnailImage as Record<string, unknown> | undefined)?.url ?? (post.featuredImage as Record<string, unknown> | undefined)?.url ?? ""),
+              featuredImage: String((post.featuredImage as Record<string, unknown> | undefined)?.url ?? ""),
+              ogImage: String((post.ogImage as Record<string, unknown> | undefined)?.url ?? ""),
+              imageAlt: String(post.imageAlt ?? post.title ?? ""),
+              author: "Phause Team",
+              content: (String(post.body || "")).split(/\n{2,}|\n/).filter(Boolean),
+            }))
+          );
+        }
+      })
+      .catch(() => setPosts(blogPosts));
+  }, []);
+
+  const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+  const heroBlock = pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "hero")?.props as Record<string, unknown> | undefined;
+  const heroEyebrow = getBlockProp(heroBlock ?? {}, "eyebrow", "Insights & Resources");
+  const heroTitle = getBlockProp(heroBlock ?? {}, "title", "Ideas that move your business forward.");
+  const heroDescription = getBlockProp(heroBlock ?? {}, "description", "Explore insights, practical guidance and the latest thinking around technology, cybersecurity and smarter business operations.");
 
   const filteredPosts = useMemo(() => {
-    return blogPosts.filter((post) => {
+    return posts.filter((post) => {
       const matchesCategory =
         activeCategory === "All" || post.category === activeCategory;
 
@@ -20,7 +62,7 @@ export default function BlogPage() {
 
       return matchesCategory && searchText.includes(search.toLowerCase());
     });
-  }, [search, activeCategory]);
+  }, [posts, search, activeCategory]);
 
   return (
     <main className="min-h-screen bg-[#081522] text-white">
@@ -31,19 +73,15 @@ export default function BlogPage() {
 
         <div className="relative mx-auto max-w-7xl">
           <p className="mb-5 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-400">
-            Insights & Resources
+            {heroEyebrow}
           </p>
 
           <h1 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">
-            Ideas that move your business{" "}
-            <span className="bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent">
-              forward.
-            </span>
+            {heroTitle}
           </h1>
 
           <p className="mt-6 max-w-2xl text-base leading-8 text-slate-400 md:text-lg">
-            Explore insights, practical guidance and the latest thinking
-            around technology, cybersecurity and smarter business operations.
+            {heroDescription}
           </p>
         </div>
       </section>
@@ -100,9 +138,11 @@ export default function BlogPage() {
                 >
                   <Link href={`/blog/${post.slug}`}>
                     <div className="relative h-60 overflow-hidden">
-                      <img
+                      <Image
                         src={post.image}
                         alt={post.title}
+                        width={1200}
+                        height={700}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                       />
                       <span className="absolute left-5 top-5 rounded-full border border-cyan-300/20 bg-[#081522]/90 px-4 py-2 text-xs font-semibold text-cyan-300">

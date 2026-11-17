@@ -7,10 +7,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+
 import Logo from "../../../public/logo/phause-logo.png";
-import { NAV_LINKS, ROUTES } from "@/lib/routes";
 import RegistrationModal from "@/components/registration/RegistrationModal";
 import LoginModal from "@/components/auth/LoginModal";
+import { NAV_LINKS, ROUTES } from "@/lib/routes";
 
 const AUTH_CHANGE_EVENT = "phause-auth-change";
 
@@ -29,6 +30,8 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>(NAV_LINKS);
+  const [brandName, setBrandName] = useState("Phause");
   const router = useRouter();
   const isLoggedIn = useSyncExternalStore(
     subscribeToAuthChanges,
@@ -42,144 +45,169 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
+  useEffect(() => {
+    const loadNavigation = async () => {
+      try {
+        const response = await fetch("/api/navigation");
+        const payload = await response.json();
+
+        if (payload?.navigation?.items?.length) {
+          const cmsItems = payload.navigation.items.map((item: { label: string; href: string }) => ({
+            label: item.label,
+            href: item.href,
+          }));
+          setNavLinks(cmsItems);
+        }
+
+        if (payload?.navigation?.label) {
+          setBrandName(payload.navigation.label.replace(" navigation", ""));
+        }
+      } catch {
+        setNavLinks(NAV_LINKS);
+      }
+    };
+
+    void loadNavigation();
+  }, []);
+
   return (
     <>
-    <motion.nav
-      initial={{ y: -80, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? "glass py-3 shadow-[0_8px_40px_rgba(0,216,201,0.08)]" : "py-6"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        {/* Logo */}
-        <motion.div whileHover={{ scale: 1.05 }}>
-          <Link href={ROUTES.home} className="flex items-center gap-3">
-            <Image src={Logo} alt="Phause Logo" className="w-full h-20" priority />
-          </Link>
-        </motion.div>
+      <motion.nav
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className={`fixed left-0 right-0 top-0 z-50 transition-all duration-500 ${
+          scrolled ? "glass py-3 shadow-[0_8px_40px_rgba(0,216,201,0.08)]" : "py-6"
+        }`}
+      >
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
+          <motion.div whileHover={{ scale: 1.05 }}>
+            <Link href={ROUTES.home} className="flex items-center gap-3" aria-label={brandName}>
+              <Image src={Logo} alt={brandName || "Phause Logo"} className="h-20 w-full" priority />
+            </Link>
+          </motion.div>
 
-        {/* Desktop links */}
-        <div className="hidden lg:flex items-center gap-8">
-          {NAV_LINKS.map((link, i) => (
-            <motion.div
-              key={link.label}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 * i }}
-              whileHover={{ y: -2 }}
-              className="relative"
-            >
-              <Link
-                href={link.href}
-                className="relative text-sm font-medium text-slate-300 hover:text-phause-cyan transition-colors group"
+          <div className="hidden items-center gap-8 lg:flex">
+            {navLinks.map((link, i) => (
+              <motion.div
+                key={`${link.label}-${i}`}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 * i }}
+                whileHover={{ y: -2 }}
+                className="relative"
               >
-                {link.label}
-                <span className="absolute -bottom-1 left-0 w-0 h-[2px] bg-phause-cyan transition-all duration-300 group-hover:w-full" />
-              </Link>
-            </motion.div>
-          ))}
-
-          {isLoggedIn ? (
-            <>
-              <button
-                type="button"
-                onClick={() => router.push(ROUTES.subscription)}
-                className="px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
-              >
-                Go to Workplace
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  clearToken();
-                  window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
-                  router.refresh();
-                }}
-                className="ml-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setLoginOpen(true)}
-                className="px-5 py-2.5 rounded-full text-sm font-semibold border border-phause-cyan/40 text-phause-cyan hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)] transition-all duration-300"
-              >
-                Login
-              </button>
-              <motion.button
-                whileHover={{ scale: 1.06 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setRegistrationOpen(true)}
-                className="relative flex items-center gap-1.5 overflow-hidden rounded-full px-6 py-2.5 text-sm font-bold text-phause-dark group"
-              >
-              <span className="absolute inset-0 bg-gradient-to-r from-phause-cyan via-cyan-400 to-phause-teal bg-[length:200%_100%] transition-all duration-500 group-hover:bg-[position:100%_0]" />
-              <span className="relative flex items-center gap-1.5">
-                Register <ArrowRight className="h-4 w-4" />
-              </span>
-              </motion.button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile hamburger */}
-        <button
-          onClick={() => setOpen(!open)}
-          className="lg:hidden text-phause-cyan p-2"
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="w-7 h-7" /> : <Menu className="w-7 h-7" />}
-        </button>
-      </div>
-
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="lg:hidden glass mt-3 mx-4 rounded-2xl overflow-hidden"
-          >
-            <div className="flex flex-col p-6 gap-5">
-              {NAV_LINKS.map((link) => (
                 <Link
-                  key={link.label}
                   href={link.href}
-                  onClick={() => setOpen(false)}
-                  className="text-slate-200 font-medium hover:text-phause-cyan transition-colors"
+                  className="group relative text-sm font-medium text-slate-300 transition-colors hover:text-phause-cyan"
                 >
                   {link.label}
+                  <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-phause-cyan transition-all duration-300 group-hover:w-full" />
                 </Link>
-              ))}
-              <div className="flex gap-4 pt-3 border-t border-phause-border">
+              </motion.div>
+            ))}
+
+            {isLoggedIn ? (
+              <>
                 <button
                   type="button"
-                  onClick={() => { setOpen(false); setLoginOpen(true); }}
-                  className="flex-1 text-center py-2.5 rounded-full border border-phause-cyan/40 text-phause-cyan font-semibold"
+                  onClick={() => router.push(ROUTES.subscription)}
+                  className="rounded-full border border-phause-cyan/40 px-5 py-2.5 text-sm font-semibold text-phause-cyan transition-all duration-300 hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)]"
+                >
+                  Go to Workplace
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearToken();
+                    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+                    router.refresh();
+                  }}
+                  className="rounded-full border border-phause-cyan/40 px-5 py-2.5 text-sm font-semibold text-phause-cyan transition-all duration-300 hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)]"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setLoginOpen(true)}
+                  className="rounded-full border border-phause-cyan/40 px-5 py-2.5 text-sm font-semibold text-phause-cyan transition-all duration-300 hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)]"
                 >
                   Login
                 </button>
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    setRegistrationOpen(true);
-                  }}
-                  className="flex-1 text-center py-2.5 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold"
+                <motion.button
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setRegistrationOpen(true)}
+                  className="group relative flex items-center gap-1.5 overflow-hidden rounded-full px-6 py-2.5 text-sm font-bold text-phause-dark"
                 >
-                  Register
-                </button>
+                  <span className="absolute inset-0 bg-gradient-to-r from-phause-cyan via-cyan-400 to-phause-teal bg-[length:200%_100%] transition-all duration-500 group-hover:bg-[position:100%_0]" />
+                  <span className="relative flex items-center gap-1.5">
+                    Register <ArrowRight className="h-4 w-4" />
+                  </span>
+                </motion.button>
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={() => setOpen(!open)}
+            className="p-2 text-phause-cyan lg:hidden"
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {open && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="glass mx-4 mt-3 overflow-hidden rounded-2xl lg:hidden"
+            >
+              <div className="flex flex-col gap-5 p-6">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.label}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="font-medium text-slate-200 transition-colors hover:text-phause-cyan"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="flex gap-4 border-t border-phause-border pt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      setLoginOpen(true);
+                    }}
+                    className="flex-1 rounded-full border border-phause-cyan/40 px-4 py-2.5 text-center font-semibold text-phause-cyan"
+                  >
+                    Login
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      setRegistrationOpen(true);
+                    }}
+                    className="flex-1 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal px-4 py-2.5 text-center font-bold text-phause-dark"
+                  >
+                    Register
+                  </button>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
-    <RegistrationModal open={registrationOpen} onClose={() => setRegistrationOpen(false)} />
-    <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.nav>
+      <RegistrationModal open={registrationOpen} onClose={() => setRegistrationOpen(false)} />
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   );
 }

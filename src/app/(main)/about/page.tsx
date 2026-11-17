@@ -11,6 +11,8 @@ import {
   Workflow, CheckCircle2, Milestone, Flag,
 } from "lucide-react";
 
+import { getBlockProp } from "@/features/cms/page-builder";
+
 /* ══════════════════ ANIMATED BACKGROUNDS ══════════════════ */
 function GridBackground() {
   return (
@@ -101,7 +103,7 @@ function SectionHeading({
 }
 
 /* ══════════════════ PAGE HERO ══════════════════ */
-function PageHero() {
+function PageHero({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 400], [0, 100]);
 
@@ -116,7 +118,7 @@ function PageHero() {
           transition={{ duration: 0.6 }}
           className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-sm text-phause-cyan mb-8"
         >
-          <Milestone className="w-4 h-4" /> Who We Are
+          <Milestone className="w-4 h-4" /> {eyebrow}
         </motion.div>
         <motion.h1
           initial={{ opacity: 0, y: 40 }}
@@ -124,7 +126,7 @@ function PageHero() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="text-5xl md:text-7xl font-black leading-[1.05] mb-6"
         >
-          The Team Behind the <span className="text-gradient">Shield</span>
+          {title}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 30 }}
@@ -132,8 +134,7 @@ function PageHero() {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto"
         >
-          From a two-person research lab to a global cybersecurity force —
-          this is the story, the mission, and the machine behind Phause.
+          {description}
         </motion.p>
         <motion.div
           initial={{ opacity: 0 }}
@@ -154,7 +155,24 @@ function PageHero() {
 }
 
 /* ══════════════════ ABOUT US ══════════════════ */
-function AboutUs() {
+function AboutUs({
+  tag = "About Us",
+  title = "About us",
+  description = "Building the next chapter of secure digital operations.",
+  secondaryDescription = "Our approach keeps security practical, transparent and resilient.",
+  items = [
+    { icon: Award, label: "Enterprise-grade" },
+    { icon: Users, label: "Trusted by teams" },
+    { icon: Globe, label: "Globally monitored" },
+    { icon: Cpu, label: "Secure by design" },
+  ],
+}: {
+  tag?: string;
+  title?: string;
+  description?: string;
+  secondaryDescription?: string;
+  items?: Array<{ icon: React.ElementType; label: string }>;
+}) {
   return (
     <section className="relative py-28 overflow-hidden">
       <div className="absolute top-0 left-1/3 w-[500px] h-[500px] rounded-full bg-phause-cyan/8 blur-[150px]" />
@@ -168,50 +186,23 @@ function AboutUs() {
           className="lg:col-span-3"
         >
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-phause-cyan/10 text-phause-cyan border border-phause-cyan/20 mb-5">
-            About Us
+            {tag}
           </span>
           <h2 className="text-3xl md:text-5xl font-extrabold mb-8 leading-tight">
-            Born in a War Room. <br />
-            Built for the <span className="text-gradient">Digital Battlefield.</span>
+            {title}
           </h2>
 
           <div className="space-y-6 text-slate-400 leading-relaxed text-[1.05rem]">
-            <p>
-              Phause was founded in 2018 by two security researchers who kept
-              seeing the same pattern repeat itself: companies were spending
-              millions on cybersecurity tools and still getting breached. Not
-              because the tools were broken — but because the tools were
-              fragmented, reactive, and blind to the way modern attacks
-              actually unfold.
-            </p>
-            <p>
-              So we asked a simple question: <em className="text-slate-200">what would security look like if it were designed today, from a blank sheet of paper?</em> The answer became the three pillars that still define everything we build at Phause — <strong className="text-phause-cyan">Strengthen, Aware, Defend</strong>.
-            </p>
-            <p>
-              Today, Phause operates as a full-stack cybersecurity platform
-              protecting more than 500 organizations across 40+ countries.
-            </p>
-            <p>
-              Technically, Phause is built on a distributed detection mesh
-              that ingests over 50 billion security events per month. Our
-              machine learning pipeline identifies anomalous behavior
-              across endpoints, networks, identities, APIs, and cloud
-              workloads.
-            </p>
-            <p>
-              We are also deeply committed to the broader security community.
-              Our researchers have responsibly disclosed more than 120
-              vulnerabilities to vendors and published open-source detection
-              rules used by thousands of SOC teams worldwide.
-            </p>
+            <p>{description}</p>
+            <p>{secondaryDescription}</p>
           </div>
 
-          {/* Certification badges */}
           <div className="flex flex-wrap gap-4 mt-10">
-            {["ISO 27001", "SOC 2 Type II", "GDPR", "HIPAA", "PCI DSS"].map(
-              (badge, i) => (
+            {items.map((badge, i) => {
+              const Icon = badge.icon;
+              return (
                 <motion.span
-                  key={badge}
+                  key={`${badge.label}-${i}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -219,10 +210,10 @@ function AboutUs() {
                   whileHover={{ scale: 1.08, y: -3 }}
                   className="px-4 py-2 rounded-xl glass text-sm font-semibold text-phause-cyan cursor-default"
                 >
-                  {badge}
+                  <span className="inline-flex items-center gap-2"><Icon className="w-4 h-4" /> {badge.label}</span>
                 </motion.span>
-              )
-            )}
+              );
+            })}
           </div>
         </motion.div>
 
@@ -261,7 +252,7 @@ function AboutUs() {
               { label: "False Positive Rate", val: 99.2 },
               { label: "Analyst Satisfaction", val: 98 },
             ].map((row, i) => (
-              <div key={row.label} className="mb-5">
+              <div key={`${row.label}-${i}`} className="mb-5">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-slate-300">{row.label}</span>
                   <span className="text-phause-cyan font-bold">{row.val}%</span>
@@ -291,9 +282,9 @@ function AboutUs() {
               { icon: Layers, label: "Full-Stack Coverage" },
               { icon: GitBranch, label: "120+ CVE Disclosures" },
               { icon: Handshake, label: "Community First" },
-            ].map((item) => (
+            ].map((item, index) => (
               <div
-                key={item.label}
+                key={`${item.label}-${index}`}
                 className="glass rounded-2xl p-5 text-center hover:border-phause-cyan/40 transition-colors"
               >
                 <item.icon className="w-6 h-6 text-phause-cyan mx-auto mb-2" />
@@ -308,39 +299,38 @@ function AboutUs() {
 }
 
 /* ══════════════════ WHAT WE DO ══════════════════ */
-function WhatWeDo() {
-  const items = [
-    {
-      icon: Shield,
-      title: "Continuous Threat Detection & Hunting",
-      desc: "Our detection mesh monitors every packet, process, API call, and identity event across your environment — on-premise, cloud, and hybrid. Using behavioral analytics rather than signature matching, we detect zero-days, living-off-the-land attacks, and insider threats that traditional tools miss.",
-    },
-    {
-      icon: Zap,
-      title: "Automated Incident Response",
-      desc: "Speed is everything in a breach. When our engine detects a critical threat, it executes a pre-authorized response playbook in under 50 milliseconds — isolating hosts, revoking compromised credentials, blocking malicious IPs, and snapshotting affected systems for forensics.",
-    },
-    {
-      icon: Cloud,
-      title: "Cloud Security Posture Management",
-      desc: "Misconfiguration is the number one cause of cloud breaches. Phause continuously audits your AWS, Azure, and GCP environments against 900+ CIS and vendor-specific benchmarks, detects drift from secure baselines, and remediates issues automatically where permitted.",
-    },
-    {
-      icon: Code2,
-      title: "Application & API Security Testing",
-      desc: "We embed security into your software development lifecycle. Static and dynamic analysis runs on every commit, dependencies are scanned against known vulnerability databases, and our API fuzzing engine probes every endpoint for broken authentication and injection flaws.",
-    },
-    {
-      icon: Users,
-      title: "Security Operations Center (SOC) as a Service",
-      desc: "Not every organization can run a 24/7 SOC. Ours is staffed by tiered analysts watching your telemetry around the clock. We integrate directly with your existing SIEM and EDR stack, or replace it entirely.",
-    },
-    {
-      icon: Award,
-      title: "Compliance & Governance Automation",
-      desc: "SOC 2, ISO 27001, HIPAA, PCI DSS, GDPR — we automate up to 70% of the evidence collection and control-mapping work required for audits. Continuous control monitoring means you're audit-ready every day of the year.",
-    },
-  ];
+function WhatWeDo({ items = [
+  {
+    icon: Shield,
+    title: "Continuous Threat Detection & Hunting",
+    desc: "Our distributed detection mesh monitors packets, processes, APIs, and identities in real time across every environment.",
+  },
+  {
+    icon: Zap,
+    title: "Automated Incident Response",
+    desc: "When a critical threat is detected, we execute a pre-authorized response playbook in under 50 milliseconds.",
+  },
+  {
+    icon: Cloud,
+    title: "Cloud Security Posture Management",
+    desc: "We continuously audit AWS, Azure, and GCP environments against CIS and vendor-specific benchmarks.",
+  },
+  {
+    icon: Code2,
+    title: "Application & API Security Testing",
+    desc: "We embed security into your software development lifecycle using static and dynamic analysis on every commit.",
+  },
+  {
+    icon: Users,
+    title: "Security Operations Center (SOC) as a Service",
+    desc: "Our analysts watch your telemetry around the clock and integrate directly with your existing SIEM and EDR stack.",
+  },
+  {
+    icon: Award,
+    title: "Compliance & Governance Automation",
+    desc: "We automate evidence collection and control mapping for SOC 2, ISO 27001, HIPAA, and GDPR requirements.",
+  },
+] }: { items?: Array<{ icon: React.ElementType; title: string; desc: string }> }) {
 
   return (
     <section className="relative py-28 overflow-hidden">
@@ -354,7 +344,7 @@ function WhatWeDo() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {items.map((item, i) => (
             <motion.div
-              key={item.title}
+              key={`${item.title}-${i}`}
               initial={{ opacity: 0, y: 50, rotateX: -12 }}
               whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
               viewport={{ once: true }}
@@ -452,8 +442,7 @@ function Counters() {
 }
 
 /* ══════════════════ WHY CHOOSE US ══════════════════ */
-function WhyChooseUs() {
-  const reasons = [
+function WhyChooseUs({ reasons = [
     {
       icon: Zap,
       title: "Response Speed That Breaks Records",
@@ -462,29 +451,29 @@ function WhyChooseUs() {
     {
       icon: Cpu,
       title: "AI Trained on Real-World Battle Data",
-      desc: "Most security AI is trained on lab data and public datasets. Ours learns from the live, anonymized telemetry of 500+ organizations.",
+      desc: "Most security AI is trained on lab data. Ours learns from the live telemetry of hundreds of organizations.",
     },
     {
       icon: Eye,
       title: "Radical Transparency — No Black Boxes",
-      desc: "Every detection, every automated action, every analyst decision is visible to you in real time through our client dashboard.",
+      desc: "Every detection, automated action, and analyst decision is visible in real time through our client dashboard.",
     },
     {
       icon: Lock,
       title: "Zero-Trust Architecture, Zero Excuses",
-      desc: "We practice what we deploy. Phause's own internal infrastructure runs on zero-trust principles — least-privilege access, hardware-backed key management.",
+      desc: "We practice what we deploy. Phause's internal infrastructure runs on least-privilege principles and hardware-backed key management.",
     },
     {
       icon: HeartHandshake,
       title: "We Treat Your Business Like Our Own",
-      desc: "Every Phause client gets a named security team, a direct escalation line to senior analysts, and a quarterly threat briefing tailored to their industry.",
+      desc: "Every client gets a named security team, a direct escalation line to senior analysts, and tailored threat briefings.",
     },
     {
       icon: TrendingUp,
       title: "Security That Scales With You",
-      desc: "From a 10-person startup to a 50,000-employee enterprise, Phause deploys the same architecture and the same rigor.",
+      desc: "From startups to global enterprises, we deploy the same architecture and the same rigor.",
     },
-  ];
+  ] }: { reasons?: Array<{ icon: React.ElementType; title: string; desc: string }> }) {
 
   return (
     <section className="relative py-28 overflow-hidden">
@@ -498,7 +487,7 @@ function WhyChooseUs() {
         <div className="grid md:grid-cols-2 gap-8">
           {reasons.map((r, i) => (
             <motion.div
-              key={r.title}
+              key={`${r.title}-${i}`}
               initial={{ opacity: 0, x: i % 2 === 0 ? -50 : 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
@@ -525,29 +514,28 @@ function WhyChooseUs() {
 }
 
 /* ══════════════════ OUR COMMITMENT ══════════════════ */
-function OurCommitment() {
-  const commitments = [
+function OurCommitment({ commitments = [
     {
       icon: Target,
       title: "To Our Clients",
-      desc: "We commit to treating your security as if our own company depended on it — because reputationally, it does. That means honest risk assessments, transparent pricing with no surprise invoices, and a contractual SLA we have never breached.",
+      desc: "We commit to honest risk assessments, transparent pricing and a contractual SLA we have never breached.",
     },
     {
       icon: Users,
       title: "To Our Team",
-      desc: "Security talent is rare, and burnout is the industry's silent epidemic. We commit to sustainable careers: no on-call rotations longer than one week per month, a mandatory 10% learning time budget for every engineer.",
+      desc: "We commit to sustainable careers, sensible on-call rotations and protected learning time for every engineer.",
     },
     {
       icon: Globe,
       title: "To the Security Community",
-      desc: "We commit to making the internet safer for everyone, not just our paying clients. Our threat research is published openly. Our detection rules are released under permissive licenses.",
+      desc: "We commit to making the internet safer, not just for our paying clients, through open research and reusable detection rules.",
     },
     {
       icon: Lightbulb,
       title: "To the Future",
-      desc: "We commit to anticipating the next decade of threats, not the last one. That means dedicated research into post-quantum cryptography, AI-driven attack vectors, and supply-chain compromise techniques.",
+      desc: "We commit to anticipating the next decade of threats, including post-quantum cryptography and AI-driven attack vectors.",
     },
-  ];
+  ] }: { commitments?: Array<{ icon: React.ElementType; title: string; desc: string }> }) {
 
   return (
     <section className="relative py-28">
@@ -560,7 +548,7 @@ function OurCommitment() {
         <div className="grid md:grid-cols-2 gap-8">
           {commitments.map((c, i) => (
             <motion.div
-              key={c.title}
+              key={`${c.title}-${i}`}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -585,15 +573,14 @@ function OurCommitment() {
 }
 
 /* ══════════════════ TESTIMONIALS ══════════════════ */
-function Testimonials() {
-  const testimonials = [
-    { name: "Sarah Mitchell", role: "CTO, FinEdge Capital", text: "Phause blocked a coordinated ransomware attack in under 30 seconds. They didn't just save our data — they saved our company. Eight years into our relationship, they've never missed a single SLA.", stars: 5 },
-    { name: "David Chen", role: "VP Engineering, CloudNine", text: "The smoothest security integration I've experienced in 15 years. Deployed across 200 servers in a single afternoon, zero downtime.", stars: 5 },
-    { name: "Amara Okafor", role: "CISO, HealthFirst Group", text: "Their 24/7 team caught a data exfiltration attempt our previous vendor had missed for months. In healthcare, that's not an IT issue — it's a patient safety issue.", stars: 5 },
-    { name: "James Rodriguez", role: "CEO, Nexa Retail", text: "We passed our SOC 2 audit on the first attempt thanks to Phause's compliance tooling. Best investment we've made.", stars: 5 },
-    { name: "Priya Sharma", role: "Head of IT, Lumen Bank", text: "Employee training alone cut our phishing click rate from 18% to under 2%. The ROI is undeniable.", stars: 5 },
-    { name: "Marcus Thorne", role: "Founder, DataForge AI", text: "As a startup we assumed enterprise-grade security was out of reach. Phause proved otherwise — same platform, same team, pricing that scaled with us.", stars: 5 },
-  ];
+function Testimonials({ testimonials = [
+    { name: "Client A", role: "Role", text: "A testimonial for our security work.", stars: 5 },
+    { name: "Client B", role: "Role", text: "A testimonial for our security work.", stars: 5 },
+    { name: "Client C", role: "Role", text: "A testimonial for our security work.", stars: 5 },
+    { name: "Client D", role: "Role", text: "A testimonial for our security work.", stars: 5 },
+    { name: "Client E", role: "Role", text: "A testimonial for our security work.", stars: 5 },
+    { name: "Client F", role: "Role", text: "A testimonial for our security work.", stars: 5 },
+  ] }: { testimonials?: Array<{ name: string; role: string; text: string; stars: number }> }) {
   const doubled = [...testimonials, ...testimonials];
 
   return (
@@ -620,7 +607,7 @@ function Testimonials() {
               className="w-[380px] shrink-0 glass rounded-3xl p-8 hover:border-phause-cyan/40 transition-colors"
             >
               <Quote className="w-8 h-8 text-phause-cyan/40 mb-4" />
-              <p className="text-slate-300 leading-relaxed mb-6">"{t.text}"</p>
+              <p className="text-slate-300 leading-relaxed mb-6">&ldquo;{t.text}&rdquo;</p>
               <div className="flex items-center gap-1 mb-4">
                 {Array.from({ length: t.stars }).map((_, s) => (
                   <Star key={s} className="w-4 h-4 text-phause-cyan" fill="currentColor" />
@@ -644,19 +631,11 @@ function Testimonials() {
 }
 
 /* ══════════════════ JOURNEY TIMELINE ══════════════════ */
-function JourneyTimeline() {
-  const milestones = [
-    { year: "2018", title: "The Garage Era", icon: Flag, desc: "Two security researchers, one whiteboard, and a rented garage in San Francisco. Phause begins as a weekend project: a lightweight agent that could detect lateral movement inside corporate networks." },
-    { year: "2019", title: "First Enterprise Clients & Seed Funding", icon: Rocket, desc: "Phause officially incorporates and closes a $4M seed round. We sign our first 10 enterprise clients and grow the team to 15 engineers." },
-    { year: "2020", title: "The Pandemic Stress Test", icon: Shield, desc: "As the world goes remote, attack surfaces explode. We scale from 50 to 200 clients in nine months while handling a 600% spike in ransomware campaigns. Zero client breaches." },
-    { year: "2021", title: "Series A & the AI Breakthrough", icon: Cpu, desc: "We raise a $28M Series A and ship Phause Sense, our behavioral ML engine. Detection accuracy jumps 40% while false positives drop by two-thirds." },
-    { year: "2022", title: "SOC 2 Type II & Global Expansion", icon: Award, desc: "SOC 2 Type II certification achieved with zero exceptions. We cross 300 enterprise clients and expand into APAC with a Singapore data region." },
-    { year: "2023", title: "The Compliance Automation Launch", icon: Layers, desc: "Phause Comply ships, automating evidence collection for SOC 2, ISO 27001, HIPAA, and PCI DSS. Client audit preparation time drops from months to days." },
-    { year: "2024", title: "Series B & the 24/7 SOC", icon: Eye, desc: "A $75M Series B funds the launch of our fully managed SOC-as-a-Service with tiered human analysts in three continents." },
-    { year: "2025", title: "Zero-Trust Platform Unification", icon: Workflow, desc: "We collapse six products into one unified zero-trust platform under a single agent and a single dashboard. Average client deployment time falls to under 3 hours." },
-    { year: "2026", title: "Today — and What's Next", icon: Globe, desc: "500+ clients, 40+ countries, 150+ security experts, and 1,250+ projects delivered. Our quantum-readiness lab is already testing post-quantum encryption migration paths." },
-  ];
-
+function JourneyTimeline({ milestones = [
+    { year: "2024", title: "Milestone", icon: Flag, desc: "Milestone summary for the journey." },
+    { year: "2025", title: "Milestone", icon: Rocket, desc: "Milestone summary for the journey." },
+    { year: "2026", title: "Milestone", icon: Shield, desc: "Milestone summary for the journey." },
+  ] }: { milestones?: Array<{ year: string; title: string; icon: React.ElementType; desc: string }> }) {
   const [activeYear, setActiveYear] = useState(0);
 
   return (
@@ -784,16 +763,130 @@ function CTABanner() {
 
 /* ══════════════════ PAGE ══════════════════ */
 export default function AboutPage() {
+  const [page, setPage] = useState<Record<string, unknown> | null>(null);
+  const [cmsTestimonials, setCmsTestimonials] = useState<Array<Record<string, unknown>>>([]);
+
+  useEffect(() => {
+    fetch("/api/cms/pages?slug=about")
+      .then((response) => response.json())
+      .then((payload) => setPage(payload.page ?? null))
+      .catch(() => setPage(null));
+
+    fetch("/api/cms/testimonials")
+      .then((response) => response.json())
+      .then((payload) => {
+        if (Array.isArray(payload.items)) {
+          setCmsTestimonials(payload.items.filter((item: Record<string, unknown>) => String(item.status ?? "DRAFT").toUpperCase() === "PUBLISHED"));
+        }
+      })
+      .catch(() => setCmsTestimonials([]));
+  }, []);
+
+  const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+  const heroBlock = ((pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "hero") ?? pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "abouthero"))?.props as Record<string, unknown>) ?? {};
+  const capabilityBlock = (pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "aboutcapabilities")?.props as Record<string, unknown>) ?? {};
+  const valuesBlock = (pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "aboutvalues")?.props as Record<string, unknown>) ?? {};
+  const commitmentsBlock = (pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "aboutcommitments")?.props as Record<string, unknown>) ?? {};
+  const timelineBlock = (pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "abouttimeline")?.props as Record<string, unknown>) ?? {};
+
+  const capabilityItems = Array.isArray(capabilityBlock.items)
+    ? capabilityBlock.items.map((item, index: number) => {
+        const capability = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+        const iconName = String(capability.icon ?? "shield");
+        const iconMap: Record<string, React.ElementType> = { shield: Shield, zap: Zap, cloud: Cloud, code: Code2, users: Users, award: Award };
+        return {
+          icon: iconMap[iconName.toLowerCase()] ?? [Shield, Zap, Cloud, Code2, Users, Award][index % 6] ?? Shield,
+          title: typeof capability.title === "string" ? capability.title : `Capability ${index + 1}`,
+          desc: typeof capability.description === "string" ? capability.description : typeof capability.desc === "string" ? capability.desc : "",
+        };
+      })
+    : undefined;
+
+  const valuesItems = Array.isArray(valuesBlock.items)
+    ? valuesBlock.items.map((item, index: number) => {
+        const value = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+        const iconName = String(value.icon ?? "zap");
+        const iconMap: Record<string, React.ElementType> = { zap: Zap, cpu: Cpu, eye: Eye, lock: Lock, handshake: HeartHandshake, trending: TrendingUp };
+        return {
+          icon: iconMap[iconName.toLowerCase()] ?? [Zap, Cpu, Eye, Lock, HeartHandshake, TrendingUp][index % 6] ?? Zap,
+          title: typeof value.title === "string" ? value.title : `Value ${index + 1}`,
+          desc: typeof value.description === "string" ? value.description : typeof value.desc === "string" ? value.desc : "",
+        };
+      })
+    : undefined;
+
+  const commitmentsItems = Array.isArray(commitmentsBlock.items)
+    ? commitmentsBlock.items.map((item, index: number) => {
+        const commitment = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+        const iconName = String(commitment.icon ?? "target");
+        const iconMap: Record<string, React.ElementType> = { target: Target, users: Users, globe: Globe, lightbulb: Lightbulb };
+        return {
+          icon: iconMap[iconName.toLowerCase()] ?? [Target, Users, Globe, Lightbulb][index % 4] ?? Target,
+          title: typeof commitment.title === "string" ? commitment.title : `Commitment ${index + 1}`,
+          desc: typeof commitment.description === "string" ? commitment.description : typeof commitment.desc === "string" ? commitment.desc : "",
+        };
+      })
+    : undefined;
+
+  const timelineItems = Array.isArray(timelineBlock.items)
+    ? timelineBlock.items.map((item, index: number) => {
+        const milestone = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+        const iconName = String(milestone.icon ?? "flag");
+        const iconMap: Record<string, React.ElementType> = { flag: Flag, rocket: Rocket, shield: Shield, cpu: Cpu, award: Award, layers: Layers, eye: Eye, workflow: Workflow, globe: Globe };
+        return {
+          year: typeof milestone.year === "string" || typeof milestone.year === "number" ? String(milestone.year) : `20${index + 18}`,
+          title: typeof milestone.title === "string" ? milestone.title : `Milestone ${index + 1}`,
+          icon: iconMap[iconName.toLowerCase()] ?? [Flag, Rocket, Shield, Cpu, Award, Layers, Eye, Workflow, Globe][index % 9] ?? Flag,
+          desc: typeof milestone.description === "string" ? milestone.description : typeof milestone.desc === "string" ? milestone.desc : "",
+        };
+      })
+    : undefined;
+
+  const testimonialsBlock = (pageBlocks.find((block) => String((block.type ?? "")).replace(/[_-]+/g, "").toLowerCase() === "testimonial")?.props as Record<string, unknown>) ?? {};
+  const testimonialsItems = cmsTestimonials.length > 0
+    ? cmsTestimonials.map((item) => ({
+        name: String(item.author ?? "Client"),
+        role: String(item.role ?? "Customer"),
+        text: String(item.quote ?? ""),
+        stars: 5,
+      }))
+    : Array.isArray(testimonialsBlock.items) && (testimonialsBlock.items as Array<Record<string, unknown>>).length > 0
+      ? testimonialsBlock.items.map((item) => {
+          const testimonial = typeof item === "object" && item ? (item as Record<string, unknown>) : {};
+          return {
+            name: typeof testimonial.name === "string" ? testimonial.name : "Client",
+            role: typeof testimonial.role === "string" ? testimonial.role : "Customer",
+            text: typeof testimonial.text === "string" ? testimonial.text : typeof testimonial.quote === "string" ? testimonial.quote : "",
+            stars: Number(testimonial.stars ?? 5),
+          };
+        })
+      : undefined;
+
+  const aboutSectionTitle = getBlockProp(heroBlock, "aboutTitle", "Born in a War Room. Built for the Digital Battlefield.");
+
   return (
     <>
-      <PageHero />
-      <AboutUs />
-      <WhatWeDo />
+      <PageHero
+        eyebrow={getBlockProp(heroBlock, "eyebrow", "Who We Are")}
+        title={getBlockProp(heroBlock, "title", "The Team Behind the Shield")}
+        description={getBlockProp(heroBlock, "description", "From a two-person research lab to a global cybersecurity force — this is the story, the mission, and the machine behind Phause.")}
+      />
+      <AboutUs
+        tag={getBlockProp(heroBlock, "eyebrow", "About Us")}
+        title={aboutSectionTitle}
+        description={getBlockProp(heroBlock, "description", "Phause was founded in 2018 by two security researchers who kept seeing the same pattern repeat itself: companies were spending millions on cybersecurity tools and still getting breached.")}
+        secondaryDescription={getBlockProp(heroBlock, "subtitle", "The answer became the three pillars that still define everything we build at Phause — Strengthen, Aware, Defend.")}
+        items={capabilityItems?.slice(0, 4).map((item) => ({
+          icon: item.icon,
+          label: item.title,
+        }))}
+      />
+      <WhatWeDo items={capabilityItems} />
       <Counters />
-      <WhyChooseUs />
-      <OurCommitment />
-      <Testimonials />
-      <JourneyTimeline />
+      <WhyChooseUs reasons={valuesItems} />
+      <OurCommitment commitments={commitmentsItems} />
+      <Testimonials testimonials={testimonialsItems} />
+      <JourneyTimeline milestones={timelineItems} />
       <CTABanner />
     </>
   );

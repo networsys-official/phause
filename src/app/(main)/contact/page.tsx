@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
-    motion, AnimatePresence, useInView,
+    motion, AnimatePresence,
 } from "framer-motion";
 import {
-    Zap, Mail, Phone, MapPin, Send, Clock, Building2,
+    Mail, Phone, MapPin, Send, Clock,
     Globe, Headset, CheckCircle2, Loader2, ChevronDown,
     Navigation,
     User, AtSign, MessageSquare, Briefcase, Smartphone,
-    MapPinned, Sparkles, ArrowRight,
+    Sparkles, ArrowRight,
 } from "lucide-react";
+
+import { getBlockProp } from "@/features/cms/page-builder";
 
 /* ══════════════════ ANIMATED BACKGROUNDS ══════════════════ */
 function GridBackground() {
@@ -102,7 +104,7 @@ function SectionHeading({
 }
 
 /* ══════════════════ PAGE HERO ══════════════════ */
-function PageHero() {
+function PageHero({ eyebrow = "Average response time: under 2 hours", title = "Let's Secure Your Future", description = "Whether you're evaluating a platform, planning a migration, or facing an active incident — our team is one message away, around the clock." }: { eyebrow?: string; title?: string; description?: string }) {
     return (
         <section className="relative min-h-[55vh] flex items-center justify-center overflow-hidden pt-24">
             <GridBackground />
@@ -114,7 +116,7 @@ function PageHero() {
                     transition={{ duration: 0.6 }}
                     className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-sm text-phause-cyan mb-8"
                 >
-                    <Headset className="w-4 h-4" /> Average response time: under 2 hours
+                    <Headset className="w-4 h-4" /> {eyebrow}
                 </motion.div>
                 <motion.h1
                     initial={{ opacity: 0, y: 40 }}
@@ -122,7 +124,7 @@ function PageHero() {
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="text-5xl md:text-7xl font-black leading-[1.05] mb-6"
                 >
-                    Let's Secure Your <span className="text-gradient">Future</span>
+                    {title}
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 30 }}
@@ -130,8 +132,7 @@ function PageHero() {
                     transition={{ duration: 0.8, delay: 0.4 }}
                     className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto"
                 >
-                    Whether you're evaluating a platform, planning a migration, or facing
-                    an active incident — our team is one message away, around the clock.
+                    {description}
                 </motion.p>
             </div>
         </section>
@@ -149,13 +150,126 @@ const enquirySubjects = [
     "Press & Media",
 ];
 
+type ContactField = {
+    key: string;
+    label: string;
+    type: string;
+    placeholder: string;
+    required?: boolean;
+    options?: string[];
+};
+
+const defaultContactFields: ContactField[] = [
+    { key: "name", label: "Full Name", type: "text", placeholder: "Jane Cooper", required: true },
+    { key: "email", label: "Work Email", type: "email", placeholder: "jane@company.com", required: true },
+    { key: "phone", label: "Phone Number", type: "tel", placeholder: "+1 (555) 000-0000" },
+    { key: "company", label: "Company", type: "text", placeholder: "Acme Corp" },
+    { key: "subject", label: "Subject", type: "select", placeholder: "General Enquiry", required: true, options: enquirySubjects },
+    { key: "message", label: "Message", type: "textarea", placeholder: "Tell us about your infrastructure, current security stack, and what you're trying to achieve…", required: true },
+];
+
+const defaultContactCards = [
+    {
+        icon: Mail, title: "Email Us",
+        lines: ["hello@phause.com", "support@phause.com"],
+        note: "For demos & partnerships / For existing clients",
+    },
+    {
+        icon: Phone, title: "Call Us",
+        lines: ["+1 (555) 010-PHAUSE (USA)", "+91 80 4719 0100 (India)"],
+        note: "24/7 emergency line for active incidents",
+    },
+    {
+        icon: MapPin, title: "Headquarters",
+        lines: ["580 California Street, Floor 12", "San Francisco, CA 94104, USA"],
+        note: "Regional offices in New York, Bangalore & Mumbai",
+    },
+    {
+        icon: Clock, title: "Working Hours",
+        lines: ["Mon – Fri: 9:00 AM – 6:00 PM (local)", "SOC & Incident Response: 24/7/365"],
+        note: "Global follow-the-sun coverage across 3 continents",
+    },
+] as const;
+
 function EnquiryForm() {
+    const [formFields, setFormFields] = useState<ContactField[]>(defaultContactFields);
+    const [page, setPage] = useState<Record<string, unknown> | null>(null);
     const [form, setForm] = useState({
         name: "", email: "", phone: "", company: "",
         subject: enquirySubjects[0], message: "",
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [status, setStatus] = useState<"idle" | "sending" | "success">("idle");
+
+    useEffect(() => {
+        let isMounted = true;
+
+        fetch("/api/cms/pages?slug=contact")
+            .then((response) => response.json())
+            .then((payload) => {
+                if (isMounted) {
+                    setPage(payload.page ?? null);
+                }
+            })
+            .catch(() => {
+                if (isMounted) {
+                    setPage(null);
+                }
+            });
+
+        fetch("/api/cms/forms")
+            .then((response) => response.json())
+            .then((payload) => {
+                const contactForm = Array.isArray(payload.forms)
+                    ? payload.forms.find((item: Record<string, unknown>) => String(item.slug ?? "").toLowerCase() === "contact-form")
+                    : null;
+
+                if (!isMounted || !contactForm) {
+                    return;
+                }
+
+                const nextFields: ContactField[] = Array.isArray(contactForm.fields)
+                    ? (contactForm.fields as Array<Record<string, unknown>>).map((field) => ({
+                        key: String(field.key ?? field.label ?? "field"),
+                        label: String(field.label ?? "Field"),
+                        type: String(field.type ?? "text"),
+                        placeholder: String(field.placeholder ?? ""),
+                        required: Boolean(field.required),
+                        options: Array.isArray(field.options) ? field.options.map((option) => String(option)) : undefined,
+                      }))
+                    : [...defaultContactFields];
+
+                setFormFields(nextFields);
+                const nextSubject = nextFields.find((field) => field.key === "subject")?.options?.[0] ?? enquirySubjects[0];
+                setForm((current) => ({ ...current, subject: nextSubject }));
+            })
+            .catch(() => undefined);
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const contactBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+    const contactBlock = contactBlocks.find((block) => String(block.type ?? "").toLowerCase() === "contact") as Record<string, unknown> | undefined;
+    const contactProps = (contactBlock?.props ?? {}) as Record<string, unknown>;
+    const contactDetails = Array.isArray(contactProps.details)
+        ? (contactProps.details as Array<Record<string, unknown>>)
+        : [];
+
+    const contactCards = contactDetails.length > 0
+        ? contactDetails.map((detail) => {
+            const title = String(detail.label ?? "Contact");
+            const value = String(detail.value ?? "");
+            const matchedTitle = defaultContactCards.find((card) => card.title.toLowerCase() === title.toLowerCase());
+            return {
+                icon: matchedTitle?.icon ?? Mail,
+                title,
+                lines: value.split(/\n|\r\n/).map((line) => line.trim()).filter(Boolean),
+                note: String(detail.note ?? matchedTitle?.note ?? ""),
+            };
+          })
+        : [...defaultContactCards];
 
     const validate = () => {
         const e: Record<string, string> = {};
@@ -182,12 +296,19 @@ function EnquiryForm() {
         `w-full px-5 py-4 rounded-2xl bg-phause-card/70 border ${errors[field] ? "border-red-500/60" : "border-phause-border"
         } text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-phause-cyan/60 focus:shadow-[0_0_20px_rgba(0,216,201,0.12)] transition-all duration-300`;
 
-    const fields = [
-        { key: "name", label: "Full Name", icon: User, type: "text", placeholder: "Jane Cooper", required: true },
-        { key: "email", label: "Work Email", icon: AtSign, type: "email", placeholder: "jane@company.com", required: true },
-        { key: "phone", label: "Phone Number", icon: Smartphone, type: "tel", placeholder: "+1 (555) 000-0000", required: false },
-        { key: "company", label: "Company", icon: Briefcase, type: "text", placeholder: "Acme Corp", required: false },
-    ];
+    const iconMap = {
+        name: User,
+        email: AtSign,
+        phone: Smartphone,
+        company: Briefcase,
+        subject: MessageSquare,
+        message: MessageSquare,
+    } as const;
+
+    const fields = formFields.map((field) => ({
+        ...field,
+        icon: iconMap[field.key as keyof typeof iconMap] ?? User,
+    }));
 
     return (
         <section className="relative py-28 overflow-hidden">
@@ -208,28 +329,7 @@ function EnquiryForm() {
                         transition={{ duration: 0.7 }}
                         className="lg:col-span-2 flex flex-col gap-5"
                     >
-                        {[
-                            {
-                                icon: Mail, title: "Email Us",
-                                lines: ["hello@phause.com", "support@phause.com"],
-                                note: "For demos & partnerships / For existing clients",
-                            },
-                            {
-                                icon: Phone, title: "Call Us",
-                                lines: ["+1 (555) 010-PHAUSE (USA)", "+91 80 4719 0100 (India)"],
-                                note: "24/7 emergency line for active incidents",
-                            },
-                            {
-                                icon: MapPin, title: "Headquarters",
-                                lines: ["580 California Street, Floor 12", "San Francisco, CA 94104, USA"],
-                                note: "Regional offices in New York, Bangalore & Mumbai",
-                            },
-                            {
-                                icon: Clock, title: "Working Hours",
-                                lines: ["Mon – Fri: 9:00 AM – 6:00 PM (local)", "SOC & Incident Response: 24/7/365"],
-                                note: "Global follow-the-sun coverage across 3 continents",
-                            },
-                        ].map((card, i) => (
+                        {contactCards.map((card, i) => (
                             <motion.div
                                 key={card.title}
                                 initial={{ opacity: 0, y: 30 }}
@@ -308,30 +408,30 @@ function EnquiryForm() {
                                         className="relative z-10 space-y-5"
                                     >
                                         <div className="grid md:grid-cols-2 gap-5">
-                                            {fields.map((f) => (
-                                                <div key={f.key}>
+                                            {fields.filter((field) => field.key !== "message" && field.key !== "subject").map((field) => (
+                                                <div key={field.key}>
                                                     <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                                                        {f.label} {f.required && <span className="text-phause-cyan">*</span>}
+                                                        {field.label} {field.required && <span className="text-phause-cyan">*</span>}
                                                     </label>
                                                     <div className="relative">
-                                                        <f.icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                                        <field.icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                                                         <input
-                                                            type={f.type}
-                                                            value={form[f.key as keyof typeof form]}
-                                                            onChange={(e) => setForm({ ...form, [f.key]: e.target.value })}
-                                                            placeholder={f.placeholder}
-                                                            className={`${inputCls(f.key)} pl-11`}
+                                                            type={field.type === "email" ? "email" : field.type === "tel" ? "tel" : "text"}
+                                                            value={String(form[field.key as keyof typeof form] ?? "")}
+                                                            onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                                                            placeholder={field.placeholder}
+                                                            className={`${inputCls(field.key)} pl-11`}
                                                         />
                                                     </div>
                                                     <AnimatePresence>
-                                                        {errors[f.key] && (
+                                                        {errors[field.key] && (
                                                             <motion.p
                                                                 initial={{ opacity: 0, y: -6 }}
                                                                 animate={{ opacity: 1, y: 0 }}
                                                                 exit={{ opacity: 0 }}
                                                                 className="text-xs text-red-400 mt-1.5"
                                                             >
-                                                                {errors[f.key]}
+                                                                {errors[field.key]}
                                                             </motion.p>
                                                         )}
                                                     </AnimatePresence>
@@ -339,54 +439,58 @@ function EnquiryForm() {
                                             ))}
                                         </div>
 
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                                                Subject <span className="text-phause-cyan">*</span>
-                                            </label>
-                                            <div className="relative">
-                                                <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                                                <select
-                                                    value={form.subject}
-                                                    onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                                                    className={`${inputCls("subject")} pl-11 appearance-none cursor-pointer`}
-                                                >
-                                                    {enquirySubjects.map((s) => (
-                                                        <option key={s} value={s} className="bg-phause-card">{s}</option>
-                                                    ))}
-                                                </select>
-                                                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                        {fields.some((field) => field.key === "subject") && (
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                                                    Subject <span className="text-phause-cyan">*</span>
+                                                </label>
+                                                <div className="relative">
+                                                    <MessageSquare className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                                    <select
+                                                        value={form.subject}
+                                                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                                                        className={`${inputCls("subject")} pl-11 appearance-none cursor-pointer`}
+                                                    >
+                                                        {(fields.find((field) => field.key === "subject")?.options ?? enquirySubjects).map((s) => (
+                                                            <option key={s} value={s} className="bg-phause-card">{s}</option>
+                                                        ))}
+                                                    </select>
+                                                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                                                Message <span className="text-phause-cyan">*</span>
-                                            </label>
-                                            <textarea
-                                                rows={5}
-                                                value={form.message}
-                                                onChange={(e) => setForm({ ...form, message: e.target.value })}
-                                                placeholder="Tell us about your infrastructure, current security stack, and what you're trying to achieve…"
-                                                className={`${inputCls("message")} resize-none`}
-                                            />
-                                            <div className="flex justify-between mt-1.5">
-                                                <AnimatePresence>
-                                                    {errors.message && (
-                                                        <motion.p
-                                                            initial={{ opacity: 0, y: -6 }}
-                                                            animate={{ opacity: 1, y: 0 }}
-                                                            exit={{ opacity: 0 }}
-                                                            className="text-xs text-red-400"
-                                                        >
-                                                            {errors.message}
-                                                        </motion.p>
-                                                    )}
-                                                </AnimatePresence>
-                                                <p className={`text-xs ml-auto ${form.message.length < 20 ? "text-slate-500" : "text-phause-cyan"}`}>
-                                                    {form.message.length}/20 min
-                                                </p>
+                                        {fields.some((field) => field.key === "message") && (
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                                                    Message <span className="text-phause-cyan">*</span>
+                                                </label>
+                                                <textarea
+                                                    rows={5}
+                                                    value={form.message}
+                                                    onChange={(e) => setForm({ ...form, message: e.target.value })}
+                                                    placeholder={fields.find((field) => field.key === "message")?.placeholder ?? "Tell us about your infrastructure, current security stack, and what you're trying to achieve…"}
+                                                    className={`${inputCls("message")} resize-none`}
+                                                />
+                                                <div className="flex justify-between mt-1.5">
+                                                    <AnimatePresence>
+                                                        {errors.message && (
+                                                            <motion.p
+                                                                initial={{ opacity: 0, y: -6 }}
+                                                                animate={{ opacity: 1, y: 0 }}
+                                                                exit={{ opacity: 0 }}
+                                                                className="text-xs text-red-400"
+                                                            >
+                                                                {errors.message}
+                                                            </motion.p>
+                                                        )}
+                                                    </AnimatePresence>
+                                                    <p className={`text-xs ml-auto ${form.message.length < 20 ? "text-slate-500" : "text-phause-cyan"}`}>
+                                                        {form.message.length}/20 min
+                                                    </p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
 
                                         <motion.button
                                             type="submit"
@@ -670,9 +774,26 @@ function EmergencyStrip() {
 
 /* ══════════════════ PAGE ══════════════════ */
 export default function ContactPage() {
+    const [page, setPage] = useState<Record<string, unknown> | null>(null);
+
+    useEffect(() => {
+        fetch("/api/cms/pages?slug=contact")
+            .then((response) => response.json())
+            .then((payload) => setPage(payload.page))
+            .catch(() => setPage(null));
+    }, []);
+
+    const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+    const contactBlock = (pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "contact")?.props as Record<string, unknown>) ?? {};
+    const hero = {
+        eyebrow: getBlockProp(contactBlock, "eyebrow", "Average response time: under 2 hours"),
+        title: getBlockProp(contactBlock, "title", "Let's Secure Your Future"),
+        description: getBlockProp(contactBlock, "description", "Whether you're evaluating a platform, planning a migration, or facing an active incident — our team is one message away, around the clock."),
+    };
+
     return (
         <main className="bg-phause-dark text-white overflow-hidden">
-            <PageHero />
+            <PageHero eyebrow={hero.eyebrow} title={hero.title} description={hero.description} />
             <EnquiryForm />
             <OfficeLocations />
             <EmergencyStrip />

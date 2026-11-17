@@ -1,15 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
-    motion, AnimatePresence, useScroll, useTransform, useInView,
+    motion, AnimatePresence, useScroll, useTransform,
 } from "framer-motion";
 import {
-    Shield, ShieldCheck, Zap, Globe, Lock, Check, X, ChevronDown, Sparkles,
-    Crown, Rocket, Building2, Landmark, Users, Server, Headset, Database,
-    ArrowRight, ArrowLeft, CreditCard, BadgeCheck, Star, Quote,
-    GitCompare, HelpCircle, TrendingUp, Fingerprint, Layers, Cpu,
+    Shield, ShieldCheck, Globe, Lock, Check, X, ChevronDown, Sparkles,
+    Crown, Rocket, Building2, Landmark, Headset,
+    ArrowRight, HelpCircle, TrendingUp, BadgeCheck,
 } from "lucide-react";
 import {
     BILLING_CYCLE_STORAGE_KEY,
@@ -20,6 +19,7 @@ import {
 
 import { usePlanStore } from "@/store/plan.store";
 import { ROUTES } from "@/lib/routes";
+import { getBlockProp } from "@/features/cms/page-builder";
 
 import SubscriptionModal from "./SubscriptionModal"
 
@@ -113,7 +113,7 @@ function SectionHeading({
 }
 
 /* ══════════════════ PAGE HERO ══════════════════ */
-function PageHero() {
+function PageHero({ eyebrow = "Pricing & Plans", title = "Plans that scale with your security", description = "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid." }: { eyebrow?: string; title?: string; description?: string }) {
     const { scrollY } = useScroll();
     const y = useTransform(scrollY, [0, 400], [0, 100]);
 
@@ -128,7 +128,7 @@ function PageHero() {
                     transition={{ duration: 0.6 }}
                     className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-sm text-phause-cyan mb-8"
                 >
-                    <Sparkles className="w-4 h-4" /> Pricing & Plans
+                    <Sparkles className="w-4 h-4" /> {eyebrow}
                 </motion.div>
                 <motion.h1
                     initial={{ opacity: 0, y: 40 }}
@@ -136,7 +136,7 @@ function PageHero() {
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="text-5xl md:text-7xl font-black leading-[1.05] mb-6"
                 >
-                    Security that <span className="text-gradient">scales</span> with you
+                    {title}
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 30 }}
@@ -144,8 +144,7 @@ function PageHero() {
                     transition={{ duration: 0.8, delay: 0.4 }}
                     className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto"
                 >
-                    Five tiers. One platform. Zero compromises. Start free, upgrade when
-                    you're ready — every plan runs the same battle-tested defense grid.
+                    {description}
                 </motion.p>
                 <motion.div
                     initial={{ opacity: 0 }}
@@ -390,9 +389,9 @@ function PlanCard({
 
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-2.5 mb-6">
-                    {plan.stats.map((s) => (
+                    {plan.stats.map((s, index) => (
                         <div
-                            key={s.label}
+                            key={`${s.label}-${index}`}
                             className="rounded-xl bg-phause-cyan/[0.06] border border-phause-cyan/10 px-3 py-2.5 hover:border-phause-cyan/30 transition-colors"
                         >
                             <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
@@ -405,8 +404,8 @@ function PlanCard({
 
                 {/* Features */}
                 <div className="space-y-2.5 mb-8 flex-1">
-                    {plan.features.map((f) => (
-                        <div key={f.label} className="flex items-start gap-2.5">
+                    {plan.features.map((f, index) => (
+                        <div key={`${f.label}-${index}`} className="flex items-start gap-2.5">
                             {f.included ? (
                                 <Check className="w-4 h-4 text-phause-cyan shrink-0 mt-0.5" />
                             ) : (
@@ -458,12 +457,17 @@ function PlansSection({
     isLoading: boolean;
     error: string | null;
 }) {
+    const [cycle, setCycle] = useState<"monthly" | "yearly">(() => {
+        if (typeof window === "undefined") return "yearly";
+        const saved = window.sessionStorage.getItem(BILLING_CYCLE_STORAGE_KEY);
+        return saved === "monthly" || saved === "yearly" ? saved : "yearly";
+    });
+
     return (
         <section className="relative py-28 overflow-hidden">
             <div className="absolute left-1/2 top-24 w-[700px] h-[500px] rounded-full bg-phause-cyan/8 blur-[160px] -translate-x-1/2" />
 
             <div className="max-w-[90rem] mx-auto px-6">
-
                 <SectionHeading
                     tag="Choose Your Shield"
                     title={
@@ -475,7 +479,6 @@ function PlansSection({
                     subtitle="Choose the right protection for your team. Upgrade whenever your security requirements grow."
                 />
 
-                {/* Billing information */}
                 <div className="flex justify-center mb-14">
                     <div className="glass rounded-full px-6 py-3 flex items-center gap-3">
                         <span className="w-2 h-2 rounded-full bg-phause-cyan animate-pulse" />
@@ -485,7 +488,13 @@ function PlansSection({
                     </div>
                 </div>
 
-                {/* Error */}
+                <BillingToggle cycle={cycle} onChange={setCycle} />
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-stretch">
+                    {plans.map((plan, i) => (
+                        <PlanCard key={plan.id} plan={plan} cycle={cycle} index={i} />
+                    ))}
+                </div>
+
                 {error && (
                     <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-red-500/20 bg-red-500/10 text-center">
                         <p className="text-red-400 text-sm">
@@ -793,7 +802,7 @@ function RequestDemo() {
                                 </motion.button>
 
                                 <p className="text-xs text-slate-500 mt-4">
-                                    Let's find the right security solution for your team.
+                                    Let&apos;s find the right security solution for your team.
                                 </p>
                             </div>
 
@@ -848,7 +857,7 @@ function RequestDemo() {
                                     <p className="text-sm text-slate-400 leading-relaxed">
                                         Not sure which plan fits?
                                         <span className="text-phause-cyan">
-                                            {" "}We'll help you explore your options.
+                                            {" "}We&apos;ll help you explore your options.
                                         </span>
                                     </p>
                                 </div>
@@ -961,7 +970,7 @@ function GuaranteeBanner() {
                                 The Phause <span className="text-gradient">60-Day Pledge</span>
                             </h3>
                             <p className="text-slate-400 leading-relaxed mb-5">
-                                If we don't detect a live attack simulation that your previous vendor
+                                If we don&apos;t detect a live attack simulation that your previous vendor
                                 caught, or if any critical alert slips past our SOC in your first 60
                                 days — your first year is free. In writing. In the contract.
                             </p>
@@ -1026,21 +1035,42 @@ export default function SubscriptionPage() {
         fetchPlans,
     } = usePlanStore();
 
+    const [page, setPage] = useState<Record<string, unknown> | null>(null);
+
     useEffect(() => {
-        fetchPlans();
+        void fetchPlans();
     }, [fetchPlans]);
 
-    // Convert backend response into UI-compatible plans.
-    const plans = apiPlans.map(mapApiPlanToPlan);
+    useEffect(() => {
+        const loadPage = async () => {
+            try {
+                const response = await fetch("/api/cms/pages?slug=subscription");
+                const payload = await response.json();
+                setPage(payload.page ?? null);
+            } catch {
+                setPage(null);
+            }
+        };
+
+        void loadPage();
+    }, []);
+
+    const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+    const heroBlock = (pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "hero")?.props as Record<string, unknown>) ?? {};
+    const plans = apiPlans.length > 0 ? apiPlans.map(mapApiPlanToPlan) : [];
 
     return (
         <>
-            <PageHero />
+            <PageHero
+                eyebrow={getBlockProp(heroBlock, "eyebrow", "Pricing & Plans")}
+                title={getBlockProp(heroBlock, "title", "Plans that scale with your security")}
+                description={getBlockProp(heroBlock, "description", "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid.")}
+            />
 
             <TrustStrip />
 
             <PlansSection
-                plans={plans}
+                plans={plans.length > 0 ? plans : []}
                 isLoading={isLoading}
                 error={error}
             />

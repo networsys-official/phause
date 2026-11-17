@@ -180,7 +180,7 @@ export default function SubscriptionModal({
                             </div>
 
                             <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-phause-cyan">
-                                LET'S CONNECT
+                                LET&apos;S CONNECT
                             </p>
 
                             <h2

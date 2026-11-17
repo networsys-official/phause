@@ -14,6 +14,74 @@ body {
   overflow-x: hidden;
 }
 
+button,
+[role="button"],
+a[href],
+.dropdown-trigger,
+.icon-button,
+.save-button,
+.edit-button,
+.delete-button,
+.toggle-button,
+.nav-item,
+[data-nav-item="true"] {
+  cursor: pointer;
+  transition: all 200ms ease;
+}
+
+button:hover,
+[role="button"]:hover,
+a[href]:hover,
+.dropdown-trigger:hover,
+.icon-button:hover,
+.save-button:hover,
+.edit-button:hover,
+.delete-button:hover,
+.toggle-button:hover,
+.nav-item:hover,
+[data-nav-item="true"]:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+}
+
+button:disabled,
+[disabled],
+.save-button:disabled,
+.edit-button:disabled,
+.delete-button:disabled,
+.toggle-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.save-button.loading,
+.save-button.is-loading,
+.save-button[aria-busy="true"],
+.save-button[data-loading="true"] {
+  cursor: wait;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
+select,
+select option,
+.dropdown-trigger,
+[data-select-trigger] {
+  cursor: pointer;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+.toggle-switch,
+label[for] {
+  cursor: pointer;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
 }

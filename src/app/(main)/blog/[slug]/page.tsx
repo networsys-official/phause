@@ -1,7 +1,10 @@
 
+import Image from "next/image";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays, Clock3 } from "lucide-react";
+import { getBlockProp } from "@/features/cms/page-builder";
 import { blogPosts, getBlogPost } from "@/lib/blog";
 
 type BlogDetailProps = {
@@ -16,11 +19,36 @@ export function generateStaticParams() {
   }));
 }
 
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const post = await getBlogPost(slug);
+  const ogImage = post?.ogImage ?? post?.featuredImage ?? post?.image ?? "/logo/phause-logo.png";
+
+  return {
+    title: post ? `${post.title} | Phause Blog` : "Phause Blog",
+    description: post?.excerpt ?? "Phause blog",
+    openGraph: {
+      title: post ? post.title : "Phause Blog",
+      description: post?.excerpt ?? "Phause blog",
+      images: [{ url: ogImage, alt: post?.imageAlt ?? post?.title ?? "Phause blog image" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post ? post.title : "Phause Blog",
+      description: post?.excerpt ?? "Phause blog",
+      images: [ogImage],
+    },
+  };
+}
+
 export default async function BlogDetailPage({
   params,
 }: BlogDetailProps) {
   const { slug } = await params;
-  const post = getBlogPost(slug);
+  const post = await getBlogPost(slug);
+  const cmsPage = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"}/api/cms/pages?slug=blog`, { cache: "no-store" }).then((response) => response.ok ? response.json() : { page: null }).catch(() => ({ page: null }));
+  const pageBlocks = Array.isArray(cmsPage.page?.blocks) ? cmsPage.page.blocks : [];
+  const heroBlock = pageBlocks.find((block: Record<string, unknown>) => String((block.type ?? "")).toLowerCase() === "hero")?.props as Record<string, unknown> | undefined;
 
   if (!post) {
     notFound();
@@ -50,7 +78,7 @@ export default async function BlogDetailPage({
 
           <div className="mt-10">
             <span className="inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold text-cyan-300">
-              {post.category}
+              {getBlockProp(heroBlock ?? {}, "eyebrow", post.category)}
             </span>
 
             <h1 className="mt-6 text-3xl font-bold leading-tight md:text-5xl">
@@ -79,9 +107,12 @@ export default async function BlogDetailPage({
       {/* Article image */}
       <section className="px-6 pt-12">
         <div className="mx-auto max-w-5xl overflow-hidden rounded-3xl border border-white/10">
-          <img
-            src={post.image}
-            alt={post.title}
+          <Image
+            src={post.featuredImage ?? post.image}
+            alt={post.imageAlt ?? post.title}
+            width={1600}
+            height={900}
+            priority
             className="h-[280px] w-full object-cover md:h-[500px]"
           />
         </div>
@@ -151,9 +182,11 @@ export default async function BlogDetailPage({
                   href={`/blog/${related.slug}`}
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#101f2e] transition hover:border-cyan-400/40"
                 >
-                  <img
+                  <Image
                     src={related.image}
                     alt={related.title}
+                    width={1200}
+                    height={720}
                     className="h-48 w-full object-cover transition duration-500 group-hover:scale-[1.02]"
                   />
 

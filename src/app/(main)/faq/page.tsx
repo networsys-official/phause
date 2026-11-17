@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { getBlockProp } from "@/features/cms/page-builder";
 import { ArrowRight, Check, ChevronDown, HelpCircle, ShieldCheck } from "lucide-react";
 import SubscriptionModal from "../subscription/SubscriptionModal";
 
@@ -40,6 +41,46 @@ const faqs = [
 
 export default function FAQPage() {
   const [open, setOpen] = useState<number | null>(0);
+  const [page, setPage] = useState<Record<string, unknown> | null>(null);
+  const [cmsFaqs, setCmsFaqs] = useState<Array<{ question: string; answer: string }>>([]);
+
+  useEffect(() => {
+    fetch("/api/cms/pages?slug=faq")
+      .then((response) => response.json())
+      .then((payload) => setPage(payload.page ?? null))
+      .catch(() => setPage(null));
+
+    fetch("/api/cms/faqs")
+      .then((response) => response.json())
+      .then((payload) => {
+        if (Array.isArray(payload.items)) {
+          const nextFaqs = payload.items
+            .filter((item: Record<string, unknown>) => String(item.status ?? "DRAFT").toUpperCase() === "PUBLISHED")
+            .map((item: Record<string, unknown>) => ({
+              question: String(item.question ?? ""),
+              answer: String(item.answer ?? ""),
+            }));
+          setCmsFaqs(nextFaqs);
+        }
+      })
+      .catch(() => setCmsFaqs([]));
+  }, []);
+
+  const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
+  const faqBlock = pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "faq")?.props as Record<string, unknown> | undefined;
+  const heroBlock = pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "hero")?.props as Record<string, unknown> | undefined;
+
+  const pageFaqs = cmsFaqs.length > 0
+    ? cmsFaqs
+    : Array.isArray(faqBlock?.items) && (faqBlock.items as Array<Record<string, unknown>>).length > 0
+      ? faqBlock.items.map((item) => ({
+          question: String((item as Record<string, unknown>).question ?? ""),
+          answer: String((item as Record<string, unknown>).answer ?? ""),
+        }))
+      : faqs;
+
+  const heroTitle = getBlockProp(heroBlock ?? {}, "title", "Questions, answered.");
+  const heroDescription = getBlockProp(heroBlock ?? {}, "description", "Everything teams usually ask before they put Phause between them and the attackers.");
 
   return (
     <section className="relative py-28">
@@ -49,16 +90,21 @@ export default function FAQPage() {
             FAQ
           </span>
           <h1 className="mt-4 text-4xl md:text-5xl font-extrabold">
-            Questions, <span className="text-gradient">answered</span>
+            {heroTitle.split(" ").slice(0, -1).join(" ") ? (
+              <>
+                {heroTitle.split(" ").slice(0, -1).join(" ")} <span className="text-gradient">{heroTitle.split(" ").slice(-1)[0]}</span>
+              </>
+            ) : (
+              <span className="text-gradient">{heroTitle}</span>
+            )}
           </h1>
           <p className="mt-4 text-slate-400 leading-relaxed">
-            Everything teams usually ask before they put Phause between them and
-            the attackers.
+            {heroDescription}
           </p>
         </div>
 
         <div className="space-y-4">
-          {faqs.map((faq, index) => {
+          {pageFaqs.map((faq, index) => {
             const isOpen = open === index;
             const answerId = `faq-answer-${index}`;
 
@@ -192,7 +238,7 @@ function RequestDemo() {
                                 </motion.button>
 
                                 <p className="text-xs text-slate-500 mt-4">
-                                    Let's find the right security solution for your team.
+                                    Let&apos;s find the right security solution for your team.
                                 </p>
                             </div>
 
@@ -247,7 +293,7 @@ function RequestDemo() {
                                     <p className="text-sm text-slate-400 leading-relaxed">
                                         Not sure which plan fits?
                                         <span className="text-phause-cyan">
-                                            {" "}We'll help you explore your options.
+                                            {" "}We&apos;ll help you explore your options.
                                         </span>
                                     </p>
                                 </div>

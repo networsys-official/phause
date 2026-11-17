@@ -1,3 +1,4 @@
+import { prisma } from "@/infrastructure/database/prisma";
 
 export type BlogPost = {
   slug: string;
@@ -7,11 +8,15 @@ export type BlogPost = {
   date: string;
   readTime: string;
   image: string;
+  thumbnailImage?: string;
+  featuredImage?: string;
+  ogImage?: string;
+  imageAlt?: string;
   author: string;
   content: string[];
 };
 
-export const blogPosts: BlogPost[] = [
+export const fallbackBlogPosts: BlogPost[] = [
   {
     slug: "why-cybersecurity-matters",
     title: "Why Cybersecurity Matters for Modern Businesses",
@@ -66,11 +71,52 @@ export const blogPosts: BlogPost[] = [
   },
 ];
 
+export const blogPosts = fallbackBlogPosts;
+
 export const blogCategories = [
   "All",
-  ...Array.from(new Set(blogPosts.map((post) => post.category))),
+  ...Array.from(new Set(fallbackBlogPosts.map((post) => post.category))),
 ];
 
-export function getBlogPost(slug: string) {
-  return blogPosts.find((post) => post.slug === slug);
+export async function getAllBlogPosts() {
+  try {
+    const rows = await prisma.post.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        slug: true,
+        title: true,
+        excerpt: true,
+        body: true,
+        status: true,
+        createdAt: true,
+        imageAlt: true,
+        featuredImage: { select: { url: true, altText: true, id: true } },
+        thumbnailImage: { select: { url: true, altText: true, id: true } },
+        ogImage: { select: { url: true, altText: true, id: true } },
+      },
+    });
+
+    return rows.map((post) => ({
+      slug: post.slug,
+      title: post.title,
+      excerpt: post.excerpt ?? "",
+      category: "CMS",
+      date: new Date(post.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+      readTime: "5 min read",
+      image: post.featuredImage?.url ?? post.thumbnailImage?.url ?? "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1400&q=85",
+      thumbnailImage: post.thumbnailImage?.url ?? post.featuredImage?.url ?? undefined,
+      featuredImage: post.featuredImage?.url ?? undefined,
+      ogImage: post.ogImage?.url ?? undefined,
+      imageAlt: post.imageAlt ?? post.featuredImage?.altText ?? post.title,
+      author: "Phause Team",
+      content: (post.body ?? "").split(/\n{2,}|\n/).filter(Boolean),
+    }));
+  } catch {
+    return fallbackBlogPosts;
+  }
+}
+
+export async function getBlogPost(slug: string) {
+  const posts = await getAllBlogPosts();
+  return posts.find((post) => post.slug === slug) ?? fallbackBlogPosts.find((post) => post.slug === slug);
 }

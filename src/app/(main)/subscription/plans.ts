@@ -3,8 +3,6 @@ import {
     PlanFeatures,
 } from "@/types/plan";
 
-/* ══════════════════ PLAN INTERFACE ══════════════════ */
-
 export interface Plan {
     id: string;
     name: string;
@@ -37,34 +35,21 @@ export interface Plan {
     maxUsers: number;
 }
 
-/* ══════════════════ FEATURE LABELS ══════════════════ */
-
 const FEATURE_LABELS: Record<string, string> = {
     apiAccess: "API Access",
     api_access: "API Access",
-
     ssoEnabled: "Single Sign-On (SSO)",
-
     premiumTemplates: "Premium Email Templates",
     customTemplates: "Custom Email Templates",
     custom_templates: "Custom Email Templates",
-
     auditLogs: "Audit Logs",
-
     aiNarratives: "AI-Generated Narratives",
-
     risk_scoring: "Risk Scoring",
-
     advanced_reports: "Advanced Reports",
-
     training_modules: "Training Modules",
-
     phishing_campaigns: "Phishing Campaigns",
-
     bulk_employee_import: "Bulk Employee Import",
 };
-
-/* ══════════════════ HELPERS ══════════════════ */
 
 function formatFeatureName(key: string): string {
     return (
@@ -81,9 +66,7 @@ function formatLimit(value: number): string {
     return value === 0 ? "Unlimited" : value.toLocaleString();
 }
 
-function getPlanAccent(
-    name: string
-): Plan["accent"] {
+function getPlanAccent(name: string): Plan["accent"] {
     const normalized = name.toLowerCase();
 
     if (normalized.includes("free")) return "slate";
@@ -103,19 +86,13 @@ function getPlanCTA(name: string): string {
     return `Choose ${name}`;
 }
 
-/* ══════════════════ API RESPONSE MAPPER ══════════════════ */
-
-export function mapApiPlanToPlan(
-    apiPlan: SubscriptionPlanResponse
-): Plan {
+export function mapApiPlanToPlan(apiPlan: SubscriptionPlanResponse): Plan {
     const price = Number(apiPlan.price);
 
-    const features = Object.entries(apiPlan.features || {}).map(
-        ([key, value]) => ({
-            label: formatFeatureName(key),
-            included: value === true,
-        })
-    );
+    const features = Object.entries(apiPlan.features || {}).map(([key, value]) => ({
+        label: formatFeatureName(key),
+        included: value === true,
+    }));
 
     const stats = [
         {
@@ -132,10 +109,7 @@ export function mapApiPlanToPlan(
         },
         {
             label: "Free Trial",
-            value:
-                apiPlan.trialDays > 0
-                    ? `${apiPlan.trialDays} Days`
-                    : "No Trial",
+            value: apiPlan.trialDays > 0 ? `${apiPlan.trialDays} Days` : "No Trial",
         },
     ];
 
@@ -143,49 +117,152 @@ export function mapApiPlanToPlan(
         id: apiPlan.id,
         name: apiPlan.name,
         tagline: apiPlan.description,
-
         priceMonthly: price,
-        priceYearly: null,
+        priceYearly: price,
         currency: apiPlan.currency.toUpperCase(),
-
         cta: getPlanCTA(apiPlan.name),
-
-        popular:
-            apiPlan.name.toLowerCase() === "professional",
-
+        popular: apiPlan.name.toLowerCase() === "professional",
         accent: getPlanAccent(apiPlan.name),
-
         billingCycle: apiPlan.billingCycle,
         trialDays: apiPlan.trialDays,
-
         stats,
         features,
-
         rawFeatures: apiPlan.features || {},
-
         maxCampaigns: apiPlan.maxCampaigns,
         maxUsers: apiPlan.maxUsers,
     };
 }
 
-/* ══════════════════ SHARED CONSTANTS ══════════════════ */
+export const PLANS: Plan[] = [
+    {
+        id: "sentinel-free",
+        name: "Free",
+        tagline: "For individuals and small teams getting started.",
+        priceMonthly: 0,
+        priceYearly: 0,
+        currency: "USD",
+        cta: "Start Free",
+        accent: "slate",
+        billingCycle: "MONTHLY",
+        trialDays: 14,
+        stats: [
+            { label: "Protected Endpoints", value: "Up to 5" },
+            { label: "Monthly Events", value: "1M" },
+            { label: "Data Retention", value: "7 days" },
+            { label: "Support", value: "Community" },
+        ],
+        features: [
+            { label: "Core threat detection", included: true },
+            { label: "Community rule packs", included: true },
+            { label: "Phishing awareness training", included: true },
+            { label: "Weekly posture report", included: true },
+            { label: "Automation playbooks", included: false },
+            { label: "24/7 SOC monitoring", included: false },
+            { label: "Compliance automation", included: false },
+        ],
+        rawFeatures: {},
+        maxCampaigns: 5,
+        maxUsers: 10,
+    },
+    {
+        id: "sentinel-starter",
+        name: "Starter",
+        tagline: "For growing teams that need real protection without enterprise overhead.",
+        priceMonthly: 29,
+        priceYearly: 24,
+        currency: "USD",
+        cta: "Choose Starter",
+        accent: "teal",
+        billingCycle: "MONTHLY",
+        trialDays: 14,
+        stats: [
+            { label: "Protected Endpoints", value: "Up to 50" },
+            { label: "Monthly Events", value: "100M" },
+            { label: "Data Retention", value: "30 days" },
+            { label: "Support", value: "Email, 12h SLA" },
+        ],
+        features: [
+            { label: "Everything in Free", included: true },
+            { label: "Behavioral ML detection", included: true },
+            { label: "Automated response playbooks", included: true },
+            { label: "Cloud posture scans", included: true },
+            { label: "Secrets & dependency review", included: true },
+            { label: "24/7 human SOC monitoring", included: false },
+            { label: "Compliance automation", included: false },
+        ],
+        rawFeatures: {},
+        maxCampaigns: 50,
+        maxUsers: 25,
+    },
+    {
+        id: "sentinel-professional",
+        name: "Professional",
+        tagline: "Our flagship plan for teams that need maximum visibility and control.",
+        priceMonthly: 99,
+        priceYearly: 79,
+        currency: "USD",
+        cta: "Choose Professional",
+        popular: true,
+        accent: "cyan",
+        billingCycle: "MONTHLY",
+        trialDays: 21,
+        stats: [
+            { label: "Protected Endpoints", value: "Up to 500" },
+            { label: "Monthly Events", value: "5B" },
+            { label: "Data Retention", value: "1 year" },
+            { label: "Support", value: "24/7 chat, 1h SLA" },
+        ],
+        features: [
+            { label: "Everything in Starter", included: true },
+            { label: "24/7 human SOC monitoring", included: true },
+            { label: "Compliance automation", included: true },
+            { label: "API security testing", included: true },
+            { label: "Named security team", included: true },
+            { label: "Custom detection rules", included: true },
+            { label: "Threat intelligence feeds", included: false },
+        ],
+        rawFeatures: {},
+        maxCampaigns: 500,
+        maxUsers: 100,
+    },
+    {
+        id: "sentinel-business",
+        name: "Business",
+        tagline: "For enterprises with multi-cloud estates and strict regulatory demands.",
+        priceMonthly: 299,
+        priceYearly: 249,
+        currency: "USD",
+        cta: "Choose Business",
+        accent: "violet",
+        billingCycle: "MONTHLY",
+        trialDays: 30,
+        stats: [
+            { label: "Protected Endpoints", value: "Up to 5,000" },
+            { label: "Monthly Events", value: "50B" },
+            { label: "Data Retention", value: "3 years" },
+            { label: "Support", value: "Dedicated TAM, 15m SLA" },
+        ],
+        features: [
+            { label: "Everything in Professional", included: true },
+            { label: "Premium threat intelligence feeds", included: true },
+            { label: "HIPAA / PCI DSS / GDPR automation", included: true },
+            { label: "Zero-trust identity analytics", included: true },
+            { label: "Multi-tenant & MSSP management", included: true },
+            { label: "Quarterly red-team collaboration", included: true },
+            { label: "Dedicated infrastructure option", included: true },
+        ],
+        rawFeatures: {},
+        maxCampaigns: 5000,
+        maxUsers: 250,
+    },
+];
 
-export const BILLING_CYCLE_STORAGE_KEY =
-    "phause-billing-cycle";
+export const BILLING_CYCLE_STORAGE_KEY = "phause-billing-cycle";
 
-/* ══════════════════ PRICE FORMATTER ══════════════════ */
-
-export function formatPrice(
-    plan: Plan,
-    cycle: "monthly" | "yearly" = "monthly"
-): string {
+export function formatPrice(plan: Plan, cycle: "monthly" | "yearly" = "monthly"): string {
     if (plan.priceMonthly === null) return "Custom";
 
-    const price =
-        cycle === "monthly"
-            ? plan.priceMonthly
-            : plan.priceYearly;
-
+    const price = cycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
     if (price === null) return "Custom";
 
     return new Intl.NumberFormat("en", {

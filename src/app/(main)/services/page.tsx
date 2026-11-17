@@ -1,9 +1,11 @@
 
 "use client"
 
-import { useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { getBlockProp } from "@/features/cms/page-builder"
 import {
     ArrowDown,
     ArrowRight,
@@ -11,7 +13,6 @@ import {
     ShieldCheck,
     Mail,
     Search,
-    Bug,
     GraduationCap,
     ClipboardCheck,
     Users,
@@ -25,8 +26,8 @@ import {
     Activity,
     Target,
     FileSearch,
-    Headphones,
     BriefcaseBusiness,
+    Headphones,
     Workflow,
     CheckCircle2,
 } from "lucide-react"
@@ -42,234 +43,78 @@ type Service = {
     suitableFor: string
 }
 
-const services: Service[] = [
-    {
-        number: "01",
-        title: "Phishing Awareness & Simulation",
-        description:
-            "Help your employees recognise suspicious emails and understand common phishing techniques.",
-        icon: GraduationCap,
-        image:
-            "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1000&q=85",
-        overview:
-            "Build a stronger security-conscious workforce through awareness initiatives and controlled phishing simulations. Help teams understand how phishing attempts work and how to respond safely.",
-        features: [
-            "Phishing awareness programmes",
-            "Simulated phishing exercises",
-            "Employee awareness insights",
-            "Guidance on identifying suspicious messages",
-        ],
-        suitableFor:
-            "Organisations looking to improve employee awareness and reduce phishing-related risks.",
-    },
-    {
-        number: "02",
-        title: "Email Security Assessment",
-        description:
-            "Review your email security practices and identify areas that may need stronger protection.",
-        icon: Mail,
-        image:
-            "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1000&q=85",
-        overview:
-            "Understand how your organisation approaches email security. An assessment can help identify potential weaknesses in processes, configurations and user practices.",
-        features: [
-            "Email security posture review",
-            "Identification of potential weaknesses",
-            "Security configuration recommendations",
-            "Practical improvement guidance",
-        ],
-        suitableFor:
-            "Businesses that want to review their current email security practices and improve their protection strategy.",
-    },
-    {
-        number: "03",
-        title: "Phishing Threat Detection",
-        description:
-            "Improve visibility into suspicious messages and help your team respond to potential threats.",
-        icon: Search,
-        image:
-            "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1000&q=85",
-        overview:
-            "Strengthen your organisation's approach to identifying and assessing suspicious email activity. Establish clearer processes for recognising and escalating potential phishing threats.",
-        features: [
-            "Suspicious email identification guidance",
-            "Threat reporting workflows",
-            "Incident escalation recommendations",
-            "Security response guidance",
-        ],
-        suitableFor:
-            "Teams seeking a more structured approach to identifying and reporting suspicious email activity.",
-    },
-    {
-        number: "04",
-        title: "Security Awareness Training",
-        description:
-            "Give employees practical knowledge to make safer decisions when handling digital communication.",
-        icon: ShieldCheck,
-        image:
-            "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1000&q=85",
-        overview:
-            "Help employees understand their role in protecting business information. Focus on practical security habits, suspicious communication and safe online behaviour.",
-        features: [
-            "Security awareness sessions",
-            "Phishing prevention guidance",
-            "Safe email and browsing practices",
-            "Employee security education",
-        ],
-        suitableFor:
-            "Businesses that want to build consistent security awareness across departments and teams.",
-    },
-    {
-        number: "05",
-        title: "Phishing Incident Readiness",
-        description:
-            "Prepare your organisation with clear reporting, escalation and response procedures.",
-        icon: ClipboardCheck,
-        image:
-            "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=1000&q=85",
-        overview:
-            "A clear response process helps teams act quickly when a suspicious message or potential phishing incident is reported. Establish responsibilities and practical response steps.",
-        features: [
-            "Incident reporting procedures",
-            "Response and escalation planning",
-            "Employee reporting guidance",
-            "Security process recommendations",
-        ],
-        suitableFor:
-            "Organisations that want to improve their readiness to handle suspected phishing incidents.",
-    },
-]
 
-const processSteps = [
-    {
-        number: "01",
-        title: "Understand",
-        description:
-            "We begin by understanding your organisation, current security practices and priorities.",
-        icon: Target,
-    },
-    {
-        number: "02",
-        title: "Assess",
-        description:
-            "We review your requirements and identify areas where security improvements may help.",
-        icon: FileSearch,
-    },
-    {
-        number: "03",
-        title: "Recommend",
-        description:
-            "We outline a practical approach based on your organisation's needs and objectives.",
-        icon: Workflow,
-    },
-    {
-        number: "04",
-        title: "Improve",
-        description:
-            "We help you move forward with clear actions and a stronger security approach.",
-        icon: CheckCircle2,
-    },
-]
+const defaultHeroProps = {
+    eyebrow: undefined as string | undefined,
+    title: undefined as string | undefined,
+    description: undefined as string | undefined,
+}
 
-const audiences = [
-    {
-        title: "Growing Businesses",
-        description: "Build stronger email security practices as your organisation grows.",
-        icon: Building2,
-    },
-    {
-        title: "Enterprise Teams",
-        description: "Support consistent security awareness across larger teams.",
-        icon: Network,
-    },
-    {
-        title: "IT & Security Teams",
-        description: "Improve visibility, reporting and phishing response processes.",
-        icon: LockKeyhole,
-    },
-    {
-        title: "Remote Workforces",
-        description: "Help distributed employees recognise suspicious communication.",
-        icon: Globe,
-    },
-    {
-        title: "Operations Teams",
-        description: "Establish practical procedures for reporting potential threats.",
-        icon: Activity,
-    },
-    {
-        title: "Business Leadership",
-        description: "Understand organisational phishing risks and improvement priorities.",
-        icon: BriefcaseBusiness,
-    },
-]
+const defaultItemCollection = [] as Array<Record<string, unknown>>
 
-const benefits = [
-    {
-        title: "Practical Security Focus",
-        description:
-            "Recommendations centred on real organisational requirements.",
-        icon: ShieldCheck,
-    },
-    {
-        title: "People-Aware Approach",
-        description:
-            "Recognise the important role employees play in phishing prevention.",
-        icon: Users,
-    },
-    {
-        title: "Clear Recommendations",
-        description:
-            "Understand potential improvement areas and the next steps to consider.",
-        icon: CheckCircle2,
-    },
-    {
-        title: "Connected Approach",
-        description:
-            "Bring awareness, assessment and response planning together.",
-        icon: Network,
-    },
-    {
-        title: "Tailored Engagement",
-        description:
-            "Shape discussions around your organisation's needs and priorities.",
-        icon: Target,
-    },
-    {
-        title: "Ongoing Improvement",
-        description:
-            "Support a more consistent approach to security awareness over time.",
-        icon: Activity,
-    },
-]
+function normalizeCmsBlockType(value: string) {
+    return String(value).replace(/[_-]+/g, "").toLowerCase();
+}
 
-const faqs = [
-    {
-        question: "What types of phishing-related services do you offer?",
-        answer:
-            "Phause's service areas presented here include phishing awareness and simulation, email security assessment, phishing threat detection, security awareness training and phishing incident readiness.",
-    },
-    {
-        question: "Who can benefit from these services?",
-        answer:
-            "Businesses of different sizes, IT and security teams, operations departments and organisations with remote workforces can explore these services based on their requirements.",
-    },
-    {
-        question: "Can we combine multiple services?",
-        answer:
-            "Yes. You can discuss multiple requirements together so that the proposed approach reflects your organisation's priorities.",
-    },
-    {
-        question: "How does the engagement process begin?",
-        answer:
-            "Start by contacting the Phause team. Share your organisation's requirements and the team can discuss suitable next steps.",
-    },
-    {
-        question: "Are the services tailored to our organisation?",
-        answer:
-            "The requirements and scope can be discussed with the Phause team to understand which approach is appropriate for your organisation.",
-    },
-]
+function findCmsBlock(blocks: Array<Record<string, unknown>>, ...types: string[]) {
+    return blocks.find((block) => types.some((type) => normalizeCmsBlockType(String(block.type ?? "")) === normalizeCmsBlockType(type))) ?? null;
+}
+
+const serviceIconLookup: Record<string, React.ElementType> = {
+    phishing: GraduationCap,
+    awareness: GraduationCap,
+    assessment: Mail,
+    detection: Search,
+    training: ShieldCheck,
+    readiness: ClipboardCheck,
+    default: ShieldCheck,
+};
+
+const processIconLookup: Record<string, React.ElementType> = {
+    understand: Target,
+    assess: FileSearch,
+    recommend: Workflow,
+    improve: CheckCircle2,
+    default: Workflow,
+};
+
+const audienceIconLookup: Record<string, React.ElementType> = {
+    growing: Building2,
+    enterprise: Network,
+    security: LockKeyhole,
+    remote: Globe,
+    operations: Activity,
+    leadership: BriefcaseBusiness,
+    default: Users,
+};
+
+const benefitIconLookup: Record<string, React.ElementType> = {
+    focus: ShieldCheck,
+    approach: Users,
+    recommendations: CheckCircle2,
+    connected: Network,
+    tailored: Target,
+    improvement: Activity,
+    default: ShieldCheck,
+};
+
+function resolveIcon(iconName: string | undefined, lookup: Record<string, React.ElementType>, fallback: React.ElementType) {
+    if (!iconName) return fallback;
+    const normalized = iconName.toLowerCase().replace(/[^a-z]/g, "");
+    return lookup[normalized] ?? lookup.default ?? fallback;
+}
+
+function slugify(value: string) {
+    return value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function toArray(value: unknown): Array<Record<string, unknown>> {
+    return Array.isArray(value) ? (value as Array<Record<string, unknown>>) : [];
+}
 
 function ServiceModal({
     service,
@@ -307,9 +152,11 @@ function ServiceModal({
                         className="relative my-auto w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-[#101D2B] shadow-2xl"
                     >
                         <div className="relative h-52 overflow-hidden sm:h-64">
-                            <img
+                            <Image
                                 src={service.image}
-                                alt=""
+                                alt={service.title}
+                                fill
+                                priority
                                 className="h-full w-full object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-[#101D2B] via-[#101D2B]/30 to-transparent" />
@@ -389,7 +236,132 @@ function ServiceModal({
 export default function ServicesPage() {
     const [selectedService, setSelectedService] = useState<Service | null>(null)
     const [activeFaq, setActiveFaq] = useState<number | null>(0)
+    const [page, setPage] = useState<Record<string, unknown> | null>(null)
+    const [cmsServices, setCmsServices] = useState<Array<Record<string, unknown>>>([])
+    const [cmsFaqs, setCmsFaqs] = useState<Array<{ question: string; answer: string }>>([])
     const reduceMotion = useReducedMotion()
+
+    useEffect(() => {
+        fetch("/api/cms/pages?slug=services")
+            .then((response) => response.json())
+            .then((payload) => setPage(payload.page ?? null))
+            .catch(() => setPage(null));
+
+        fetch("/api/cms/services")
+            .then((response) => response.json())
+            .then((payload) => {
+                if (Array.isArray(payload.items)) {
+                    setCmsServices(payload.items.filter((item: Record<string, unknown>) => String(item.status ?? "DRAFT").toUpperCase() === "PUBLISHED"));
+                }
+            })
+            .catch(() => setCmsServices([]));
+
+        fetch("/api/cms/faqs")
+            .then((response) => response.json())
+            .then((payload) => {
+                if (Array.isArray(payload.items)) {
+                    setCmsFaqs(payload.items.filter((item: Record<string, unknown>) => String(item.status ?? "DRAFT").toUpperCase() === "PUBLISHED").map((item: Record<string, unknown>) => ({
+                        question: String(item.question ?? ""),
+                        answer: String(item.answer ?? ""),
+                    })));
+                }
+            })
+            .catch(() => setCmsFaqs([]));
+    }, []);
+
+    const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : defaultItemCollection;
+    const heroBlock = findCmsBlock(pageBlocks, "servicesHero", "hero")?.props as Record<string, unknown> | undefined;
+    const servicesBlock = findCmsBlock(pageBlocks, "servicesFeatures", "services")?.props as Record<string, unknown> | undefined;
+    const processBlock = findCmsBlock(pageBlocks, "servicesProcess")?.props as Record<string, unknown> | undefined;
+    const audiencesBlock = findCmsBlock(pageBlocks, "servicesAudiences")?.props as Record<string, unknown> | undefined;
+    const benefitsBlock = findCmsBlock(pageBlocks, "servicesBenefits")?.props as Record<string, unknown> | undefined;
+    const statsBlock = findCmsBlock(pageBlocks, "servicesStats", "stats")?.props as Record<string, unknown> | undefined;
+    const faqBlock = findCmsBlock(pageBlocks, "servicesFaq", "faq")?.props as Record<string, unknown> | undefined;
+
+    const hero = {
+        eyebrow: getBlockProp(heroBlock ?? defaultHeroProps, "eyebrow", defaultHeroProps.eyebrow ?? ""),
+        title: getBlockProp(heroBlock ?? defaultHeroProps, "title", defaultHeroProps.title ?? ""),
+        description: getBlockProp(heroBlock ?? defaultHeroProps, "description", defaultHeroProps.description ?? ""),
+    };
+
+    const cmsServicesMapped = toArray(servicesBlock?.items ?? []).map((item, index) => {
+        const record = item as Record<string, unknown>;
+        const iconName = String(record.icon ?? record.title ?? "");
+        return {
+            number: String(record.number ?? `${index + 1}`.padStart(2, "0")),
+            title: String(record.title ?? ""),
+            description: String(record.description ?? ""),
+            image: String(record.image ?? ""),
+            overview: String(record.overview ?? record.description ?? ""),
+            features: Array.isArray(record.features) ? record.features.map((feature) => String(feature)) : [],
+            suitableFor: String(record.suitableFor ?? ""),
+            icon: resolveIcon(iconName, serviceIconLookup, ShieldCheck),
+        } as Service;
+    });
+
+    const resourceServices = cmsServices.length > 0 ? cmsServices.map((item, index) => ({
+        number: String(index + 1).padStart(2, "0"),
+        title: String(item.title ?? ""),
+        description: String(item.description ?? ""),
+        image: String(item.image ?? ""),
+        overview: String(item.description ?? ""),
+        features: [],
+        suitableFor: "",
+        icon: ShieldCheck,
+    } as Service)) : [];
+
+    const cmsProcessSteps = toArray(processBlock?.items ?? []).map((item, index) => {
+        const record = item as Record<string, unknown>;
+        const iconName = String(record.title ?? record.label ?? "");
+        return {
+            number: String(record.number ?? `${index + 1}`.padStart(2, "0")),
+            title: String(record.title ?? ""),
+            description: String(record.description ?? ""),
+            icon: resolveIcon(iconName, processIconLookup, Workflow),
+        };
+    });
+
+    const cmsAudiences = toArray(audiencesBlock?.items ?? []).map((item) => {
+        const record = item as Record<string, unknown>;
+        const title = String(record.title ?? "");
+        return {
+            title,
+            description: String(record.description ?? ""),
+            icon: resolveIcon(String(record.icon ?? title), audienceIconLookup, Users),
+        };
+    });
+
+    const cmsBenefits = toArray(benefitsBlock?.items ?? []).map((item) => {
+        const record = item as Record<string, unknown>;
+        const title = String(record.title ?? "");
+        return {
+            title,
+            description: String(record.description ?? ""),
+            icon: resolveIcon(String(record.icon ?? title), benefitIconLookup, ShieldCheck),
+        };
+    });
+
+    const cmsHighlights = toArray(statsBlock?.items ?? []).map((item) => {
+        const record = item as Record<string, unknown>;
+        const title = String(record.title ?? record.label ?? record.value ?? "");
+        return {
+            title,
+            text: String(record.description ?? record.text ?? record.label ?? ""),
+            icon: resolveIcon(String(record.icon ?? title), serviceIconLookup, ShieldCheck),
+        };
+    });
+
+    const cmsFaqsMapped = toArray(faqBlock?.items ?? []).map((item) => ({
+        question: String((item as Record<string, unknown>).question ?? ""),
+        answer: String((item as Record<string, unknown>).answer ?? ""),
+    }));
+
+    const renderedServices = resourceServices.length ? resourceServices : cmsServicesMapped.length ? cmsServicesMapped : [];
+    const renderedProcessSteps = cmsProcessSteps.length ? cmsProcessSteps : [];
+    const renderedAudiences = cmsAudiences.length ? cmsAudiences : [];
+    const renderedBenefits = cmsBenefits.length ? cmsBenefits : [];
+    const renderedHighlights = cmsHighlights.length ? cmsHighlights : [];
+    const renderedFaqs = cmsFaqs.length ? cmsFaqs : cmsFaqsMapped.length ? cmsFaqsMapped : [];
 
     return (
         <main className="overflow-hidden bg-[#081522] text-white">
@@ -418,20 +390,15 @@ export default function ServicesPage() {
 
                         <span className="inline-flex items-center gap-2 rounded-full border border-phause-cyan/20 bg-phause-cyan/[0.08] px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-phause-cyan">
                             <BriefcaseBusiness className="h-4 w-4" />
-                            Our Services
+                            {hero.eyebrow}
                         </span>
 
                         <h1 className="mt-7 max-w-3xl text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-                            Practical security services for a{" "}
-                            <span className="text-gradient">
-                                phishing-aware organisation.
-                            </span>
+                            {hero.title}
                         </h1>
 
                         <p className="mt-7 max-w-2xl text-base leading-8 text-slate-400 md:text-lg">
-                            Explore security awareness, email assessment and
-                            phishing-readiness services designed to help your
-                            organisation strengthen its approach to digital threats.
+                            {hero.description}
                         </p>
 
                         <div className="mt-9 flex flex-wrap gap-4">
@@ -463,43 +430,31 @@ export default function ServicesPage() {
                         <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-phause-cyan/10 blur-[70px]" />
 
                         <div className="relative space-y-3">
-                            {[
-                                {
-                                    icon: ShieldCheck,
-                                    title: "5 core service areas",
-                                    text: "A connected approach to phishing security",
-                                },
-                                {
-                                    icon: Workflow,
-                                    title: "Understand to improve",
-                                    text: "A clear process built around your needs",
-                                },
-                                {
-                                    icon: Network,
-                                    title: "People and technology",
-                                    text: "Consider both in your security approach",
-                                },
-                            ].map((item, index) => (
-                                <motion.div
-                                    key={item.title}
-                                    initial={{ opacity: 0, y: 15 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.3 + index * 0.12 }}
-                                    className="flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-[#101F2E] p-5 transition hover:translate-x-1 hover:border-phause-cyan/20"
-                                >
-                                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-phause-cyan/15 bg-phause-cyan/10">
-                                        <item.icon className="h-6 w-6 text-phause-cyan" />
-                                    </span>
-                                    <div>
-                                        <h3 className="font-bold text-white">
-                                            {item.title}
-                                        </h3>
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            {item.text}
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            ))}
+                            {renderedHighlights.map((item, index) => {
+                                const Icon = item.icon ?? ShieldCheck;
+
+                                return (
+                                    <motion.div
+                                        key={item.title || `highlight-${index}`}
+                                        initial={{ opacity: 0, y: 15 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 + index * 0.12 }}
+                                        className="flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-[#101F2E] p-5 transition hover:translate-x-1 hover:border-phause-cyan/20"
+                                    >
+                                        <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-phause-cyan/15 bg-phause-cyan/10">
+                                            <Icon className="h-6 w-6 text-phause-cyan" />
+                                        </span>
+                                        <div>
+                                            <h3 className="font-bold text-white">
+                                                {item.title}
+                                            </h3>
+                                            <p className="mt-1 text-sm text-slate-500">
+                                                {item.text}
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     </motion.aside>
                 </div>
@@ -534,9 +489,10 @@ export default function ServicesPage() {
                     </motion.div>
 
                     <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-6">
-                        {services.map((service, index) => (
+                        {renderedServices.map((service, index) => (
                             <motion.article
-                                key={service.number}
+                                key={`${service.number}-${index}`}
+                                id={slugify(service.title)}
                                 initial={{ opacity: 0, y: 25 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -548,12 +504,18 @@ export default function ServicesPage() {
                                 }`}
                             >
                                 <div className="relative h-56 overflow-hidden">
-                                    <img
-                                        src={service.image}
-                                        alt=""
-                                        loading="lazy"
-                                        className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                                    />
+                                    {service.image ? (
+                                        <Image
+                                            src={service.image}
+                                            alt={service.title}
+                                            fill
+                                            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-phause-cyan/10 via-[#101F2E] to-[#0B1927]">
+                                            <service.icon className="h-12 w-12 text-phause-cyan/70" />
+                                        </div>
+                                    )}
                                     <div className="absolute inset-0 bg-gradient-to-t from-[#101F2E] via-[#101F2E]/15 to-transparent" />
 
                                     <span className="absolute left-5 top-5 rounded-full border border-white/20 bg-black/30 px-4 py-2 text-xs font-bold tracking-widest text-white backdrop-blur-md">
@@ -618,7 +580,7 @@ export default function ServicesPage() {
                     <div className="relative grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="absolute left-[12%] right-[12%] top-8 hidden h-px bg-gradient-to-r from-transparent via-phause-cyan/40 to-transparent lg:block" />
 
-                        {processSteps.map((step, index) => (
+                        {renderedProcessSteps.map((step, index) => (
                             <motion.div
                                 key={step.number}
                                 initial={{ opacity: 0, y: 25 }}
@@ -672,7 +634,7 @@ export default function ServicesPage() {
                         <p className="mt-6 leading-8 text-slate-400">
                             Different teams face different challenges.
                             Explore an approach that considers your
-                            organisation's people, processes and priorities.
+                            organisation&apos;s people, processes and priorities.
                         </p>
 
                         <Link
@@ -685,7 +647,7 @@ export default function ServicesPage() {
                     </motion.div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
-                        {audiences.map((audience, index) => (
+                        {renderedAudiences.map((audience, index) => (
                             <motion.div
                                 key={audience.title}
                                 initial={{ opacity: 0, y: 20 }}
@@ -734,7 +696,7 @@ export default function ServicesPage() {
                     </div>
 
                     <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                        {benefits.map((benefit, index) => (
+                        {renderedBenefits.map((benefit, index) => (
                             <motion.article
                                 key={benefit.title}
                                 initial={{ opacity: 0, y: 20 }}
@@ -791,7 +753,7 @@ export default function ServicesPage() {
                     </div>
 
                     <div className="space-y-3">
-                        {faqs.map((faq, index) => {
+                        {renderedFaqs.map((faq, index) => {
                             const isOpen = activeFaq === index
 
                             return (
@@ -872,8 +834,8 @@ export default function ServicesPage() {
                         </h2>
 
                         <p className="mx-auto mt-6 max-w-2xl leading-8 text-slate-400">
-                            Tell us about your organisation's requirements.
-                            Let's explore the right services and next steps
+                            Tell us about your organisation&apos;s requirements.
+                            Let&apos;s explore the right services and next steps
                             for your team.
                         </p>
 
