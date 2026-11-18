@@ -53,4 +53,40 @@ jobs:
         run: npm test
 
       - name: Build app
+        env:
+          AUTH_SECRET: ci-build-only-not-for-runtime
         run: npm run build
+
+  deploy:
+    needs: lint-test-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_SSH_PORT: ${{ secrets.VPS_SSH_PORT }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          for name in VPS_HOST VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS VPS_DEPLOY_PATH; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required GitHub Actions secret: $name" >&2
+              exit 1
+            fi
+          done
+
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$VPS_SSH_KEY" > "$HOME/.ssh/phause_deploy"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/phause_deploy" "$HOME/.ssh/known_hosts"
+
+          ssh -i "$HOME/.ssh/phause_deploy" \
+            -p "${VPS_SSH_PORT:-22}" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$VPS_USER@$VPS_HOST" \
+            "cd '$VPS_DEPLOY_PATH' && git pull --ff-only origin main && docker compose --env-file .env.production --profile migrate run --build --rm migrator && docker compose --env-file .env.production up -d --build --remove-orphans"
