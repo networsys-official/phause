@@ -1,4 +1,6 @@
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
+import { existsSync, symlinkSync } from "node:fs";
+import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { chromium, type Page } from "playwright";
@@ -49,11 +51,34 @@ async function ensureLocalServer() {
     return;
   }
 
-  spawnSync("pkill", ["-f", `next dev -H 127.0.0.1 -p ${LOCAL_PORT}`], { stdio: "ignore" });
-  await delay(1000);
+  const useProductionServer =
+    existsSync(join(process.cwd(), ".next", "BUILD_ID")) && Boolean(process.env.AUTH_SECRET);
+  const nextBin = join(process.cwd(), "node_modules", "next", "dist", "bin", "next");
+  let commandArgs: string[];
 
-  localServer = spawn("npx", ["next", "dev", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)], {
-    env: { ...process.env, PORT: String(LOCAL_PORT) },
+  if (useProductionServer) {
+    const standaloneDir = join(process.cwd(), ".next", "standalone");
+    const staticAssets = join(process.cwd(), ".next", "static");
+    const standaloneStaticAssets = join(standaloneDir, ".next", "static");
+    const publicAssets = join(process.cwd(), "public");
+    const standalonePublicAssets = join(standaloneDir, "public");
+
+    if (existsSync(staticAssets) && !existsSync(standaloneStaticAssets)) {
+      symlinkSync(staticAssets, standaloneStaticAssets, "dir");
+    }
+
+    if (existsSync(publicAssets) && !existsSync(standalonePublicAssets)) {
+      symlinkSync(publicAssets, standalonePublicAssets, "dir");
+    }
+
+    commandArgs = [join(standaloneDir, "server.js")];
+  } else {
+    commandArgs = [nextBin, "dev", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)];
+  }
+
+  localServer = spawn(process.execPath, commandArgs, {
+    detached: process.platform !== "win32",
+    env: { ...process.env, HOSTNAME: "127.0.0.1", PORT: String(LOCAL_PORT) },
     stdio: "inherit",
   });
 
@@ -117,8 +142,17 @@ afterAll(async () => {
     await browser.close();
   }
 
-  if (localServer && !localServer.killed) {
-    localServer.kill("SIGTERM");
+  if (localServer && localServer.exitCode === null && localServer.signalCode === null && localServer.pid) {
+    const server = localServer;
+    const exited = new Promise<void>((resolve) => server.once("exit", () => resolve()));
+
+    if (process.platform === "win32") {
+      server.kill("SIGTERM");
+    } else {
+      process.kill(-server.pid, "SIGTERM");
+    }
+
+    await exited;
   }
 });
 
