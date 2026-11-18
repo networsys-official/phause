@@ -133,7 +133,7 @@ const handleWorkplace = () => {
     setOpen(false);
     setRegistrationOpen(true);
   };
-
+//changes
   return (
     <>
       <motion.nav
