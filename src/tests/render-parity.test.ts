@@ -144,12 +144,15 @@ afterAll(async () => {
 
   if (localServer && localServer.exitCode === null && localServer.signalCode === null && localServer.pid) {
     const server = localServer;
+    const serverPid = server.pid;
+    if (serverPid === undefined) return;
+
     const exited = new Promise<void>((resolve) => server.once("exit", () => resolve()));
 
     if (process.platform === "win32") {
       server.kill("SIGTERM");
     } else {
-      process.kill(-server.pid, "SIGTERM");
+      process.kill(-serverPid, "SIGTERM");
     }
 
     await exited;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -24,6 +24,11 @@ import { planService } from "@/services/planService";
 import type { SubscriptionPlanResponse } from "@/types/plan";
 
 type PaymentProvider = "stripe" | "razorpay" | "paypal";
+type PlanLoadResult = {
+    planId: string;
+    plan: SubscriptionPlanResponse | null;
+    error: string;
+};
 
 const PROVIDERS: {
     id: PaymentProvider;
@@ -187,14 +192,30 @@ function CheckoutInner() {
 
     const planId = searchParams.get("plan");
 
-    const [plan, setPlan] = useState<SubscriptionPlanResponse | null>(null);
+    const [planLoadResult, setPlanLoadResult] =
+        useState<PlanLoadResult | null>(null);
     const [provider, setProvider] = useState<PaymentProvider>("stripe");
 
-    const [loadingPlan, setLoadingPlan] = useState(true);
     const [checkoutLoading, setCheckoutLoading] = useState(false);
 
-    const [error, setError] = useState("");
+    const [checkoutError, setCheckoutError] = useState<{
+        planId: string | null;
+        message: string;
+    } | null>(null);
     const [step, setStep] = useState<"plan" | "payment">("plan");
+
+    const currentPlanLoad =
+        planId && planLoadResult?.planId === planId ? planLoadResult : null;
+    const plan = currentPlanLoad?.plan ?? null;
+    const loadingPlan = Boolean(planId) && currentPlanLoad === null;
+    const planError = planId
+        ? currentPlanLoad?.error ?? ""
+        : "No subscription plan was selected. Please select a plan first.";
+    const error =
+        planError ||
+        (checkoutError?.planId === planId ? checkoutError.message : "");
+    const setError = (message: string) =>
+        setCheckoutError({ planId, message });
 
     const price = useMemo(() => {
         if (!plan) return "";
@@ -202,48 +223,49 @@ function CheckoutInner() {
         return formatCurrency(plan.price, plan.currency);
     }, [plan]);
 
-    const fetchSelectedPlan = useCallback(async () => {
-        if (!planId) {
-            setError("No subscription plan was selected. Please select a plan first.");
-            setLoadingPlan(false);
-            return;
-        }
-
-        setLoadingPlan(true);
-        setError("");
-
-        try {
-            // Fetch the current plans from the existing plans API.
-            // This avoids calling the missing /api/plans/[id] route.
-            const plans = await planService.getPlans();
-
-            const selectedPlan = plans.find(
-                (item) => item.id === planId && item.isActive,
-            );
-
-            if (!selectedPlan) {
-                setPlan(null);
-                setError(
-                    "This plan is no longer available. Please return to the subscription page and choose another plan.",
-                );
-                return;
-            }
-
-            setPlan(selectedPlan);
-        } catch (err) {
-            setError(
-                err instanceof Error
-                    ? err.message
-                    : "Unable to load the selected subscription plan.",
-            );
-        } finally {
-            setLoadingPlan(false);
-        }
-    }, [planId]);
-
     useEffect(() => {
-        void fetchSelectedPlan();
-    }, [fetchSelectedPlan]);
+        if (!planId) return;
+
+        let active = true;
+
+        const loadSelectedPlan = async () => {
+            try {
+                // Fetch the current plans from the existing plans API.
+                // This avoids calling the missing /api/plans/[id] route.
+                const plans = await planService.getPlans();
+                if (!active) return;
+
+                const selectedPlan = plans.find(
+                    (item) => item.id === planId && item.isActive,
+                );
+
+                setPlanLoadResult({
+                    planId,
+                    plan: selectedPlan ?? null,
+                    error: selectedPlan
+                        ? ""
+                        : "This plan is no longer available. Please return to the subscription page and choose another plan.",
+                });
+            } catch (err) {
+                if (!active) return;
+
+                setPlanLoadResult({
+                    planId,
+                    plan: null,
+                    error:
+                        err instanceof Error
+                            ? err.message
+                            : "Unable to load the selected subscription plan.",
+                });
+            }
+        };
+
+        void loadSelectedPlan();
+
+        return () => {
+            active = false;
+        };
+    }, [planId]);
 
     const handleCheckout = async () => {
         if (!plan) {
