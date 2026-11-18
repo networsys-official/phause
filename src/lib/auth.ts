@@ -1,32 +1,60 @@
-// Authentication token utilities
-// Store, retrieve, and clear the auth token in sessionStorage.
-
 const TOKEN_KEY = "phauseAuthToken";
 
-/** Store the token for the current session */
+export const AUTH_CHANGE_EVENT = "phause-auth-change";
+
+/**
+ * Store authentication token persistently.
+ */
 export function storeToken(token: string): void {
-  try {
-    sessionStorage.setItem(TOKEN_KEY, token);
-  } catch (e) {
-    // ignore storage errors in non-browser environments
-    console.error("Failed to store auth token", e);
-  }
+    if (typeof window === "undefined" || !token) return;
+
+    try {
+        localStorage.setItem(TOKEN_KEY, token);
+
+        // Keep compatibility with any existing code using sessionStorage.
+        sessionStorage.setItem(TOKEN_KEY, token);
+
+        window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    } catch (error) {
+        console.error("Failed to store authentication token:", error);
+    }
 }
 
-/** Retrieve the stored token, or null if not present */
+/**
+ * Retrieve authentication token.
+ */
 export function getToken(): string | null {
-  try {
-    return sessionStorage.getItem(TOKEN_KEY);
-  } catch {
-    return null;
-  }
+    if (typeof window === "undefined") return null;
+
+    try {
+        return (
+            localStorage.getItem(TOKEN_KEY) ||
+            sessionStorage.getItem(TOKEN_KEY)
+        );
+    } catch {
+        return null;
+    }
 }
 
-/** Clear the stored auth token */
+/**
+ * Remove authentication token.
+ */
 export function clearToken(): void {
-  try {
-    sessionStorage.removeItem(TOKEN_KEY);
-  } catch (e) {
-    console.error("Failed to clear auth token", e);
-  }
+    if (typeof window === "undefined") return;
+
+    try {
+        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
+
+        window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+    } catch (error) {
+        console.error("Failed to clear authentication token:", error);
+    }
+}
+
+/**
+ * Check whether the website has an authenticated session.
+ */
+export function isAuthenticated(): boolean {
+    return Boolean(getToken());
 }
