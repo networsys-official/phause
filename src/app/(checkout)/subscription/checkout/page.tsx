@@ -1,697 +1,852 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-    motion, AnimatePresence,
-} from "framer-motion";
-import {
-    Shield, ShieldCheck, Check, X, Sparkles, Lock,
-    User, CreditCard, FileText, PartyPopper, ArrowLeft, ArrowRight,
-    Building2, Mail, Phone, MapPin, Eye, EyeOff, Loader2,
-    BadgeCheck, Zap, Headset, RefreshCcw, Fingerprint,
+    ArrowLeft,
+    ArrowRight,
+    BadgeCheck,
+    Check,
+    CreditCard,
+    ExternalLink,
+    Loader2,
+    Lock,
+    Shield,
+    ShieldCheck,
+    Sparkles,
+    X,
 } from "lucide-react";
-// import { PLANS, type Plan } from "@/app/(main)/subscription/plans";
-import { ROUTES } from "@/lib/routes";
 
-/* ══════════════════ ANIMATED BACKGROUNDS ══════════════════ */
+import { ROUTES } from "@/lib/routes";
+import { getToken } from "@/lib/auth";
+import { planService } from "@/services/planService";
+import type { SubscriptionPlanResponse } from "@/types/plan";
+
+type PaymentProvider = "stripe" | "razorpay" | "paypal";
+
+const PROVIDERS: {
+    id: PaymentProvider;
+    name: string;
+    description: string;
+}[] = [
+    {
+        id: "stripe",
+        name: "Stripe",
+        description: "Pay securely using Stripe.",
+    },
+    {
+        id: "razorpay",
+        name: "Razorpay",
+        description: "Pay using supported local payment methods.",
+    },
+    {
+        id: "paypal",
+        name: "PayPal",
+        description: "Continue securely with PayPal.",
+    },
+];
+
 function GridBackground() {
     return (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none fixed">
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
             <div
-                className="absolute inset-0 opacity-[0.15]"
+                className="absolute inset-0 opacity-[0.12]"
                 style={{
                     backgroundImage:
                         "linear-gradient(rgba(0,216,201,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,216,201,0.3) 1px, transparent 1px)",
                     backgroundSize: "60px 60px",
                 }}
             />
+
             <motion.div
-                className="absolute w-[600px] h-[600px] rounded-full blur-[160px] bg-phause-teal/15 -top-40 -left-40"
+                className="absolute -left-40 -top-40 h-[600px] w-[600px] rounded-full bg-phause-teal/15 blur-[160px]"
                 animate={{ x: [0, 80, 0], y: [0, 50, 0] }}
-                transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                    duration: 14,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                }}
             />
+
             <motion.div
-                className="absolute w-[500px] h-[500px] rounded-full blur-[160px] bg-cyan-500/12 bottom-0 right-0"
+                className="absolute -bottom-20 -right-20 h-[500px] w-[500px] rounded-full bg-cyan-500/10 blur-[160px]"
                 animate={{ x: [0, -60, 0], y: [0, -40, 0] }}
-                transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                    duration: 18,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                }}
             />
         </div>
     );
 }
 
-function ParticleField() {
-    const particles = Array.from({ length: 25 });
+function formatCurrency(price: string | number, currency: string) {
+    const amount = Number(price);
+
+    if (!Number.isFinite(amount)) {
+        return "Price unavailable";
+    }
+
+    try {
+        return new Intl.NumberFormat("en-IN", {
+            style: "currency",
+            currency: currency.toUpperCase(),
+            maximumFractionDigits: 2,
+        }).format(amount);
+    } catch {
+        return `${currency.toUpperCase()} ${amount.toLocaleString("en-IN")}`;
+    }
+}
+
+function getCheckoutUrl(value: unknown): string | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    const record = value as Record<string, unknown>;
+
+    // Support common response property names.
+    const possibleUrlKeys = [
+        "checkoutUrl",
+        "checkout_url",
+        "paymentUrl",
+        "payment_url",
+        "redirectUrl",
+        "redirect_url",
+        "url",
+        "sessionUrl",
+        "session_url",
+    ];
+
+    for (const key of possibleUrlKeys) {
+        const candidate = record[key];
+
+        if (typeof candidate === "string" && candidate.trim()) {
+            return candidate;
+        }
+    }
+
+    // Some APIs wrap their response inside data/result/session.
+    for (const key of ["data", "result", "session", "checkout", "payment"]) {
+        const nestedUrl = getCheckoutUrl(record[key]);
+
+        if (nestedUrl) {
+            return nestedUrl;
+        }
+    }
+
+    return null;
+}
+
+function getErrorMessage(value: unknown): string {
+    if (!value || typeof value !== "object") {
+        return "Something went wrong. Please try again.";
+    }
+
+    const record = value as Record<string, unknown>;
+
+    if (typeof record.message === "string") {
+        return record.message;
+    }
+
+    if (typeof record.error === "string") {
+        return record.error;
+    }
+
+    return "Unable to start checkout. Please try again.";
+}
+
+function isSafeCheckoutUrl(value: string) {
+    try {
+        const url = new URL(value);
+
+        return url.protocol === "https:" || url.protocol === "http:";
+    } catch {
+        return false;
+    }
+}
+
+function LoadingScreen({ message }: { message: string }) {
     return (
-        <div className="absolute inset-0 pointer-events-none fixed">
-            {particles.map((_, i) => (
-                <motion.span
-                    key={i}
-                    className="absolute w-1 h-1 rounded-full bg-phause-cyan"
-                    style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, opacity: 0.4 }}
-                    animate={{ y: [0, -40, 0], opacity: [0.1, 0.7, 0.1] }}
-                    transition={{ duration: 3 + (i % 5), repeat: Infinity, delay: (i % 7) * 0.6 }}
-                />
-            ))}
-        </div>
+        <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-phause-dark px-6 text-white">
+            <GridBackground />
+
+            <div className="glass relative z-10 flex items-center gap-3 rounded-2xl px-6 py-5">
+                <Loader2 className="h-5 w-5 animate-spin text-phause-cyan" />
+                <span className="text-sm text-slate-300">{message}</span>
+            </div>
+        </main>
     );
 }
 
-/* ══════════════════ STEP DEFINITIONS ══════════════════ */
-const STEPS = [
-    { id: 0, label: "Plan", icon: Shield, sub: "Confirm selection" },
-    { id: 1, label: "Account", icon: User, sub: "Your details" },
-    { id: 2, label: "Payment", icon: CreditCard, sub: "Billing info" },
-    { id: 3, label: "Done", icon: PartyPopper, sub: "You're in" },
-];
-
-/* ══════════════════ INPUT FIELD ══════════════════ */
-function Field({
-    label, icon: Icon, error, ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
-    label: string; icon: React.ElementType; error?: string;
-}) {
-    return (
-        <div className="flex-1">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                {label}
-            </label>
-            <div className={`relative glass rounded-xl overflow-hidden transition-all duration-300 focus-within:border-phause-cyan/60 focus-within:shadow-[0_0_25px_rgba(0,216,201,0.15)] ${error ? "border-red-400/50" : ""}`}>
-                <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-phause-cyan/70" />
-                <input
-                    {...props}
-                    className="w-full bg-transparent pl-11 pr-4 py-3.5 text-sm text-slate-200 placeholder-slate-500 outline-none"
-                />
-            </div>
-            {error && (
-                <motion.p
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-xs text-red-400 mt-1.5 flex items-center gap-1"
-                >
-                    <X className="w-3 h-3" /> {error}
-                </motion.p>
-            )}
-        </div>
-    );
-}
-
-/* ══════════════════ PROGRESS STEPPER ══════════════════ */
-function Stepper({ step, onJump }: { step: number; onJump: (s: number) => void }) {
-    return (
-        <div className="relative mb-12">
-            {/* Connector line */}
-            <div className="absolute top-7 left-[12%] right-[12%] h-[2px] bg-phause-border rounded-full overflow-hidden">
-                <motion.div
-                    className="h-full bg-gradient-to-r from-phause-cyan to-phause-teal"
-                    animate={{ width: `${(step / (STEPS.length - 1)) * 100}%` }}
-                    transition={{ duration: 0.6, ease: "easeInOut" }}
-                />
-            </div>
-            <div className="relative flex justify-between">
-                {STEPS.map((s, i) => {
-                    const done = i < step;
-                    const active = i === step;
-                    return (
-                        <div key={s.id} className="flex flex-col items-center gap-2 z-10 w-24">
-                            <motion.button
-                                onClick={() => done && onJump(i)}
-                                whileHover={done ? { scale: 1.12 } : {}}
-                                animate={{
-                                    scale: active ? 1.15 : 1,
-                                    boxShadow: active
-                                        ? "0 0 35px rgba(0,216,201,0.5)"
-                                        : done
-                                            ? "0 0 20px rgba(0,216,201,0.3)"
-                                            : "0 0 0 rgba(0,0,0,0)",
-                                }}
-                                className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-colors duration-300 ${done
-                                    ? "bg-gradient-to-br from-phause-cyan to-phause-teal cursor-pointer"
-                                    : active
-                                        ? "bg-gradient-to-br from-phause-cyan to-phause-teal"
-                                        : "glass border-phause-border"
-                                    }`}
-                            >
-                                {done ? (
-                                    <Check className="w-6 h-6 text-phause-dark" />
-                                ) : (
-                                    <s.icon className={`w-6 h-6 ${active ? "text-phause-dark" : "text-slate-500"}`} />
-                                )}
-                            </motion.button>
-                            <div className="text-center">
-                                <p className={`text-xs font-bold ${active ? "text-phause-cyan" : done ? "text-slate-300" : "text-slate-500"}`}>
-                                    {s.label}
-                                </p>
-                                <p className="text-[10px] text-slate-600 hidden sm:block">{s.sub}</p>
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        </div>
-    );
-}
-
-/* ══════════════════ STEP 0 : PLAN CONFIRMATION ══════════════════ */
-function StepPlan({
-    plan, cycle, onCycleChange, onNext,
-}: { plan: Plan; cycle: "monthly" | "yearly"; onCycleChange: (c: "monthly" | "yearly") => void; onNext: () => void }) {
-    const isCustom = plan.priceMonthly === null;
-    const price = cycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-6"
-        >
-            <div className="glass rounded-3xl p-8 relative overflow-hidden">
-                <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-phause-cyan/15 blur-[80px]" />
-                <div className="relative z-10">
-                    <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
-                        <div className="flex items-center gap-4">
-                            <motion.div
-                                animate={{ rotate: [0, 8, 0, -8, 0] }}
-                                transition={{ duration: 4, repeat: Infinity }}
-                                className="w-14 h-14 rounded-2xl bg-gradient-to-br from-phause-cyan to-phause-teal flex items-center justify-center shadow-[0_0_25px_rgba(0,216,201,0.4)]"
-                            >
-                                <ShieldCheck className="w-7 h-7 text-phause-dark" />
-                            </motion.div>
-                            <div>
-                                <h3 className="text-2xl font-extrabold">{plan.name}</h3>
-                                <p className="text-sm text-slate-400">{plan.tagline}</p>
-                            </div>
-                        </div>
-                        <a href={ROUTES.subscription} className="text-xs text-phause-cyan hover:underline flex items-center gap-1">
-                            <RefreshCcw className="w-3 h-3" /> Change plan
-                        </a>
-                    </div>
-
-                    {/* Billing cycle mini-toggle */}
-                    {!isCustom && (
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="glass rounded-full p-1 flex items-center gap-1">
-                                {(["monthly", "yearly"] as const).map((c) => (
-                                    <button
-                                        key={c}
-                                        onClick={() => onCycleChange(c)}
-                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all capitalize ${cycle === c ? "bg-phause-cyan/20 text-phause-cyan border border-phause-cyan/40" : "text-slate-400 hover:text-white"
-                                            }`}
-                                    >
-                                        {c}
-                                    </button>
-                                ))}
-                            </div>
-                            {cycle === "yearly" && (
-                                <span className="text-xs font-bold text-phause-teal bg-phause-teal/10 border border-phause-teal/30 px-3 py-1 rounded-full">
-                                    Save 20%
-                                </span>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Price breakdown */}
-                    <div className="rounded-2xl bg-phause-cyan/[0.05] border border-phause-cyan/15 p-6 space-y-3">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">{plan.name} — per endpoint</span>
-                            <span className="font-bold text-slate-200">
-                                {isCustom ? "Custom quote" : `$${price}.00`}
-                            </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Billing cycle</span>
-                            <span className="font-bold text-slate-200 capitalize">{cycle}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">14-day free trial</span>
-                            <span className="font-bold text-phause-teal">Included</span>
-                        </div>
-                        <div className="border-t border-phause-cyan/15 pt-3 flex justify-between">
-                            <span className="font-bold text-slate-200">Due today</span>
-                            <span className="font-black text-xl text-gradient">$0.00</span>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-5 text-xs text-slate-500">
-                        <Lock className="w-3.5 h-3.5 text-phause-cyan" />
-                        No charge until day 15. Cancel anytime with two clicks.
-                    </div>
-                </div>
-            </div>
-
-            <motion.button
-                onClick={onNext}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold shadow-[0_0_35px_rgba(0,216,201,0.4)] flex items-center justify-center gap-2"
-            >
-                Confirm Plan & Continue <ArrowRight className="w-5 h-5" />
-            </motion.button>
-        </motion.div>
-    );
-}
-
-/* ══════════════════ STEP 1 : ACCOUNT DETAILS ══════════════════ */
-function StepAccount({
-    form, setForm, errors, onNext, onBack,
-}: {
-    form: Record<string, string>;
-    setForm: (f: Record<string, string>) => void;
-    errors: Record<string, string>;
-    onNext: () => void; onBack: () => void;
-}) {
-    const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
-        setForm({ ...form, [k]: e.target.value });
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-6"
-        >
-            <div className="glass rounded-3xl p-8">
-                <h3 className="text-xl font-extrabold mb-1 flex items-center gap-2.5">
-                    <User className="w-5 h-5 text-phause-cyan" /> Account Details
-                </h3>
-                <p className="text-sm text-slate-500 mb-7">Tell us who you are — this becomes your admin account.</p>
-
-                <div className="space-y-5">
-                    <div className="flex flex-col sm:flex-row gap-5">
-                        <Field label="First Name" icon={User} placeholder="Sarah" value={form.firstName} onChange={set("firstName")} error={errors.firstName} />
-                        <Field label="Last Name" icon={User} placeholder="Mitchell" value={form.lastName} onChange={set("lastName")} error={errors.lastName} />
-                    </div>
-                    <Field label="Work Email" icon={Mail} type="email" placeholder="sarah@yourcompany.com" value={form.email} onChange={set("email")} error={errors.email} />
-                    <div className="flex flex-col sm:flex-row gap-5">
-                        <Field label="Company" icon={Building2} placeholder="Acme Corp" value={form.company} onChange={set("company")} error={errors.company} />
-                        <Field label="Phone (optional)" icon={Phone} type="tel" placeholder="+1 555 000 0000" value={form.phone} onChange={set("phone")} />
-                    </div>
-                    <Field label="Country" icon={MapPin} placeholder="United States" value={form.country} onChange={set("country")} error={errors.country} />
-                </div>
-            </div>
-
-            <div className="flex gap-4">
-                <motion.button
-                    onClick={onBack}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="px-7 py-4 rounded-2xl glass border border-phause-cyan/25 text-phause-cyan font-bold flex items-center gap-2"
-                >
-                    <ArrowLeft className="w-5 h-5" /> Back
-                </motion.button>
-                <motion.button
-                    onClick={onNext}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold shadow-[0_0_35px_rgba(0,216,201,0.4)] flex items-center justify-center gap-2"
-                >
-                    Continue to Payment <ArrowRight className="w-5 h-5" />
-                </motion.button>
-            </div>
-        </motion.div>
-    );
-}
-
-/* ══════════════════ STEP 2 : PAYMENT ══════════════════ */
-function StepPayment({
-    form, setForm, errors, onBack, onPay,
-}: {
-    form: Record<string, string>;
-    setForm: (f: Record<string, string>) => void;
-    errors: Record<string, string>;
-    onBack: () => void; onPay: () => void;
-}) {
-    const [showCvv, setShowCvv] = useState(false);
-    const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
-        setForm({ ...form, [k]: e.target.value });
-
-    const formatCard = (v: string) =>
-        v.replace(/\D/g, "").slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ");
-    const formatExp = (v: string) => {
-        const d = v.replace(/\D/g, "").slice(0, 4);
-        return d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d;
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: 60 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
-            transition={{ duration: 0.4 }}
-            className="space-y-6"
-        >
-            <div className="glass rounded-3xl p-8">
-                <h3 className="text-xl font-extrabold mb-1 flex items-center gap-2.5">
-                    <CreditCard className="w-5 h-5 text-phause-cyan" /> Payment Method
-                </h3>
-                <p className="text-sm text-slate-500 mb-7">
-                    You will not be charged until your 14-day trial ends on day 15.
-                </p>
-
-                <div className="space-y-5">
-                    <Field
-                        label="Cardholder Name" icon={User} placeholder="Name on card"
-                        value={form.cardName} onChange={set("cardName")} error={errors.cardName}
-                    />
-                    <Field
-                        label="Card Number" icon={CreditCard} placeholder="4242 4242 4242 4242" inputMode="numeric"
-                        value={form.cardNumber} onChange={(e) => setForm({ ...form, cardNumber: formatCard(e.target.value) })}
-                        error={errors.cardNumber}
-                    />
-                    <div className="flex flex-col sm:flex-row gap-5">
-                        <Field
-                            label="Expiry" icon={CreditCard} placeholder="MM/YY" inputMode="numeric"
-                            value={form.expiry} onChange={(e) => setForm({ ...form, expiry: formatExp(e.target.value) })}
-                            error={errors.expiry}
-                        />
-                        <div className="flex-1">
-                            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                                CVV
-                            </label>
-                            <div className={`relative glass rounded-xl overflow-hidden transition-all duration-300 focus-within:border-phause-cyan/60 ${errors.cvv ? "border-red-400/50" : ""}`}>
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-phause-cyan/70" />
-                                <input
-                                    type={showCvv ? "text" : "password"}
-                                    inputMode="numeric"
-                                    placeholder="•••"
-                                    maxLength={4}
-                                    value={form.cvv}
-                                    onChange={(e) => setForm({ ...form, cvv: e.target.value.replace(/\D/g, "") })}
-                                    className="w-full bg-transparent pl-11 pr-12 py-3.5 text-sm text-slate-200 placeholder-slate-500 outline-none"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCvv(!showCvv)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-phause-cyan transition-colors"
-                                >
-                                    {showCvv ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
-                            </div>
-                            {errors.cvv && (
-                                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-red-400 mt-1.5 flex items-center gap-1">
-                                    <X className="w-3 h-3" /> {errors.cvv}
-                                </motion.p>
-                            )}
-                        </div>
-                    </div>
-                    <Field label="Billing ZIP / Postal Code" icon={MapPin} placeholder="94103" value={form.zip} onChange={set("zip")} error={errors.zip} />
-                </div>
-
-                <div className="flex items-center gap-2.5 mt-7 p-4 rounded-2xl bg-phause-cyan/[0.06] border border-phause-cyan/15 text-xs text-slate-400">
-                    <Fingerprint className="w-5 h-5 text-phause-cyan shrink-0" />
-                    Payments are processed over TLS 1.3 with tokenized card storage. Phause never sees or stores your full card number.
-                </div>
-            </div>
-
-            <div className="flex gap-4">
-                <motion.button
-                    onClick={onBack}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="px-7 py-4 rounded-2xl glass border border-phause-cyan/25 text-phause-cyan font-bold flex items-center gap-2"
-                >
-                    <ArrowLeft className="w-5 h-5" /> Back
-                </motion.button>
-                <motion.button
-                    onClick={onPay}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold shadow-[0_0_35px_rgba(0,216,201,0.4)] flex items-center justify-center gap-2"
-                >
-                    <Lock className="w-4 h-4" /> Start Free Trial
-                </motion.button>
-            </div>
-        </motion.div>
-    );
-}
-
-/* ══════════════════ STEP 3 : SUCCESS ══════════════════ */
-function StepSuccess({ plan, form }: { plan: Plan; form: Record<string, string> }) {
-    return (
-        <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="glass rounded-3xl p-10 text-center relative overflow-hidden"
-        >
-            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-72 h-72 rounded-full bg-phause-cyan/20 blur-[90px]" />
-            <div className="relative z-10">
-                <motion.div
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
-                    className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-phause-cyan to-phause-teal flex items-center justify-center shadow-[0_0_60px_rgba(0,216,201,0.6)] mb-7"
-                >
-                    <Check className="w-12 h-12 text-phause-dark" strokeWidth={3} />
-                </motion.div>
-                <motion.h3
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="text-3xl font-black mb-3"
-                >
-                    Welcome aboard, <span className="text-gradient">{form.firstName || "Sentinel"}</span>
-                </motion.h3>
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.55 }}
-                    className="text-slate-400 max-w-md mx-auto mb-8"
-                >
-                    Your <strong className="text-phause-cyan">{plan.name}</strong> trial is active.
-                    Deployment instructions are on their way to <strong className="text-slate-200">{form.email}</strong>.
-                </motion.p>
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.7 }}
-                    className="grid grid-cols-3 gap-3 max-w-md mx-auto mb-9"
-                >
-                    {[
-                        { icon: Zap, label: "Agent deploys in ~3 min" },
-                        { icon: ShieldCheck, label: "Protection live instantly" },
-                        { icon: Headset, label: "SOC watching from hour one" },
-                    ].map((x) => (
-                        <div key={x.label} className="rounded-2xl bg-phause-cyan/[0.06] border border-phause-cyan/15 p-4">
-                            <x.icon className="w-5 h-5 text-phause-cyan mx-auto mb-2" />
-                            <p className="text-[11px] text-slate-400 leading-tight">{x.label}</p>
-                        </div>
-                    ))}
-                </motion.div>
-                <motion.a
-                    href={ROUTES.subscription}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.85 }}
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="inline-flex items-center gap-2 px-9 py-4 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold shadow-[0_0_40px_rgba(0,216,201,0.5)]"
-                >
-                    Go to Dashboard <ArrowRight className="w-5 h-5" />
-                </motion.a>
-            </div>
-        </motion.div>
-    );
-}
-
-/* ══════════════════ ORDER SUMMARY SIDEBAR ══════════════════ */
-function OrderSummary({ plan, cycle }: { plan: Plan; cycle: "monthly" | "yearly" }) {
-    const isCustom = plan.priceMonthly === null;
-    const price = cycle === "monthly" ? plan.priceMonthly : plan.priceYearly;
-
-    return (
-        <motion.aside
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:sticky lg:top-24"
-        >
-            <div className="glass rounded-3xl p-7 relative overflow-hidden">
-                <div className="absolute -bottom-16 -right-16 w-48 h-48 rounded-full bg-phause-cyan/12 blur-[70px]" />
-                <div className="relative z-10">
-                    <h4 className="text-sm font-black uppercase tracking-widest text-phause-cyan mb-5 flex items-center gap-2">
-                        <FileText className="w-4 h-4" /> Order Summary
-                    </h4>
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-phause-cyan to-phause-teal flex items-center justify-center">
-                            <Shield className="w-5 h-5 text-phause-dark" />
-                        </div>
-                        <div>
-                            <p className="font-bold">{plan.name}</p>
-                            <p className="text-xs text-slate-500 capitalize">{cycle} billing · 14-day trial</p>
-                        </div>
-                    </div>
-                    <div className="space-y-2.5 text-sm border-t border-phause-border/60 pt-4">
-                        <div className="flex justify-between text-slate-400">
-                            <span>Plan (per endpoint)</span>
-                            <span className="text-slate-200 font-bold">{isCustom ? "Custom" : `$${price}.00`}</span>
-                        </div>
-                        <div className="flex justify-between text-slate-400">
-                            <span>Trial period</span>
-                            <span className="text-phause-teal font-bold">14 days free</span>
-                        </div>
-                        <div className="flex justify-between text-slate-400">
-                            <span>Setup fee</span>
-                            <span className="text-slate-200 font-bold">$0.00</span>
-                        </div>
-                        <div className="border-t border-phause-border/60 pt-3 flex justify-between font-black text-lg">
-                            <span>Due today</span>
-                            <span className="text-gradient">$0.00</span>
-                        </div>
-                    </div>
-                    <div className="mt-6 space-y-2.5">
-                        {[
-                            { icon: BadgeCheck, text: "SOC 2 Type II certified platform" },
-                            { icon: Lock, text: "256-bit encrypted checkout" },
-                            { icon: RefreshCcw, text: "Cancel anytime, no lock-in" },
-                        ].map((row) => (
-                            <div key={row.text} className="flex items-center gap-2.5 text-xs text-slate-400">
-                                <row.icon className="w-3.5 h-3.5 text-phause-cyan shrink-0" /> {row.text}
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        </motion.aside>
-    );
-}
-
-/* ══════════════════ CHECKOUT PAGE ══════════════════ */
 function CheckoutInner() {
     const searchParams = useSearchParams();
-    const selectedPlan = PLANS.find((item) => item.id === searchParams.get("plan")) ?? PLANS[2];
-    const selectedCycle = searchParams.get("cycle");
-    const [plan] = useState<Plan>(selectedPlan);
-    const [cycle, setCycle] = useState<"monthly" | "yearly">(
-        selectedCycle === "monthly" || selectedCycle === "yearly" ? selectedCycle : "yearly",
-    );
-    const [step, setStep] = useState(0);
-    const [paying, setPaying] = useState(false);
-    const [form, setForm] = useState<Record<string, string>>({
-        firstName: "", lastName: "", email: "", company: "", phone: "",
-        country: "", cardName: "", cardNumber: "", expiry: "", cvv: "", zip: "",
-    });
-    const [errors, setErrors] = useState<Record<string, string>>({});
+    const router = useRouter();
 
-    const validateStep1 = () => {
-        const e: Record<string, string> = {};
-        if (!form.firstName.trim()) e.firstName = "First name is required";
-        if (!form.lastName.trim()) e.lastName = "Last name is required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid work email";
-        if (!form.company.trim()) e.company = "Company is required";
-        if (!form.country.trim()) e.country = "Country is required";
-        setErrors(e);
-        return Object.keys(e).length === 0;
+    const planId = searchParams.get("plan");
+
+    const [plan, setPlan] = useState<SubscriptionPlanResponse | null>(null);
+    const [provider, setProvider] = useState<PaymentProvider>("stripe");
+
+    const [loadingPlan, setLoadingPlan] = useState(true);
+    const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+    const [error, setError] = useState("");
+    const [step, setStep] = useState<"plan" | "payment">("plan");
+
+    const price = useMemo(() => {
+        if (!plan) return "";
+
+        return formatCurrency(plan.price, plan.currency);
+    }, [plan]);
+
+    const fetchSelectedPlan = useCallback(async () => {
+        if (!planId) {
+            setError("No subscription plan was selected. Please select a plan first.");
+            setLoadingPlan(false);
+            return;
+        }
+
+        setLoadingPlan(true);
+        setError("");
+
+        try {
+            // Fetch the current plans from the existing plans API.
+            // This avoids calling the missing /api/plans/[id] route.
+            const plans = await planService.getPlans();
+
+            const selectedPlan = plans.find(
+                (item) => item.id === planId && item.isActive,
+            );
+
+            if (!selectedPlan) {
+                setPlan(null);
+                setError(
+                    "This plan is no longer available. Please return to the subscription page and choose another plan.",
+                );
+                return;
+            }
+
+            setPlan(selectedPlan);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Unable to load the selected subscription plan.",
+            );
+        } finally {
+            setLoadingPlan(false);
+        }
+    }, [planId]);
+
+    useEffect(() => {
+        void fetchSelectedPlan();
+    }, [fetchSelectedPlan]);
+
+    const handleCheckout = async () => {
+        if (!plan) {
+            setError("Please select a valid subscription plan.");
+            return;
+        }
+
+        const token = getToken();
+
+        if (!token) {
+            setError(
+                "Your session could not be verified. Please sign in again before continuing to checkout.",
+            );
+            return;
+        }
+
+        setCheckoutLoading(true);
+        setError("");
+
+        try {
+            const response = await fetch("/api/subscriptions/checkout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    planId: plan.id,
+                    provider,
+                }),
+            });
+
+            const result: unknown = await response.json().catch(() => null);
+
+            if (!response.ok) {
+                throw new Error(getErrorMessage(result));
+            }
+
+            const checkoutUrl = getCheckoutUrl(result);
+
+            if (!checkoutUrl || !isSafeCheckoutUrl(checkoutUrl)) {
+                throw new Error(
+                    "The checkout service did not return a valid payment URL. Please contact support.",
+                );
+            }
+
+            // Redirect to the hosted payment page returned by the backend.
+            window.location.assign(checkoutUrl);
+        } catch (err) {
+            setError(
+                err instanceof Error
+                    ? err.message
+                    : "Unable to start checkout. Please try again.",
+            );
+
+            setCheckoutLoading(false);
+        }
     };
 
-    const validateStep2 = () => {
-        const e: Record<string, string> = {};
-        if (!form.cardName.trim()) e.cardName = "Name on card is required";
-        if (form.cardNumber.replace(/\s/g, "").length !== 16) e.cardNumber = "Enter a valid 16-digit card number";
-        if (!/^\d{2}\/\d{2}$/.test(form.expiry)) e.expiry = "Use MM/YY format";
-        if (form.cvv.length < 3) e.cvv = "Invalid CVV";
-        if (!form.zip.trim()) e.zip = "ZIP is required";
-        setErrors(e);
-        return Object.keys(e).length === 0;
-    };
+    if (loadingPlan) {
+        return <LoadingScreen message="Loading your selected plan..." />;
+    }
 
-    const handlePay = () => {
-        if (!validateStep2()) return;
-        setPaying(true);
-        setTimeout(() => {
-            setPaying(false);
-            setStep(3);
-        }, 1800);
-    };
+    if (!plan) {
+        return (
+            <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-phause-dark px-6 py-20 text-white">
+                <GridBackground />
+
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="glass relative z-10 w-full max-w-lg rounded-3xl p-8 text-center"
+                >
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-red-400/20 bg-red-400/10">
+                        <X className="h-8 w-8 text-red-400" />
+                    </div>
+
+                    <h1 className="text-2xl font-black">
+                        Plan unavailable
+                    </h1>
+
+                    <p className="mt-3 text-sm leading-6 text-slate-400">
+                        {error || "We could not find the selected subscription plan."}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={() => router.push(ROUTES.subscription)}
+                        className="mt-7 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-phause-cyan to-phause-teal px-6 py-3 font-bold text-phause-dark transition hover:scale-[1.02]"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to plans
+                    </button>
+                </motion.div>
+            </main>
+        );
+    }
 
     return (
-        <div className="relative min-h-screen pt-28 pb-20">
+        <main className="relative min-h-screen overflow-hidden bg-phause-dark pb-20 pt-28 text-white">
             <GridBackground />
-            <ParticleField />
-            <div className="relative z-10 max-w-6xl mx-auto px-6">
+
+            <div className="pointer-events-none fixed inset-0 z-0">
+                {Array.from({ length: 20 }).map((_, index) => (
+                    <motion.span
+                        key={index}
+                        className="absolute h-1 w-1 rounded-full bg-phause-cyan"
+                        style={{
+                            left: `${(index * 37) % 100}%`,
+                            top: `${(index * 53) % 100}%`,
+                            opacity: 0.35,
+                        }}
+                        animate={{
+                            y: [0, -35, 0],
+                            opacity: [0.1, 0.65, 0.1],
+                        }}
+                        transition={{
+                            duration: 3 + (index % 5),
+                            repeat: Infinity,
+                            delay: (index % 7) * 0.5,
+                        }}
+                    />
+                ))}
+            </div>
+
+            <div className="relative z-10 mx-auto max-w-6xl px-5 sm:px-6">
                 {/* Header */}
                 <motion.div
-                    initial={{ opacity: 0, y: 30 }}
+                    initial={{ opacity: 0, y: 25 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-12"
+                    className="mb-12 text-center"
                 >
-                    <motion.a
-                        href={ROUTES.subscription}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="inline-flex items-center gap-1.5 text-sm text-phause-cyan hover:underline mb-5"
+                    <button
+                        type="button"
+                        onClick={() => router.push(ROUTES.subscription)}
+                        className="mb-6 inline-flex items-center gap-2 text-sm text-phause-cyan transition hover:text-white"
                     >
-                        <ArrowLeft className="w-4 h-4" /> Back to plans
-                    </motion.a>
-                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-sm text-phause-cyan mb-6">
-                        <Sparkles className="w-4 h-4" /> Secure Checkout
+                        <ArrowLeft className="h-4 w-4" />
+                        Back to plans
+                    </button>
+
+                    <div className="mb-6 inline-flex items-center gap-2 rounded-full glass px-5 py-2 text-sm text-phause-cyan">
+                        <Sparkles className="h-4 w-4" />
+                        Secure Checkout
                     </div>
-                    <h1 className="text-4xl md:text-6xl font-black mb-4">
-                        Almost <span className="text-gradient">protected</span>
+
+                    <h1 className="text-4xl font-black md:text-6xl">
+                        Almost{" "}
+                        <span className="text-gradient">there.</span>
                     </h1>
-                    <p className="text-slate-400 max-w-xl mx-auto">
-                        Four quick steps between you and the strongest defense grid in the industry.
+
+                    <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:text-base">
+                        Review your subscription and continue to our secure
+                        payment provider to complete your purchase.
                     </p>
                 </motion.div>
 
-                <div className="grid lg:grid-cols-[1fr_360px] gap-10 items-start">
+                <div className="grid items-start gap-8 lg:grid-cols-[1fr_360px] lg:gap-10">
+                    {/* Main checkout content */}
                     <div>
-                        {step < 3 && <Stepper step={step} onJump={setStep} />}
+                        {/* Progress */}
+                        <div className="mb-9 flex items-center justify-center gap-4 sm:gap-8">
+                            {[
+                                { id: "plan", label: "Review plan" },
+                                { id: "payment", label: "Payment" },
+                            ].map((item, index) => {
+                                const active = step === item.id;
+                                const completed =
+                                    step === "payment" && item.id === "plan";
+
+                                return (
+                                    <div
+                                        key={item.id}
+                                        className="flex items-center gap-3"
+                                    >
+                                        <div
+                                            className={`flex h-10 w-10 items-center justify-center rounded-xl border transition-all ${
+                                                active || completed
+                                                    ? "border-phause-cyan/40 bg-phause-cyan/15 text-phause-cyan shadow-[0_0_25px_rgba(0,216,201,0.15)]"
+                                                    : "border-phause-border bg-white/[0.03] text-slate-500"
+                                            }`}
+                                        >
+                                            {completed ? (
+                                                <Check className="h-5 w-5" />
+                                            ) : (
+                                                <span className="text-sm font-bold">
+                                                    {index + 1}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <span
+                                            className={`text-xs font-bold sm:text-sm ${
+                                                active || completed
+                                                    ? "text-phause-cyan"
+                                                    : "text-slate-500"
+                                            }`}
+                                        >
+                                            {item.label}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
                         <AnimatePresence mode="wait">
-                            {step === 0 && (
-                                <StepPlan plan={plan} cycle={cycle} onCycleChange={setCycle} onNext={() => setStep(1)} />
+                            {step === "plan" ? (
+                                <motion.section
+                                    key="plan"
+                                    initial={{ opacity: 0, x: 35 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -35 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="glass relative overflow-hidden rounded-3xl p-6 sm:p-8"
+                                >
+                                    <div className="absolute -right-20 -top-20 h-56 w-56 rounded-full bg-phause-cyan/10 blur-[80px]" />
+
+                                    <div className="relative z-10">
+                                        <div className="mb-7 flex flex-wrap items-center justify-between gap-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-phause-cyan to-phause-teal shadow-[0_0_25px_rgba(0,216,201,0.25)]">
+                                                    <ShieldCheck className="h-7 w-7 text-phause-dark" />
+                                                </div>
+
+                                                <div>
+                                                    <p className="text-xs font-bold uppercase tracking-widest text-phause-cyan">
+                                                        Selected plan
+                                                    </p>
+                                                    <h2 className="mt-1 text-2xl font-black">
+                                                        {plan.name}
+                                                    </h2>
+                                                </div>
+                                            </div>
+
+                                            <span className="rounded-full border border-phause-teal/30 bg-phause-teal/10 px-3 py-1.5 text-xs font-bold text-phause-teal">
+                                                {plan.billingCycle}
+                                            </span>
+                                        </div>
+
+                                        <p className="mb-7 text-sm leading-6 text-slate-400">
+                                            {plan.description}
+                                        </p>
+
+                                        <div className="space-y-4 rounded-2xl border border-phause-cyan/15 bg-phause-cyan/[0.045] p-5 sm:p-6">
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-slate-400">
+                                                    Subscription price
+                                                </span>
+
+                                                <span className="text-xl font-black text-white">
+                                                    {price}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-slate-400">
+                                                    Billing cycle
+                                                </span>
+
+                                                <span className="text-sm font-bold text-slate-200">
+                                                    {plan.billingCycle}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-slate-400">
+                                                    Free trial
+                                                </span>
+
+                                                <span className="text-sm font-bold text-phause-teal">
+                                                    {plan.trialDays > 0
+                                                        ? `${plan.trialDays} days`
+                                                        : "Not included"}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-slate-400">
+                                                    Maximum campaigns
+                                                </span>
+
+                                                <span className="text-sm font-bold text-slate-200">
+                                                    {plan.maxCampaigns === 0
+                                                        ? "Unlimited"
+                                                        : plan.maxCampaigns.toLocaleString()}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between gap-4">
+                                                <span className="text-sm text-slate-400">
+                                                    Maximum users
+                                                </span>
+
+                                                <span className="text-sm font-bold text-slate-200">
+                                                    {plan.maxUsers === 0
+                                                        ? "Unlimited"
+                                                        : plan.maxUsers.toLocaleString()}
+                                                </span>
+                                            </div>
+
+                                            <div className="border-t border-phause-cyan/15 pt-4">
+                                                <div className="flex items-center justify-between gap-4">
+                                                    <span className="font-bold text-slate-200">
+                                                        Plan total
+                                                    </span>
+
+                                                    <span className="text-2xl font-black text-gradient">
+                                                        {price}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="mt-6 flex items-start gap-3 rounded-2xl border border-phause-cyan/10 bg-white/[0.025] p-4">
+                                            <Lock className="mt-0.5 h-4 w-4 shrink-0 text-phause-cyan" />
+
+                                            <p className="text-xs leading-5 text-slate-400">
+                                                Your payment will be handled by
+                                                the selected payment provider.
+                                                Phause does not ask you to enter
+                                                your card details on this page.
+                                            </p>
+                                        </div>
+
+                                        <motion.button
+                                            type="button"
+                                            onClick={() => {
+                                                setError("");
+                                                setStep("payment");
+                                            }}
+                                            whileHover={{ scale: 1.015 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            className="mt-7 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal py-4 font-bold text-phause-dark shadow-[0_0_35px_rgba(0,216,201,0.25)] transition-shadow hover:shadow-[0_0_45px_rgba(0,216,201,0.4)]"
+                                        >
+                                            Continue to payment
+                                            <ArrowRight className="h-5 w-5" />
+                                        </motion.button>
+                                    </div>
+                                </motion.section>
+                            ) : (
+                                <motion.section
+                                    key="payment"
+                                    initial={{ opacity: 0, x: 35 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -35 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="glass rounded-3xl p-6 sm:p-8"
+                                >
+                                    <div className="mb-7 flex items-center gap-3">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-phause-cyan/20 bg-phause-cyan/10">
+                                            <CreditCard className="h-6 w-6 text-phause-cyan" />
+                                        </div>
+
+                                        <div>
+                                            <h2 className="text-xl font-black">
+                                                Select payment provider
+                                            </h2>
+
+                                            <p className="mt-1 text-xs text-slate-500">
+                                                Choose how you want to complete
+                                                your payment.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                        {PROVIDERS.map((item) => {
+                                            const selected =
+                                                provider === item.id;
+
+                                            return (
+                                                <button
+                                                    key={item.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setProvider(item.id);
+                                                        setError("");
+                                                    }}
+                                                    className={`flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left transition-all ${
+                                                        selected
+                                                            ? "border-phause-cyan/50 bg-phause-cyan/[0.09] shadow-[0_0_25px_rgba(0,216,201,0.08)]"
+                                                            : "border-white/[0.08] bg-white/[0.025] hover:border-phause-cyan/25 hover:bg-white/[0.045]"
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div
+                                                            className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                                                                selected
+                                                                    ? "bg-phause-cyan/15 text-phause-cyan"
+                                                                    : "bg-white/[0.05] text-slate-400"
+                                                            }`}
+                                                        >
+                                                            <CreditCard className="h-5 w-5" />
+                                                        </div>
+
+                                                        <div>
+                                                            <p className="font-bold text-white">
+                                                                {item.name}
+                                                            </p>
+
+                                                            <p className="mt-1 text-xs text-slate-500">
+                                                                {item.description}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    <div
+                                                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                                                            selected
+                                                                ? "border-phause-cyan bg-phause-cyan"
+                                                                : "border-slate-600"
+                                                        }`}
+                                                    >
+                                                        {selected && (
+                                                            <Check className="h-3 w-3 text-phause-dark" />
+                                                        )}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {error && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -5 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="mt-5 flex items-start gap-2 rounded-xl border border-red-400/20 bg-red-400/[0.07] p-4 text-sm text-red-300"
+                                            role="alert"
+                                        >
+                                            <X className="mt-0.5 h-4 w-4 shrink-0" />
+                                            <span>{error}</span>
+                                        </motion.div>
+                                    )}
+
+                                    <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setError("");
+                                                setStep("plan");
+                                            }}
+                                            disabled={checkoutLoading}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-phause-cyan/25 px-6 py-4 font-bold text-phause-cyan transition hover:bg-phause-cyan/5 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            <ArrowLeft className="h-4 w-4" />
+                                            Back
+                                        </button>
+
+                                        <motion.button
+                                            type="button"
+                                            onClick={handleCheckout}
+                                            disabled={checkoutLoading}
+                                            whileHover={
+                                                checkoutLoading
+                                                    ? undefined
+                                                    : { scale: 1.015 }
+                                            }
+                                            whileTap={
+                                                checkoutLoading
+                                                    ? undefined
+                                                    : { scale: 0.98 }
+                                            }
+                                            className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal py-4 font-bold text-phause-dark shadow-[0_0_35px_rgba(0,216,201,0.25)] transition disabled:cursor-not-allowed disabled:opacity-70"
+                                        >
+                                            {checkoutLoading ? (
+                                                <>
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+                                                    Creating secure checkout...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Continue to {provider}
+                                                    <ExternalLink className="h-4 w-4" />
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    </div>
+
+                                    <div className="mt-6 flex items-center justify-center gap-2 text-xs text-slate-500">
+                                        <Shield className="h-4 w-4 text-phause-teal" />
+                                        Secure payment handled by {provider}.
+                                    </div>
+                                </motion.section>
                             )}
-                            {step === 1 && (
-                                <StepAccount
-                                    form={form} setForm={setForm} errors={errors}
-                                    onNext={() => { if (validateStep1()) setStep(2); }}
-                                    onBack={() => setStep(0)}
-                                />
-                            )}
-                            {step === 2 && (
-                                <StepPayment
-                                    form={form} setForm={setForm} errors={errors}
-                                    onBack={() => setStep(1)}
-                                    onPay={handlePay}
-                                />
-                            )}
-                            {step === 3 && <StepSuccess plan={plan} form={form} />}
                         </AnimatePresence>
                     </div>
-                    {step < 3 && <OrderSummary plan={plan} cycle={cycle} />}
+
+                    {/* Order summary */}
+                    <motion.aside
+                        initial={{ opacity: 0, x: 30 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.5, delay: 0.15 }}
+                        className="lg:sticky lg:top-24"
+                    >
+                        <div className="glass relative overflow-hidden rounded-3xl p-6 sm:p-7">
+                            <div className="absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-phause-cyan/10 blur-[70px]" />
+
+                            <div className="relative z-10">
+                                <h3 className="mb-6 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-phause-cyan">
+                                    <BadgeCheck className="h-4 w-4" />
+                                    Order summary
+                                </h3>
+
+                                <div className="mb-6 flex items-center gap-3">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-phause-cyan to-phause-teal">
+                                        <Shield className="h-5 w-5 text-phause-dark" />
+                                    </div>
+
+                                    <div className="min-w-0">
+                                        <p className="truncate font-bold text-white">
+                                            {plan.name}
+                                        </p>
+
+                                        <p className="text-xs text-slate-500">
+                                            {plan.billingCycle} subscription
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3 border-t border-phause-border/60 pt-5 text-sm">
+                                    <div className="flex justify-between gap-3 text-slate-400">
+                                        <span>Plan price</span>
+                                        <span className="font-bold text-slate-200">
+                                            {price}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between gap-3 text-slate-400">
+                                        <span>Trial period</span>
+                                        <span className="font-bold text-phause-teal">
+                                            {plan.trialDays > 0
+                                                ? `${plan.trialDays} days`
+                                                : "None"}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between gap-3 text-slate-400">
+                                        <span>Payment provider</span>
+                                        <span className="font-bold capitalize text-slate-200">
+                                            {provider}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between gap-3 border-t border-phause-border/60 pt-4 text-base font-black">
+                                        <span>Total</span>
+                                        <span className="text-gradient">
+                                            {price}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="mt-7 space-y-3">
+                                    {[
+                                        "Secure hosted payment page",
+                                        "Encrypted payment processing",
+                                        "Subscription managed by Phause",
+                                    ].map((item) => (
+                                        <div
+                                            key={item}
+                                            className="flex items-center gap-2.5 text-xs text-slate-400"
+                                        >
+                                            <Check className="h-4 w-4 shrink-0 text-phause-teal" />
+                                            {item}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.aside>
                 </div>
             </div>
 
-            {/* Paying overlay */}
+            {/* Checkout loading overlay */}
             <AnimatePresence>
-                {paying && (
+                {checkoutLoading && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-phause-dark/80 backdrop-blur-md flex items-center justify-center"
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-phause-dark/80 px-5 backdrop-blur-md"
                     >
                         <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="glass rounded-3xl p-10 text-center"
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="glass w-full max-w-sm rounded-3xl p-9 text-center"
                         >
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                className="w-14 h-14 mx-auto mb-5 rounded-full border-4 border-phause-cyan/20 border-t-phause-cyan"
-                            />
-                            <p className="font-bold text-lg">Securing your trial…</p>
-                            <p className="text-sm text-slate-500 mt-1">Provisioning your Sentinel grid</p>
+                            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-phause-cyan/20 bg-phause-cyan/10">
+                                <Loader2 className="h-8 w-8 animate-spin text-phause-cyan" />
+                            </div>
+
+                            <h3 className="text-xl font-black">
+                                Preparing secure checkout
+                            </h3>
+
+                            <p className="mt-2 text-sm leading-6 text-slate-400">
+                                Connecting to {provider} and creating your
+                                payment session. Please do not close this page.
+                            </p>
                         </motion.div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
+        </main>
     );
 }
 
@@ -699,12 +854,7 @@ export default function CheckoutPage() {
     return (
         <Suspense
             fallback={
-                <main className="flex min-h-screen items-center justify-center bg-phause-dark px-6 text-white">
-                    <div className="glass flex items-center gap-3 rounded-2xl px-6 py-4" role="status">
-                        <Loader2 className="h-5 w-5 animate-spin text-phause-cyan" />
-                        <span className="text-sm text-slate-300">Loading secure checkout…</span>
-                    </div>
-                </main>
+                <LoadingScreen message="Loading secure checkout..." />
             }
         >
             <CheckoutInner />
