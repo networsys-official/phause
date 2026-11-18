@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { hasCmsRequestAccess, hasCmsRoleAccess, isAdminManagementPath, isPublicCmsReadRoute } from "@/lib/cms-access";
 
-if (!process.env.AUTH_SECRET) {
+const localAuthSecret = "local-test-secret";
+
+if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
   throw new Error("AUTH_SECRET is required for authentication.");
 }
 
@@ -21,7 +23,7 @@ export async function proxy(request: NextRequest) {
 
   const token = await getToken({
     req: request,
-    secret: process.env.AUTH_SECRET,
+    secret: process.env.AUTH_SECRET ?? localAuthSecret,
   });
 
   if (!token && hasCmsRequestAccess(request.headers)) {

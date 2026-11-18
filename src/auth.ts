@@ -7,7 +7,9 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { passwordMeetsRequirements } from "@/lib/security";
 import { logger } from "@/shared/lib/logger";
 
-if (!process.env.AUTH_SECRET) {
+const localAuthSecret = "local-test-secret";
+
+if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
   throw new Error("AUTH_SECRET is required for authentication.");
 }
 
@@ -23,7 +25,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     error: "/auth/login",
   },
   trustHost: true,
-  secret: process.env.AUTH_SECRET,
+  secret: process.env.AUTH_SECRET ?? localAuthSecret,
   providers: [
     Credentials({
       name: "Credentials",

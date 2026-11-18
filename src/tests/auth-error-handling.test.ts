@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { canAccessCmsPage } from "@/lib/cms-access";
 import { mapAuthError, normalizeAuthErrorKey } from "@/lib/auth-errors";
 
 describe("Auth error handling", () => {
@@ -41,5 +42,12 @@ describe("Auth error handling", () => {
     expect(mapAuthError("session_required")).toBe("Please sign in to continue.");
     expect(mapAuthError("invalid_credentials")).toBe("Invalid email or password.\n\nPlease check your credentials and try again.");
     expect(mapAuthError("AccessDenied")).toBe("Access denied. Your account does not have permission to access this resource.");
+  });
+
+  it("allows CMS access on localhost without a signed-in session", () => {
+    expect(canAccessCmsPage(null, "127.0.0.1:3000")).toBe(true);
+    expect(canAccessCmsPage(null, "localhost:3000")).toBe(true);
+    expect(canAccessCmsPage({ role: "VIEWER" }, "example.com")).toBe(true);
+    expect(canAccessCmsPage(null, "example.com")).toBe(false);
   });
 });

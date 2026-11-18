@@ -38,6 +38,14 @@ export function isPublicCmsReadRoute(pathname: string, method: string): boolean 
   return pathname === "/api/cms/pages" || pathname === "/api/cms/blog" || pathname === "/api/cms/faqs" || pathname === "/api/cms/media";
 }
 
+export function canAccessCmsPage(sessionUser?: { role?: string | null } | null, hostname?: string | null): boolean {
+  if (!sessionUser) {
+    return isLocalCmsHost(hostname);
+  }
+
+  return hasCmsRoleAccess("/cms", sessionUser.role ?? null);
+}
+
 export function isLocalCmsHost(hostname: string | null | undefined): boolean {
   if (!hostname) {
     return false;

@@ -130,6 +130,38 @@ function normalizeBlockRecord(block: { id: string; type: string; order: number; 
   };
 }
 
+export function normalizeEditableSectionItems(sectionType: string, items: unknown): Array<Record<string, unknown>> {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items.map((item, index) => {
+    if (!item || typeof item !== "object") {
+      return { id: `item-${index + 1}` };
+    }
+
+    const record = { ...(item as Record<string, unknown>) };
+    const normalizedType = String(sectionType ?? "").toLowerCase();
+
+    const title = typeof record.title === "string" ? record.title : typeof record.label === "string" ? record.label : typeof record.name === "string" ? record.name : "";
+    const description = typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "";
+    const question = typeof record.question === "string" ? record.question : typeof record.q === "string" ? record.q : "";
+    const answer = typeof record.answer === "string" ? record.answer : typeof record.a === "string" ? record.a : "";
+    const icon = typeof record.icon === "string" ? record.icon : "";
+
+    return {
+      ...record,
+      id: typeof record.id === "string" ? record.id : `item-${index + 1}`,
+      title,
+      description,
+      question,
+      answer,
+      icon,
+      ...(normalizedType === "faq" ? { title: question, description: answer } : {}),
+    };
+  });
+}
+
 export function PageSectionEditor({ page, blocks, media }: { page: { id: string; slug: string; title: string; status: string }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>; media: Array<{ id: string; title: string; url: string; mimeType: string }> }) {
   const router = useRouter();
   const initialSectionsRef = useRef(blocks.map((block) => normalizeBlockRecord(block)));
@@ -196,6 +228,77 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           props: {
             ...section.props,
             details: nextDetails,
+          },
+        };
+      }),
+    );
+    setHasUnsavedChanges(true);
+    setMessage("");
+  };
+
+  const updateSectionItem = (id: string, itemIndex: number, field: string, value: string) => {
+    setSections((current) =>
+      current.map((section) => {
+        if (section.id !== id) return section;
+
+        const nextItems = normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, index) => {
+          if (index !== itemIndex) return item;
+          return { ...item, [field]: value };
+        });
+
+        return {
+          ...section,
+          props: {
+            ...section.props,
+            items: nextItems,
+          },
+        };
+      }),
+    );
+    setHasUnsavedChanges(true);
+    setMessage("");
+  };
+
+  const addSectionItem = (id: string) => {
+    setSections((current) =>
+      current.map((section) => {
+        if (section.id !== id) return section;
+
+        const nextItems = normalizeEditableSectionItems(String(section.type ?? ""), section.props.items);
+        const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+        nextItems.push({
+          id: `item-${nextItems.length + 1}`,
+          title: isFaq ? "New question" : "New item",
+          description: isFaq ? "Add answer" : "Add description",
+          question: isFaq ? "New question" : "",
+          answer: isFaq ? "Add answer" : "",
+          icon: "",
+        });
+
+        return {
+          ...section,
+          props: {
+            ...section.props,
+            items: nextItems,
+          },
+        };
+      }),
+    );
+    setHasUnsavedChanges(true);
+    setMessage("");
+  };
+
+  const removeSectionItem = (id: string, itemIndex: number) => {
+    setSections((current) =>
+      current.map((section) => {
+        if (section.id !== id) return section;
+
+        const nextItems = normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).filter((_, index) => index !== itemIndex);
+        return {
+          ...section,
+          props: {
+            ...section.props,
+            items: nextItems,
           },
         };
       }),
@@ -338,6 +441,7 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
       };
 
       await requestJson("/api/cms/pages", "PUT", payload);
+      window.localStorage.setItem("phause:cms-page-updated", String(Date.now()));
       setSaveState("success");
       setHasUnsavedChanges(false);
       initialSectionsRef.current = sections.map((section) => ({ ...section }));
@@ -473,6 +577,72 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
               {errors[section.id]?.buttonLink ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].buttonLink}</span> : null}
             </label>
 
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
             {String(section.type ?? "").toLowerCase() === "contact" ? (
               <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
                 <div className="mb-3 flex items-center justify-between gap-3">
@@ -516,16 +686,6 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
               <span className="mb-1 block font-medium text-white">Position</span>
               <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
               {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Image</span>
-              <select value={String(section.props.image ?? "")} onChange={(event) => updateSection(section.id, "image", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Image for section ${index + 1}`}>
-                <option value="">No image</option>
-                {media.map((item) => (
-                  <option key={item.id} value={item.url}>{item.title}</option>
-                ))}
-              </select>
             </label>
           </div>
         </div>

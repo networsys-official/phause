@@ -113,7 +113,7 @@ function SectionHeading({
 }
 
 /* ══════════════════ PAGE HERO ══════════════════ */
-function PageHero({ eyebrow = "Pricing & Plans", title = "Plans that scale with your security", description = "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid." }: { eyebrow?: string; title?: string; description?: string }) {
+function PageHero({ eyebrow = "Pricing & Plans", title = "Security that scales with you", description = "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid." }: { eyebrow?: string; title?: string; description?: string }) {
     const { scrollY } = useScroll();
     const y = useTransform(scrollY, [0, 400], [0, 100]);
 
@@ -1063,7 +1063,7 @@ export default function SubscriptionPage() {
         <>
             <PageHero
                 eyebrow={getBlockProp(heroBlock, "eyebrow", "Pricing & Plans")}
-                title={getBlockProp(heroBlock, "title", "Plans that scale with your security")}
+                title={getBlockProp(heroBlock, "title", "Security that scales with you")}
                 description={getBlockProp(heroBlock, "description", "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid.")}
             />
 
