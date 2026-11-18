@@ -291,7 +291,7 @@ function PlanCard({
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.6, delay: index * 0.1 }}
             whileHover={{ y: -14, scale: 1.015 }}
-            className={`group relative glass rounded-3xl p-8 flex flex-col overflow-hidden transition-all duration-300 ${plan.popular
+            className={`group relative glass rounded-3xl p-8 flex flex-col h-full overflow-hidden transition-all duration-300 ${plan.popular
                 ? "border-phause-cyan/50 shadow-[0_0_50px_rgba(0,216,201,0.15)] lg:scale-[1.04] lg:-translate-y-2"
                 : a.ring
                 } hover:shadow-[0_0_50px_rgba(0,216,201,0.12)]`}
@@ -489,11 +489,6 @@ function PlansSection({
                 </div>
 
                 <BillingToggle cycle={cycle} onChange={setCycle} />
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-stretch">
-                    {plans.map((plan, i) => (
-                        <PlanCard key={plan.id} plan={plan} cycle={cycle} index={i} />
-                    ))}
-                </div>
 
                 {error && (
                     <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-red-500/20 bg-red-500/10 text-center">
@@ -512,11 +507,11 @@ function PlansSection({
 
                 {/* Loading skeleton */}
                 {isLoading && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                        {Array.from({ length: 4 }).map((_, i) => (
+                    <div className="flex flex-wrap justify-center gap-6">
+                        {Array.from({ length: 3 }).map((_, i) => (
                             <div
                                 key={i}
-                                className="glass rounded-3xl p-8 animate-pulse min-h-[520px]"
+                                className="glass rounded-3xl p-8 animate-pulse min-h-[520px] w-full max-w-sm"
                             >
                                 <div className="w-12 h-12 rounded-2xl bg-white/10 mb-6" />
                                 <div className="h-5 w-32 bg-white/10 rounded mb-4" />
@@ -541,15 +536,19 @@ function PlansSection({
                 {!isLoading && !error && plans.length > 0 && (
                     <motion.div
                         layout
-                        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch"
+                        className="flex flex-wrap justify-center items-stretch gap-6"
                     >
                         {plans.map((plan, index) => (
-                            <PlanCard
+                            <div
                                 key={plan.id}
-                                plan={plan}
-                                cycle="monthly"
-                                index={index}
-                            />
+                                className="flex w-full max-w-sm sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] xl:w-[22rem]"
+                            >
+                                <PlanCard
+                                    plan={plan}
+                                    cycle={cycle}
+                                    index={index}
+                                />
+                            </div>
                         ))}
                     </motion.div>
                 )}
