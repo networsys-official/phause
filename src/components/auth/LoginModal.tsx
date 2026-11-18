@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, X } from "lucide-react";
 import { login } from "@/services/auth.service";
+import { storeToken } from "@/lib/auth";
 
 const DASHBOARD_URL = "https://phause-sumit.vercel.app/auth/sso";
 type Props = { open: boolean; onClose: () => void };
@@ -57,34 +58,79 @@ export default function LoginModal({ open, onClose }: Props) {
     return () => { document.body.style.overflow = previousOverflow; window.removeEventListener("keydown", handleKeyDown); window.clearTimeout(timer); };
   }, [open, onClose]);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     if (submittingRef.current) return;
+
     const nextErrors: { email?: string; password?: string } = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) nextErrors.email = "Enter a valid email address.";
-    if (!password) nextErrors.password = "Enter your password.";
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        nextErrors.email = "Enter a valid email address.";
+    }
+
+    if (!password) {
+        nextErrors.password = "Enter your password.";
+    }
+
     setErrors(nextErrors);
     setServerError("");
+
     if (Object.keys(nextErrors).length) return;
 
     submittingRef.current = true;
     setSubmitting(true);
+
     try {
-      const result = await login({ email: email.trim(), password });
-      const token = extractAuthToken(result);
-      if (!token) throw new Error("Login succeeded, but no authentication token was returned. Please try again.");
-      const refreshToken = extractRefreshToken(result);
-      const dashboardUrl = new URL(DASHBOARD_URL);
-      const handoff = new URLSearchParams({ access_token: token });
-      if (refreshToken) handoff.set("refresh_token", refreshToken);
-      dashboardUrl.hash = handoff.toString();
-      window.location.assign(dashboardUrl.toString());
+        // Authenticate using the existing login API.
+        const result = await login({
+            email: email.trim(),
+            password,
+        });
+
+        // Extract the access token.
+        const token = extractAuthToken(result);
+
+        if (!token) {
+            throw new Error(
+                "Login succeeded, but no authentication token was returned. Please try again."
+            );
+        }
+
+        // Extract refresh token if the backend provides one.
+        const refreshToken = extractRefreshToken(result);
+
+        // IMPORTANT:
+        // Save token on the Phause website before redirecting.
+        storeToken(token);
+
+        // Preserve your existing dashboard redirect.
+        const dashboardUrl = new URL(DASHBOARD_URL);
+
+        const handoff = new URLSearchParams({
+            access_token: token,
+        });
+
+        if (refreshToken) {
+            handoff.set("refresh_token", refreshToken);
+        }
+
+        dashboardUrl.hash = handoff.toString();
+
+        // Existing redirection remains unchanged.
+        window.location.assign(dashboardUrl.toString());
+
     } catch (error) {
-      setServerError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
-      submittingRef.current = false;
-      setSubmitting(false);
+        setServerError(
+            error instanceof Error
+                ? error.message
+                : "Something went wrong. Please try again."
+        );
+
+        submittingRef.current = false;
+        setSubmitting(false);
     }
-  };
+};
 
   const inputClass = (hasError: boolean) => `h-12 w-full rounded-xl border bg-white/[0.035] pl-11 pr-11 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:bg-white/[0.055] focus:ring-2 focus:ring-phause-cyan/10 ${hasError ? "border-red-400/60" : "border-white/[0.09] focus:border-phause-cyan/60"}`;
 
