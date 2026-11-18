@@ -7,7 +7,7 @@ import { passwordMeetsRequirements } from "@/lib/security";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const name = String(body?.name ?? "").trim();
+    const name = String(body?.name ?? body?.fullName ?? "").trim();
     const email = String(body?.email ?? "").trim().toLowerCase();
     const password = String(body?.password ?? "");
 
