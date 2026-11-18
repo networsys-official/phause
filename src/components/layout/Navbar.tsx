@@ -139,10 +139,10 @@ const handleWorkplace = () => {
       <motion.nav
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        className={`fixed left-0 right-0 top-0 z-50 transition-all duration-500 ${
+        className={`fixed left-0 right-0 top-0 z-50 transition-all duration-500 border-0 style={{border: "none"}} ${
           scrolled
-            ? "glass py-3 shadow-[0_8px_40px_rgba(0,216,201,0.08)]"
-            : "py-6"
+            ? "glass py-3 shadow-[0_8px_40px_rgba(0,216,201,0.08)] border-0"
+            : "py-6 border-0"
         }`}
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
