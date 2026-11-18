@@ -9,49 +9,102 @@ import {
   Cloud, Code2, Users, Award, ArrowRight, ChevronDown,
   CheckCircle2, Star, Quote, Cpu, Workflow, Rocket, LucideIcon,
 } from "lucide-react";
+import { useCallback } from "react";
 import { getBlockProp } from "@/features/cms/page-builder";
 
 export function createFallbackItemTitle(prefix: string, index: number) {
   return `${prefix} ${index + 1}`;
 }
 
+export function extractCmsSectionItems(
+  block: Record<string, unknown> | null | undefined,
+  fallback: Array<Record<string, unknown>> = [],
+): Array<Record<string, unknown>> {
+  if (!block || typeof block !== "object") {
+    return fallback;
+  }
+
+  const arrayKeys = [
+    "items",
+    "cards",
+    "entries",
+    "list",
+    "rows",
+    "sections",
+    "features",
+    "highlights",
+    "steps",
+    "plans",
+    "metrics",
+    "stats",
+    "faqs",
+    "testimonials",
+    "members",
+    "details",
+    "values",
+    "options",
+    "data",
+    "blocks",
+    "content",
+  ];
+
+  const directArray = arrayKeys
+    .map((key) => (Array.isArray((block as Record<string, unknown>)[key]) ? (block as Record<string, unknown>)[key] : null))
+    .find((value): value is Array<Record<string, unknown>> => Array.isArray(value) && value.length > 0);
+
+  if (directArray) {
+    return directArray as Array<Record<string, unknown>>;
+  }
+
+  const nestedArray = Object.values(block).find((value): value is Array<Record<string, unknown>> => Array.isArray(value) && value.length > 0 && value.every((entry) => typeof entry === "object" && entry !== null));
+  if (nestedArray) {
+    return nestedArray as Array<Record<string, unknown>>;
+  }
+
+  if (Object.keys(block).some((key) => ["title", "subtitle", "description", "text", "q", "a", "question", "answer", "label", "value", "heading", "caption", "summary", "body", "name", "role"].includes(key))) {
+    return [block];
+  }
+
+  return fallback;
+}
+
 export function getDefaultHomeReasons() {
   return [
-    { icon: Zap, title: createFallbackItemTitle("Reason", 0), desc: "A fallback reason to choose us." },
-    { icon: Cpu, title: createFallbackItemTitle("Reason", 1), desc: "A fallback reason to choose us." },
-    { icon: Users, title: createFallbackItemTitle("Reason", 2), desc: "A fallback reason to choose us." },
-    { icon: Code2, title: createFallbackItemTitle("Reason", 3), desc: "A fallback reason to choose us." },
+    { icon: Zap, title: "Lightning-Fast Response", desc: "Sub-50ms automated threat neutralization — the fastest in the industry." },
+    { icon: Cpu, title: "AI-Powered Engine", desc: "Machine learning models trained on 50B+ security events, updated hourly." },
+    { icon: Users, title: "Human Experts 24/7", desc: "Elite security analysts watching over your infrastructure around the clock." },
+    { icon: Code2, title: "Zero-Downtime Deployment", desc: "Deploy protection without touching a single line of your existing code." },
   ];
 }
 
 export function getDefaultHomeServices() {
   return [
-    { icon: Radar, title: createFallbackItemTitle("Service", 0), desc: "Fallback service description." },
-    { icon: ShieldCheck, title: createFallbackItemTitle("Service", 1), desc: "Fallback service description." },
-    { icon: Cloud, title: createFallbackItemTitle("Service", 2), desc: "Fallback service description." },
-    { icon: Server, title: createFallbackItemTitle("Service", 3), desc: "Fallback service description." },
-    { icon: Lock, title: createFallbackItemTitle("Service", 4), desc: "Fallback service description." },
-    { icon: Eye, title: createFallbackItemTitle("Service", 5), desc: "Fallback service description." },
+    { icon: Radar, title: "Threat Detection", desc: "Real-time AI scanning across all endpoints, networks and cloud assets." },
+    { icon: ShieldCheck, title: "Security Audits", desc: "Deep-dive penetration testing and compliance audits by certified experts." },
+    { icon: Cloud, title: "Cloud Protection", desc: "Zero-trust security architecture for AWS, Azure, GCP and hybrid clouds." },
+    { icon: Server, title: "Infrastructure Defense", desc: "Harden your servers, APIs and databases against zero-day exploits." },
+    { icon: Lock, title: "Data Encryption", desc: "End-to-end AES-256 encryption with automated key rotation." },
+    { icon: Eye, title: "SIEM Monitoring", desc: "Centralized log intelligence with instant anomaly alerting." },
   ];
 }
 
 export function getDefaultHomeOffers() {
   return [
-    { title: createFallbackItemTitle("Offer", 0), desc: "Fallback offer description." },
-    { title: createFallbackItemTitle("Offer", 1), desc: "Fallback offer description." },
-    { title: createFallbackItemTitle("Offer", 2), desc: "Fallback offer description." },
-    { title: createFallbackItemTitle("Offer", 3), desc: "Fallback offer description." },
-    { title: createFallbackItemTitle("Offer", 4), desc: "Fallback offer description." },
-    { title: createFallbackItemTitle("Offer", 5), desc: "Fallback offer description." },
+    { title: "Free Security Assessment", desc: "A 360° audit of your infrastructure — completely free, no strings attached." },
+    { title: "Dedicated Security Team", desc: "Your own squad of specialists assigned exclusively to your account." },
+    { title: "Compliance Made Easy", desc: "GDPR, HIPAA, SOC 2 and ISO — we handle the paperwork, you stay compliant." },
+    { title: "Incident Response SLA", desc: "Guaranteed response to critical incidents in under 15 minutes." },
+    { title: "Employee Training", desc: "Phishing simulations and security workshops for your entire team." },
+    { title: "Insurance Backed", desc: "$10M cyber insurance coverage included with every enterprise plan." },
   ];
 }
 
 export function getDefaultHomeSteps() {
   return [
-    { icon: Eye, title: createFallbackItemTitle("Step", 0), desc: "Fallback process description." },
-    { icon: Workflow, title: createFallbackItemTitle("Step", 1), desc: "Fallback process description." },
-    { icon: Shield, title: createFallbackItemTitle("Step", 2), desc: "Fallback process description." },
-    { icon: Rocket, title: createFallbackItemTitle("Step", 3), desc: "Fallback process description." },
+    { icon: Eye, title: "Discover", desc: "We map every asset, vulnerability and attack surface in your environment." },
+    { icon: Workflow, title: "Strategize", desc: "A custom defense blueprint built for your architecture and risk profile." },
+    { icon: Shield, title: "Deploy", desc: "Protection rolls out in hours — no downtime, no disruption to your team." },
+    { icon: Rocket, title: "Evolve", desc: "Continuous learning and adaptation keeps you ahead of emerging threats." },
   ];
 }
 
@@ -775,15 +828,54 @@ function CTABanner({
 export default function Home() {
   const [page, setPage] = useState<Record<string, unknown> | null>(null);
 
+  const loadPage = useCallback(() => {
+    fetch("/api/pages?slug=home", { cache: "no-store" })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Failed to load home page: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        return payload.page ?? null;
+      })
+      .then((nextPage) => {
+        setPage(nextPage);
+      })
+      .catch((error) => {
+        console.error("Home page refresh failed", error);
+        setPage(null);
+      });
+  }, []);
+
   useEffect(() => {
-    const loadPage = async () => {
-      const response = await fetch("/api/pages?slug=home");
-      const payload = await response.json();
-      setPage(payload.page ?? null);
+    void loadPage();
+
+    const handleFocus = () => {
+      void loadPage();
     };
 
-    loadPage();
-  }, []);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === "phause:cms-page-updated") {
+        void loadPage();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void loadPage();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleStorage);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleStorage);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadPage]);
 
   const normalizeBlockType = (value: string) => String(value).replace(/[_-]/g, "").toLowerCase();
   const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
@@ -869,71 +961,57 @@ export default function Home() {
   const processBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeProcess");
   const ctaBlock = pageBlocks.find((item) => normalizeBlockType(String((item.type ?? ""))) === "homeCta");
 
-  const philosophyData = Array.isArray(philosophyBlock?.items)
-    ? (philosophyBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
-        const record = typeof item === "object" && item ? item : {};
-        const iconMap: Record<string, LucideIcon> = { shield: Shield, eye: Eye, lock: Lock };
-        return {
-          icon: iconMap[String(record.icon ?? "shield").toLowerCase()] ?? [Shield, Eye, Lock][index % 3] ?? Shield,
-          title: typeof record.title === "string" ? record.title : createFallbackItemTitle("Principle", index),
-          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
-        };
-      })
-    : defaults.philosophy;
-  const servicesData = Array.isArray(servicesBlock?.items)
-    ? (servicesBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
-        const record = typeof item === "object" && item ? item : {};
-        const iconMap: Record<string, LucideIcon> = { radar: Radar, shieldcheck: ShieldCheck, cloud: Cloud, server: Server, lock: Lock, eye: Eye };
-        return {
-          icon: iconMap[String(record.icon ?? "radar").toLowerCase()] ?? [Radar, ShieldCheck, Cloud, Server, Lock, Eye][index % 6] ?? Radar,
-          title: typeof record.title === "string" ? record.title : `Service ${index + 1}`,
-          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
-        };
-      })
-    : defaults.services;
-  const offersData = Array.isArray(offersBlock?.items)
-    ? (offersBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
-        const record = typeof item === "object" && item ? item : {};
-        return {
-          title: typeof record.title === "string" ? record.title : `Offer ${index + 1}`,
-          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
-        };
-      })
-    : defaults.offers;
-  const stepsData = Array.isArray(processBlock?.items)
-    ? (processBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
-        const record = typeof item === "object" && item ? item : {};
-        const iconMap: Record<string, LucideIcon> = { eye: Eye, workflow: Workflow, shield: Shield, rocket: Rocket };
-        return {
-          icon: iconMap[String(record.icon ?? "eye").toLowerCase()] ?? [Eye, Workflow, Shield, Rocket][index % 4] ?? Eye,
-          title: typeof record.title === "string" ? record.title : `Step ${index + 1}`,
-          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
-        };
-      })
-    : defaults.steps;
-  const testimonialsData = Array.isArray(blockProps("testimonials")?.items)
-    ? (blockProps("testimonials").items as typeof defaults.testimonials)
-    : defaults.testimonials;
-  const faqData: Array<{ q: string; a: string }> = Array.isArray(blockProps("faq")?.items)
-    ? (blockProps("faq").items as Array<Record<string, unknown>>).map((item) => {
-        const record = typeof item === "object" && item ? item : {};
-        return {
-          q: typeof record.q === "string" ? record.q : typeof record.question === "string" ? record.question : "",
-          a: typeof record.a === "string" ? record.a : typeof record.answer === "string" ? record.answer : "",
-        };
-      })
-    : defaults.faqs;
-  const whyChooseUsData = Array.isArray(whyChooseBlock?.items)
-    ? (whyChooseBlock.items as Array<Record<string, unknown>>).map((item, index: number) => {
-        const record = typeof item === "object" && item ? item : {};
-        const iconMap: Record<string, LucideIcon> = { zap: Zap, cpu: Cpu, users: Users, code: Code2 };
-        return {
-          icon: iconMap[String(record.icon ?? "zap").toLowerCase()] ?? [Zap, Cpu, Users, Code2][index % 4] ?? Zap,
-          title: typeof record.title === "string" ? record.title : `Reason ${index + 1}`,
-          desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
-        };
-      })
-    : defaults.reasons;
+  const philosophyData = extractCmsSectionItems(philosophyBlock, defaults.philosophy).map((item, index: number) => {
+    const record = typeof item === "object" && item ? item : {};
+    const iconMap: Record<string, LucideIcon> = { shield: Shield, eye: Eye, lock: Lock };
+    return {
+      icon: iconMap[String(record.icon ?? "shield").toLowerCase()] ?? [Shield, Eye, Lock][index % 3] ?? Shield,
+      title: typeof record.title === "string" ? record.title : createFallbackItemTitle("Principle", index),
+      desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+    };
+  });
+  const servicesData = extractCmsSectionItems(servicesBlock, defaults.services).map((item, index: number) => {
+    const record = typeof item === "object" && item ? item : {};
+    const iconMap: Record<string, LucideIcon> = { radar: Radar, shieldcheck: ShieldCheck, cloud: Cloud, server: Server, lock: Lock, eye: Eye };
+    return {
+      icon: iconMap[String(record.icon ?? "radar").toLowerCase()] ?? [Radar, ShieldCheck, Cloud, Server, Lock, Eye][index % 6] ?? Radar,
+      title: typeof record.title === "string" ? record.title : `Service ${index + 1}`,
+      desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+    };
+  });
+  const offersData = extractCmsSectionItems(offersBlock, defaults.offers).map((item, index: number) => {
+    const record = typeof item === "object" && item ? item : {};
+    return {
+      title: typeof record.title === "string" ? record.title : `Offer ${index + 1}`,
+      desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+    };
+  });
+  const stepsData = extractCmsSectionItems(processBlock, defaults.steps).map((item, index: number) => {
+    const record = typeof item === "object" && item ? item : {};
+    const iconMap: Record<string, LucideIcon> = { eye: Eye, workflow: Workflow, shield: Shield, rocket: Rocket };
+    return {
+      icon: iconMap[String(record.icon ?? "eye").toLowerCase()] ?? [Eye, Workflow, Shield, Rocket][index % 4] ?? Eye,
+      title: typeof record.title === "string" ? record.title : `Step ${index + 1}`,
+      desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+    };
+  });
+  const testimonialsData = extractCmsSectionItems(blockProps("testimonials") as Record<string, unknown>, defaults.testimonials) as typeof defaults.testimonials;
+  const faqData: Array<{ q: string; a: string }> = extractCmsSectionItems(blockProps("faq") as Record<string, unknown>, defaults.faqs).map((item) => {
+    const record = typeof item === "object" && item ? item : {};
+    return {
+      q: typeof record.q === "string" ? record.q : typeof record.question === "string" ? record.question : typeof record.title === "string" ? record.title : "",
+      a: typeof record.a === "string" ? record.a : typeof record.answer === "string" ? record.answer : typeof record.description === "string" ? record.description : "",
+    };
+  });
+  const whyChooseUsData = extractCmsSectionItems(whyChooseBlock, defaults.reasons).map((item, index: number) => {
+    const record = typeof item === "object" && item ? item : {};
+    const iconMap: Record<string, LucideIcon> = { zap: Zap, cpu: Cpu, users: Users, code: Code2 };
+    return {
+      icon: iconMap[String(record.icon ?? "zap").toLowerCase()] ?? [Zap, Cpu, Users, Code2][index % 4] ?? Zap,
+      title: typeof record.title === "string" ? record.title : `Reason ${index + 1}`,
+      desc: typeof record.description === "string" ? record.description : typeof record.desc === "string" ? record.desc : "",
+    };
+  });
   const ctaBannerTitle = getBlockProp(ctaBlock ?? {}, "title", defaults.cta.title);
   const ctaBannerDescription = getBlockProp(ctaBlock ?? {}, "description", defaults.cta.description);
   const ctaBannerCta = getBlockProp(ctaBlock ?? {}, "buttonText", getBlockProp(ctaBlock ?? {}, "cta", defaults.cta.cta));

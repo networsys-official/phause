@@ -63,10 +63,6 @@ const defaultNavigation = {
     { label: "Services", href: "/services", position: 2 },
     { label: "Blog", href: "/blog", position: 3 },
     { label: "Docs", href: "/docs", position: 4 },
-    { label: "FAQ", href: "/faq", position: 5 },
-    { label: "Subscription", href: "/subscription", position: 6 },
-    { label: "Registration", href: "/registration", position: 7 },
-    { label: "Contact Us", href: "/contact", position: 8 },
   ],
 };
 
@@ -745,6 +741,34 @@ function toPrismaBlockType(type: string) {
     .toUpperCase();
 }
 
+export async function hasDefaultCmsContent() {
+  const prismaReady =
+    typeof prisma !== "undefined" &&
+    typeof (prisma as { page?: { findFirst?: unknown } }).page?.findFirst === "function" &&
+    typeof (prisma as { setting?: { findFirst?: unknown } }).setting?.findFirst === "function" &&
+    typeof (prisma as { navigation?: { findFirst?: unknown } }).navigation?.findFirst === "function";
+
+  if (!prismaReady) {
+    return false;
+  }
+
+  try {
+    const [homePage, siteSetting, mainNavigation] = await Promise.all([
+      prisma.page.findFirst({ where: { slug: "home", deletedAt: null } }),
+      prisma.setting.findFirst({ where: { key: defaultSettings[0]?.key ?? "siteName", deletedAt: null } }),
+      prisma.navigation.findFirst({ where: { key: defaultNavigation.key, deletedAt: null } }),
+    ]);
+
+    return Boolean(homePage && siteSetting && mainNavigation);
+  } catch (error) {
+    if (isMissingCmsTableError(error)) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
 export async function ensureDefaultCmsContent() {
   const prismaReady =
     typeof prisma !== "undefined" &&
@@ -753,6 +777,11 @@ export async function ensureDefaultCmsContent() {
 
   if (!prismaReady) {
     logger.warn("CMS bootstrap skipped because Prisma models are unavailable.");
+    return;
+  }
+
+  if (await hasDefaultCmsContent()) {
+    logger.info("CMS bootstrap skipped because the default content is already seeded.");
     return;
   }
 
@@ -1100,37 +1129,71 @@ export async function getPageBySlug(slug: string) {
   };
 }
 
-export async function getNavigationConfig() {
-  const navigation = await prisma.navigation.findFirst({
-    where: { key: defaultNavigation.key, deletedAt: null },
-    include: { items: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
-  });
-
-  if (navigation) {
-    return {
-      key: navigation.key,
-      label: navigation.label,
-      items: navigation.items.map((item) => ({ label: item.label, href: item.href, position: item.position })),
-    };
+function isMissingCmsTableError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
   }
 
-  return defaultNavigation;
+  const code = typeof (error as { code?: unknown }).code === "string" ? (error as { code: string }).code : undefined;
+  const message = error.message.toLowerCase();
+
+  return (
+    code === "P2021" ||
+    code === "P2022" ||
+    message.includes("does not exist") ||
+    message.includes("relation") ||
+    message.includes("table") ||
+    message.includes("model")
+  );
+}
+
+export async function getNavigationConfig() {
+  try {
+    const navigation = await prisma.navigation.findFirst({
+      where: { key: defaultNavigation.key, deletedAt: null },
+      include: { items: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
+    });
+
+    if (navigation) {
+      return {
+        key: navigation.key,
+        label: navigation.label,
+        items: navigation.items.map((item) => ({ label: item.label, href: item.href, position: item.position })),
+      };
+    }
+
+    return defaultNavigation;
+  } catch (error) {
+    if (isMissingCmsTableError(error)) {
+      return defaultNavigation;
+    }
+
+    throw error;
+  }
 }
 
 export async function getFooterConfig() {
-  const footer = await prisma.footer.findFirst({
-    where: { slug: "main-footer", deletedAt: null },
-    include: { links: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
-  });
+  try {
+    const footer = await prisma.footer.findFirst({
+      where: { slug: "main-footer", deletedAt: null },
+      include: { links: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
+    });
 
-  if (footer) {
-    return {
-      title: footer.title,
-      description: footer.description ?? defaultFooter.description,
-      copyright: footer.copyright ?? defaultFooter.copyright,
-      links: footer.links.map((link) => ({ label: link.label, href: link.href, position: link.position })),
-    };
+    if (footer) {
+      return {
+        title: footer.title,
+        description: footer.description ?? defaultFooter.description,
+        copyright: footer.copyright ?? defaultFooter.copyright,
+        links: footer.links.map((link) => ({ label: link.label, href: link.href, position: link.position })),
+      };
+    }
+
+    return defaultFooter;
+  } catch (error) {
+    if (isMissingCmsTableError(error)) {
+      return defaultFooter;
+    }
+
+    throw error;
   }
-
-  return defaultFooter;
 }
