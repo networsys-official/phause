@@ -1,20 +1,156 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { spawn } from "node:child_process";
+import { spawn, type ChildProcess } from "node:child_process";
+import { createServer } from "node:net";
 import { setTimeout as delay } from "node:timers/promises";
+import { get } from "node:http";
 
 import { chromium, type Page } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-const LOCAL_PORT = 3000;
-const LOCAL_BASE = `http://127.0.0.1:${LOCAL_PORT}`;
-const LIVE_BASE = "https://phause.vercel.app";
+let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+let localServer: ChildProcess | null = null;
+let localServerExit: number | null = null;
+let localServerSignal: NodeJS.Signals | null = null;
+let localServerOutput = "";
+let localPort = 0;
+let localBase = "";
+
+const LIVE_BASE = "https://phause.webandappdevelopmenttech.com";
 const ROUTES = ["/", "/about", "/contact", "/subscription", "/registration"] as const;
 
-let localServer: ReturnType<typeof spawn> | null = null;
-let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
-let localServerExit: number | null = null;
-let localServerOutput = "";
+async function getEphemeralPort() {
+  return new Promise<number>((resolve, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        server.close();
+        reject(new Error("Unable to allocate a local test port"));
+        return;
+      }
+      server.close((error) => error ? reject(error) : resolve(address.port));
+    });
+  });
+}
+
+async function canReachLocalServer() {
+  return new Promise<boolean>((resolve) => {
+    const url = new URL(`${localBase}/api/health`);
+    const request = get(url, (response) => {
+      let body = "";
+      response.setEncoding("utf8");
+      response.on("data", (chunk) => { body += chunk; });
+      response.on("end", () => {
+        if (response.statusCode !== 200) {
+          console.warn(`[render-parity] readiness HTTP ${response.statusCode}`);
+          resolve(false);
+          return;
+        }
+
+        try {
+          const payload = JSON.parse(body) as { status?: string; service?: string };
+          resolve(payload.status === "ok" && payload.service === "phause");
+        } catch (error) {
+          console.warn("[render-parity] readiness JSON failed", error instanceof Error ? error.message : String(error));
+          resolve(false);
+        }
+      });
+    });
+
+    request.setTimeout(2_000, () => {
+      request.destroy(new Error("readiness probe timed out"));
+    });
+    request.once("error", (error) => {
+      console.warn("[render-parity] readiness probe failed", error.message);
+      resolve(false);
+    });
+  });
+}
+
+function serverDiagnostics(reason: string) {
+  return [
+    reason,
+    `server PID: ${localServer?.pid ?? "not spawned"}`,
+    `server exit code: ${localServerExit ?? "still running"}`,
+    `server signal: ${localServerSignal ?? "none"}`,
+    `server stdout/stderr:\n${localServerOutput || "(empty)"}`,
+  ].join("\n");
+}
+
+async function waitForLocalServer() {
+  for (let attempt = 1; attempt <= 60; attempt += 1) {
+    if (localServer?.exitCode !== null && localServer?.exitCode !== undefined) {
+      throw new Error(serverDiagnostics(`Local server exited before readiness (attempt ${attempt})`));
+    }
+
+    console.info(`[render-parity] readiness attempt ${attempt}/60 at ${localBase}/api/health`);
+    if (await canReachLocalServer()) {
+      console.info(`[render-parity] server ready: PID ${localServer?.pid ?? "unknown"}, port ${localPort}`);
+      return;
+    }
+
+    await delay(500);
+  }
+
+  throw new Error(serverDiagnostics("Local app did not become ready in time"));
+}
+
+async function stopLocalServer() {
+  if (!localServer || localServer.killed) return;
+
+  localServer.kill("SIGTERM");
+  await Promise.race([
+    new Promise<void>((resolve) => localServer?.once("exit", () => resolve())),
+    delay(5_000),
+  ]);
+
+  if (localServer.exitCode === null && localServer.signalCode === null) {
+    localServer.kill("SIGKILL");
+  }
+}
+
+async function ensureLocalServer() {
+  localPort = await getEphemeralPort();
+  localBase = `http://127.0.0.1:${localPort}`;
+
+  const productionBuildExists = existsSync(join(process.cwd(), ".next", "BUILD_ID"));
+  const nextCli = join(process.cwd(), "node_modules", "next", "dist", "bin", "next");
+  const serverArgs = productionBuildExists
+    ? [nextCli, "start", "-H", "127.0.0.1", "-p", String(localPort)]
+    : [nextCli, "dev", "-H", "127.0.0.1", "-p", String(localPort)];
+
+  localServerExit = null;
+  localServerSignal = null;
+  localServerOutput = "";
+
+  localServer = spawn(process.execPath, serverArgs, {
+    cwd: process.cwd(),
+    env: { ...process.env, PORT: String(localPort) },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  const collectOutput = (chunk: Buffer) => {
+    const text = chunk.toString();
+    localServerOutput += text;
+    process.stdout.write(`[render-parity:server] ${text}`);
+  };
+  localServer.stdout?.on("data", collectOutput);
+  localServer.stderr?.on("data", collectOutput);
+  localServer.once("exit", (code, signal) => {
+    localServerExit = code;
+    localServerSignal = signal;
+    console.error(`[render-parity] server exited: PID ${localServer?.pid ?? "unknown"}, code ${code}, signal ${signal}`);
+  });
+
+  try {
+    console.info(`[render-parity] spawning server PID ${localServer.pid ?? "unknown"} on ${localBase}, mode ${productionBuildExists ? "production" : "development"}`);
+    await waitForLocalServer();
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : serverDiagnostics("Local server failed"));
+  }
+}
 
 function normalizeText(value: string | null | undefined) {
   return (value ?? "").replace(/\s+/g, " ").trim();
@@ -22,67 +158,6 @@ function normalizeText(value: string | null | undefined) {
 
 function normalizeList(values: Array<string | null | undefined>) {
   return [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
-}
-
-async function canReachLocalServer() {
-  try {
-    const response = await fetch(`${LOCAL_BASE}/`, { headers: { "user-agent": "Mozilla/5.0" } });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
-
-async function waitForLocalServer() {
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    if (await canReachLocalServer()) {
-      return;
-    }
-    await delay(1000);
-  }
-
-  throw new Error(`Local app did not start in time at ${LOCAL_BASE}`);
-}
-
-async function ensureLocalServer() {
-  if (await canReachLocalServer()) {
-    return;
-  }
-
-  if (localServer && !localServer.killed) {
-    return;
-  }
-
-  const productionBuildExists = existsSync(join(process.cwd(), ".next", "BUILD_ID"));
-  const serverArgs = productionBuildExists
-    ? ["next", "start", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)]
-    : ["next", "dev", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)];
-
-  localServer = spawn("npx", serverArgs, {
-    cwd: process.cwd(),
-    env: { ...process.env, PORT: String(LOCAL_PORT) },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  localServerExit = null;
-  localServerOutput = "";
-
-  const collectOutput = (chunk: Buffer) => {
-    localServerOutput += chunk.toString();
-  };
-  localServer.stdout?.on("data", collectOutput);
-  localServer.stderr?.on("data", collectOutput);
-  localServer.once("exit", (code) => {
-    localServerExit = code;
-  });
-
-  try {
-    await waitForLocalServer();
-  } catch (error) {
-    throw new Error(
-      `${error instanceof Error ? error.message : "Local server failed"}\nServer exit code: ${localServerExit ?? "still running"}\nServer output:\n${localServerOutput}`,
-    );
-  }
 }
 
 async function extractSnapshot(page: Page) {
@@ -142,9 +217,7 @@ afterAll(async () => {
     await browser.close();
   }
 
-  if (localServer && !localServer.killed) {
-    localServer.kill("SIGTERM");
-  }
+  await stopLocalServer();
 });
 
 describe("render parity", () => {
@@ -156,7 +229,7 @@ describe("render parity", () => {
       const livePage = await browser!.newPage();
 
       try {
-        await localPage.goto(`${LOCAL_BASE}${route}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
+        await localPage.goto(`${localBase}${route}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
         await livePage.goto(`${LIVE_BASE}${route}`, { waitUntil: "domcontentloaded", timeout: 60_000 });
         await localPage.waitForTimeout(1500);
         await livePage.waitForTimeout(1500);
