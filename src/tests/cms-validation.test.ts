@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { SimpleCmsResourceManager } from "@/components/cms/resource-manager";
@@ -120,23 +120,25 @@ describe("CMS validation", () => {
 
     expect(screen.getByText("No FAQs published yet")).toBeTruthy();
 
-    rerender(
-      React.createElement(SimpleCmsResourceManager, {
-        title: "Frequently asked questions",
-        description: "FAQ records",
-        endpoint: "/api/cms/faqs",
-        defaultItem: { question: "", answer: "", slug: "", status: "DRAFT" },
-        fields: [
-          { key: "question", label: "Question", type: "text" },
-          { key: "answer", label: "Answer", type: "textarea" },
-          { key: "slug", label: "Slug", type: "text" },
-          { key: "status", label: "Status", type: "select", options: ["DRAFT", "PUBLISHED"] },
-        ],
-        itemName: "FAQ",
-        initialItems: [{ id: "faq-1", question: "What is Phause?", answer: "Security platform", slug: "what-is-phause", status: "PUBLISHED" }],
-        emptyState: { title: "No FAQs published yet", description: "Create your first question" },
-      }),
-    );
+    act(() => {
+      rerender(
+        React.createElement(SimpleCmsResourceManager, {
+          title: "Frequently asked questions",
+          description: "FAQ records",
+          endpoint: "/api/cms/faqs",
+          defaultItem: { question: "", answer: "", slug: "", status: "DRAFT" },
+          fields: [
+            { key: "question", label: "Question", type: "text" },
+            { key: "answer", label: "Answer", type: "textarea" },
+            { key: "slug", label: "Slug", type: "text" },
+            { key: "status", label: "Status", type: "select", options: ["DRAFT", "PUBLISHED"] },
+          ],
+          itemName: "FAQ",
+          initialItems: [{ id: "faq-1", question: "What is Phause?", answer: "Security platform", slug: "what-is-phause", status: "PUBLISHED" }],
+          emptyState: { title: "No FAQs published yet", description: "Create your first question" },
+        }),
+      );
+    });
 
     expect(screen.getByText("What is Phause?")).toBeTruthy();
   });

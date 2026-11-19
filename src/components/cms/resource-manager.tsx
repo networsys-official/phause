@@ -38,14 +38,16 @@ export function SimpleCmsResourceManager({
   initialItems: Array<Record<string, string>>;
   emptyState?: { title: string; description: string };
 }) {
-  const [localItems, setLocalItems] = useState<Array<Record<string, string>>>(initialItems);
+  const [resourceState, setResourceState] = useState({ initialItems, items: initialItems });
 
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setLocalItems(initialItems), 0);
-    return () => window.clearTimeout(timeout);
-  }, [initialItems]);
+  if (resourceState.initialItems !== initialItems) {
+    setResourceState({ initialItems, items: initialItems });
+  }
 
-  const items = localItems;
+  const localItems = resourceState.items;
+  const setLocalItems = (items: Array<Record<string, string>>) => {
+    setResourceState((current) => ({ ...current, items }));
+  };
 
   const [draft, setDraft] = useState<Record<string, string>>(defaultItem);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -99,13 +101,13 @@ export function SimpleCmsResourceManager({
 
   const filteredItems = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return items.filter((item) => {
+    return localItems.filter((item) => {
       const matchesStatus = statusFilter === "ALL" || String(item.status ?? "DRAFT").toUpperCase() === statusFilter;
       const text = Object.values(item).join(" ").toLowerCase();
       const matchesSearch = !query || text.includes(query);
       return matchesStatus && matchesSearch;
     });
-  }, [items, search, statusFilter]);
+  }, [localItems, search, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
   const paginatedItems = filteredItems.slice((page - 1) * pageSize, page * pageSize);
@@ -128,7 +130,7 @@ export function SimpleCmsResourceManager({
         throw new Error(data?.message ?? "Delete failed");
       }
 
-      const nextItems = Array.isArray(data?.items) ? data.items : items.filter((item) => item.id !== id);
+      const nextItems = Array.isArray(data?.items) ? data.items : localItems.filter((item) => item.id !== id);
       setLocalItems(nextItems);
       if (editingId === id) {
         setDraft(emptyDraft);
@@ -246,7 +248,7 @@ export function SimpleCmsResourceManager({
             <p className="mt-2 text-sm text-slate-400">{description}</p>
           </div>
           <div className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs uppercase tracking-[0.22em] text-cyan-300">
-            {items.length} records
+            {localItems.length} records
           </div>
         </div>
       </div>

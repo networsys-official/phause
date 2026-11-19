@@ -47,14 +47,54 @@ function headingHighlight(heading: unknown, highlighted: unknown) {
   return <>{parts.map((part, index) => <span key={index}>{part}{index < parts.length - 1 ? <span className="text-gradient">{word}</span> : null}</span>)}</>;
 }
 
+const fallbackPayload: SubscriptionPayload = {
+  page: { title: "Subscription", slug: "subscription", metaTitle: "Phause | Pricing & Plans", metaDescription: "Five tiers. One platform. Zero compromises.", ogImage: null, active: true, sectionOrder: ["hero", "trust", "pricing", "comparison", "faq", "testimonials", "cta"] },
+  hero: { badgeText: "Pricing & Plans", badgeIcon: "sparkles", badgeVisible: true, heading: "Security that scales with you", highlightedWord: "scales", subtitle: "Five tiers. One platform. Zero compromises.", backgroundImage: null, ctaPrimaryText: "Choose a plan", ctaPrimaryUrl: "#pricing", ctaSecondaryText: "Talk to us", ctaSecondaryUrl: "/contact", visible: true },
+  trustItems: [
+    { id: "fallback-1", icon: "badge", title: "SOC 2 Type II Certified", visible: true },
+    { id: "fallback-2", icon: "lock", title: "Zero-Trust Architecture", visible: true },
+    { id: "fallback-3", icon: "globe", title: "40+ Countries Served", visible: true },
+  ],
+  pricing: { title: "Plans that scale with your security", subtitle: "Find the right level of protection.", badgeText: "Pricing", visible: true },
+  plans: [
+    { id: "starter", name: "Starter", badge: "Most Popular", description: "For growing teams that need more protection.", price: "29", yearlyPrice: "24", billingCycle: "MONTHLY", buttonText: "Choose Starter", buttonUrl: "/registration", popular: true, active: true, sortOrder: 0, icon: "rocket", accent: "teal", cardBackground: null, badgeColor: null, borderColor: null, features: [{ id: "starter-feature", text: "Behavioral threat detection", icon: "check", visible: true, sortOrder: 0 }] },
+    { id: "free", name: "Free", badge: null, description: "For individuals and small teams getting started.", price: "0", yearlyPrice: "0", billingCycle: "MONTHLY", buttonText: "Start Free", buttonUrl: "/registration", popular: false, active: true, sortOrder: 1, icon: "shield", accent: "slate", cardBackground: null, badgeColor: null, borderColor: null, features: [{ id: "free-feature", text: "Core threat detection", icon: "check", visible: true, sortOrder: 0 }] },
+  ],
+  comparison: { title: "Compare every dimension", subtitle: "Compare limits and features.", visible: true },
+  comparisonRows: [{ id: "fallback-comparison", name: "Maximum users", freeValue: "10", starterValue: "25", professionalValue: "100", businessValue: "500", enterpriseValue: "Unlimited" }],
+  faq: { title: "Frequently asked questions", subtitle: "Answers about plans and billing.", visible: true },
+  faqs: [{ id: "fallback-faq", question: "Can I switch plans after subscribing?", answer: "Yes. Upgrades take effect instantly and downgrades apply at the start of your next billing cycle." }],
+  testimonials: { title: "Customer stories", subtitle: "Why teams choose Phause.", visible: false },
+  testimonialItems: [],
+  cta: { title: "Still unsure? Talk to a human.", description: "Our security engineers will map your environment to the right tier.", buttonText: "Book a free consultation", buttonUrl: "/contact", backgroundImage: null, visible: true },
+};
+
 export function SubscriptionCmsPage() {
-  const [payload, setPayload] = useState<SubscriptionPayload | null>(null);
+  const [payload, setPayload] = useState<SubscriptionPayload>(fallbackPayload);
 
   useEffect(() => {
     void fetch("/api/cms/subscription-page", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => setPayload(data.success ? data : null))
-      .catch(() => setPayload(null));
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!data?.success) return;
+        setPayload({
+          ...fallbackPayload,
+          ...data,
+          page: data.page ?? fallbackPayload.page,
+          hero: data.hero ?? fallbackPayload.hero,
+          trustItems: Array.isArray(data.trustItems) && data.trustItems.length ? data.trustItems : fallbackPayload.trustItems,
+          pricing: data.pricing ?? fallbackPayload.pricing,
+          plans: Array.isArray(data.plans) && data.plans.length ? data.plans : fallbackPayload.plans,
+          comparison: data.comparison ?? fallbackPayload.comparison,
+          comparisonRows: Array.isArray(data.comparisonRows) && data.comparisonRows.length ? data.comparisonRows : fallbackPayload.comparisonRows,
+          faq: data.faq ?? fallbackPayload.faq,
+          faqs: Array.isArray(data.faqs) && data.faqs.length ? data.faqs : fallbackPayload.faqs,
+          testimonials: data.testimonials ?? fallbackPayload.testimonials,
+          testimonialItems: Array.isArray(data.testimonialItems) ? data.testimonialItems : [],
+          cta: data.cta ?? fallbackPayload.cta,
+        });
+      })
+      .catch(() => setPayload(fallbackPayload));
   }, []);
 
   if (!payload || !payload.page?.active) return null;
