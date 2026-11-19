@@ -6,7 +6,7 @@ import { ArrowRight, Eye, EyeOff, LoaderCircle, LockKeyhole, Mail, X } from "luc
 import { login } from "@/services/auth.service";
 import { storeToken } from "@/lib/auth";
 
-const DASHBOARD_URL = "https://phause-sumit.vercel.app/auth/sso";
+const DASHBOARD_URL = "https://phause.webandappdevelopmenttech.com/auth/sso";
 type Props = { open: boolean; onClose: () => void };
 
 function extractAuthToken(value: unknown): string | null {
