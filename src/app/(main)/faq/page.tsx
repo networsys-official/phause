@@ -7,36 +7,16 @@ import { ArrowRight, Check, ChevronDown, HelpCircle, ShieldCheck } from "lucide-
 import SubscriptionModal from "../subscription/SubscriptionModal";
 
 const faqs = [
-  {
-    question: "Can I switch plans after subscribing?",
-    answer:
-      "Absolutely. Upgrades take effect instantly and are prorated to the day. Downgrades apply at the start of your next billing cycle, and your historical data is always preserved according to the higher plan's retention window.",
-  },
-  {
-    question: "What happens after my 14-day trial ends?",
-    answer:
-      "On day 15 we ask for a payment method. If you don't add one, your account gracefully downgrades to Sentinel Free — no data deletion, no service interruption, no awkward sales calls.",
-  },
-  {
-    question: "Is there a minimum contract length?",
-    answer:
-      "Monthly plans are month-to-month with zero lock-in. Yearly plans are paid upfront with a 20% discount, and you can request a prorated refund within the first 60 days if Phause isn't a fit.",
-  },
-  {
-    question: "How is per-endpoint pricing counted?",
-    answer:
-      "An endpoint is any device, server, container, or cloud workload running the Phause agent. Ephemeral workloads like CI runners are averaged over the month so burst builds don't inflate your bill.",
-  },
-  {
-    question: "Do you offer discounts for nonprofits or education?",
-    answer:
-      "Yes. Registered nonprofits, educational institutions, and open-source projects receive 50% off any paid tier, forever. Reach out to our community team to apply.",
-  },
-  {
-    question: "What makes Sentinel Sovereign different?",
-    answer:
-      "Sovereign is a fully air-gapped deployment of the entire Phause platform — it runs entirely inside your perimeter with zero external telemetry. It includes our post-quantum cryptography migration lab and a dedicated on-site incident response retainer.",
-  },
+  { question: "What is Phause?", answer: "Phause is a phishing simulation and security-awareness platform that helps organisations run authorised email simulations, review employee interactions and organise follow-up training." },
+  { question: "Who should use Phause?", answer: "Phause is designed for security teams, IT administrators, security-awareness managers and organisations that want a structured way to measure and improve phishing awareness." },
+  { question: "How do I get started?", answer: "Create an organisation account, complete your organisation setup, add employee records and review consent and eligibility before planning a campaign." },
+  { question: "Can I choose who receives a simulation?", answer: "Campaign setup supports selecting eligible employees, using department-based targeting or choosing a sample percentage. Review the audience before dispatch." },
+  { question: "Can I schedule a campaign?", answer: "Campaign configuration includes immediate and scheduled delivery options. Confirm timing and target audience before launching." },
+  { question: "What activity can Phause track?", answer: "Depending on campaign configuration, recorded events can include email opens, link clicks, landing-page views, form submissions and user-reported messages. These are interaction signals, not a complete measure of knowledge." },
+  { question: "Does Phause include training?", answer: "The platform includes training modules and enrolment and completion records to help teams organise learning after simulations." },
+  { question: "Can I export reports?", answer: "The reporting area includes campaign reporting and export workflows. Available fields depend on the report and account permissions." },
+  { question: "How should simulations be used responsibly?", answer: "Run simulations only with organisational authorisation. Define scope, confirm employee eligibility and consent requirements, coordinate with stakeholders and handle results confidentially." },
+  { question: "Where can I get help?", answer: "Use the Contact page to send the Phause team an enquiry. For product guidance, visit the documentation section." }
 ];
 
 export default function FAQPage() {

@@ -7,6 +7,7 @@
 export const ROUTES = {
   home: "/",
   about: "/about",
+  howItWorks: "/how-it-works",
   services: "/services",
   blog: "/blog",
   docs: "/docs",
@@ -20,15 +21,17 @@ export const ROUTES = {
 /** Navigation links shown in the Navbar */
 export const NAV_LINKS: { label: string; href: string }[] = [
   { label: "Home", href: ROUTES.home },
+  { label: "How It Works", href: ROUTES.howItWorks },
+  { label: "Features", href: ROUTES.services },
   { label: "About Us", href: ROUTES.about },
-  { label: "Subscription", href: ROUTES.subscription },
   { label: "Contact Us", href: ROUTES.contact },
 ];
 
 export const FOOTER_QUICK_LINKS: { label: string; href: string }[] = [
   { label: "Home", href: ROUTES.home },
   { label: "About Us", href: ROUTES.about },
-  { label: "Services", href: ROUTES.services },
+  { label: "How It Works", href: ROUTES.howItWorks },
+  { label: "Features", href: ROUTES.services },
   { label: "Blog", href: ROUTES.blog },
   { label: "Docs", href: ROUTES.docs },
   { label: "Subscription", href: ROUTES.subscription },
@@ -73,6 +76,7 @@ function getDuplicateLabels(items: { label: string; href: string }[]) {
 const VALID_ROUTE_PATHS = new Set([
   "/",
   "/about",
+  "/how-it-works",
   "/services",
   "/blog",
   "/docs",
