@@ -122,15 +122,25 @@ export function CmsShell({
 
   const pageActions = action ?? (getStudioPageActions(pathname).length > 0 ? (
     <div className="flex flex-wrap items-center gap-2">
-      {getStudioPageActions(pathname).map((label) => (
-        <Link
-          key={label}
-          href={getStudioActionLink(pathname, label)}
-          className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/15"
-        >
-          {label}
-        </Link>
-      ))}
+      {getStudioPageActions(pathname).map((label) => {
+        const actionHref = getStudioActionLink(pathname, label);
+        return (
+          <Link
+            key={label}
+            href={actionHref}
+            onClick={(event) => {
+              if (actionHref.includes("#create-resource-form")) {
+                event.preventDefault();
+                window.history.pushState(null, "", actionHref);
+                window.dispatchEvent(new Event("phause:create-service-open"));
+              }
+            }}
+            className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-cyan-200 transition hover:border-cyan-400 hover:bg-cyan-500/15"
+          >
+            {label}
+          </Link>
+        );
+      })}
     </div>
   ) : null);
   const initials = userName

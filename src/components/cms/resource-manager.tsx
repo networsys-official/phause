@@ -4,6 +4,14 @@ import Image from "next/image";
 import { Search, SlidersHorizontal, SquarePen, Trash2, Upload } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+function slugifyResourceValue(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export type ResourceField = {
   key: string;
   label: string;
@@ -31,13 +39,19 @@ export function SimpleCmsResourceManager({
   emptyState?: { title: string; description: string };
 }) {
   const [localItems, setLocalItems] = useState<Array<Record<string, string>>>(initialItems);
-  const items = initialItems.length > 0 ? initialItems : localItems;
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setLocalItems(initialItems), 0);
+    return () => window.clearTimeout(timeout);
+  }, [initialItems]);
+
+  const items = localItems;
 
   const [draft, setDraft] = useState<Record<string, string>>(defaultItem);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [page, setPage] = useState(1);
@@ -98,41 +112,6 @@ export function SimpleCmsResourceManager({
 
   const resetPagination = () => setPage(1);
 
-  async function persist(payload: Record<string, string>) {
-    setIsSaving(true);
-    setError(null);
-    setMessage(null);
-
-    const nextPayload = {
-      ...payload,
-      status: String(payload.status ?? "DRAFT").toUpperCase(),
-      ...(editingId ? { id: editingId } : {}),
-    };
-
-    try {
-      const response = await fetch(endpoint, {
-        method: editingId ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(nextPayload),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data?.message ?? "Save failed");
-      }
-
-      const nextItems = Array.isArray(data?.items) ? data.items : items;
-      setLocalItems(nextItems);
-      setDraft(emptyDraft);
-      setEditingId(null);
-      setMessage(editingId ? "✅ Changes saved" : `✅ ${itemName} created successfully`);
-    } catch (saveError) {
-      setError(saveError instanceof Error ? saveError.message : "❌ Save failed");
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
   async function handleDelete(id: string) {
     setError(null);
     setMessage(null);
@@ -162,7 +141,19 @@ export function SimpleCmsResourceManager({
   }
 
   function updateDraft(key: string, value: string) {
-    setDraft((current) => ({ ...current, [key]: value }));
+    setDraft((current) => {
+      const next = { ...current, [key]: value };
+      const titleKey = Object.prototype.hasOwnProperty.call(next, "title") ? "title" : Object.prototype.hasOwnProperty.call(next, "question") ? "question" : null;
+
+      if (!editingId && titleKey === key && Object.prototype.hasOwnProperty.call(next, "slug")) {
+        const oldSlug = slugifyResourceValue(String(current.title ?? current.question ?? ""));
+        if (!next.slug || next.slug === oldSlug) {
+          next.slug = slugifyResourceValue(value);
+        }
+      }
+
+      return next;
+    });
   }
 
   async function handleDeviceUpload(fieldKey: string, file: File) {
@@ -209,6 +200,42 @@ export function SimpleCmsResourceManager({
   }
 
   const statusOptions = ["ALL", "DRAFT", "PUBLISHED"];
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    let focusTimer: number | undefined;
+
+    const revealCreateForm = () => {
+      if (window.location.hash !== "#create-resource-form") {
+        return;
+      }
+
+      const frame = window.requestAnimationFrame(() => {
+        const form = document.getElementById("create-resource-form");
+        form?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        const titleInput = form?.querySelector<HTMLInputElement>('input[name="title"]')
+          ?? form?.querySelector<HTMLInputElement>('input[type="text"]');
+        focusTimer = window.setTimeout(() => titleInput?.focus(), 100);
+      });
+
+      return frame;
+    };
+
+    const frame = revealCreateForm();
+    window.addEventListener("hashchange", revealCreateForm);
+    window.addEventListener("phause:create-service-open", revealCreateForm);
+
+    return () => {
+      window.removeEventListener("hashchange", revealCreateForm);
+      window.removeEventListener("phause:create-service-open", revealCreateForm);
+      if (typeof frame === "number") window.cancelAnimationFrame(frame);
+      if (typeof focusTimer === "number") window.clearTimeout(focusTimer);
+    };
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -334,7 +361,12 @@ export function SimpleCmsResourceManager({
           )}
         </div>
 
-        <div className="rounded-[28px] border border-slate-800 bg-[#0b1218]/85 p-6">
+        <form
+          id="create-resource-form"
+          action="/api/cms/services"
+          method="post"
+          className="rounded-[28px] border border-slate-800 bg-[#0b1218]/85 p-6"
+        >
           <h3 className="text-xl font-semibold text-white">{editingId ? "Edit" : "Create"} {itemName}</h3>
           <p className="mt-1 text-sm text-slate-400">Complete the details below and save to push updates live.</p>
 
@@ -356,6 +388,7 @@ export function SimpleCmsResourceManager({
                       ) : null}
 
                       <select
+                        name={field.key}
                         value={selectedImage}
                         onChange={(event) => updateDraft(field.key, event.target.value)}
                         className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none transition focus:border-cyan-500/60"
@@ -401,6 +434,7 @@ export function SimpleCmsResourceManager({
                   <span className="mb-1.5 block text-slate-200">{field.label}</span>
                   {field.type === "textarea" ? (
                     <textarea
+                      name={field.key}
                       value={draft[field.key] ?? ""}
                       onChange={(event) => updateDraft(field.key, event.target.value)}
                       rows={4}
@@ -408,6 +442,7 @@ export function SimpleCmsResourceManager({
                     />
                   ) : field.type === "number" ? (
                     <input
+                      name={field.key}
                       type="number"
                       value={draft[field.key] ?? "0"}
                       onChange={(event) => updateDraft(field.key, event.target.value)}
@@ -426,6 +461,7 @@ export function SimpleCmsResourceManager({
                     </select>
                   ) : (
                     <input
+                      name={field.key}
                       type="text"
                       value={draft[field.key] ?? ""}
                       onChange={(event) => updateDraft(field.key, event.target.value)}
@@ -438,7 +474,7 @@ export function SimpleCmsResourceManager({
           </div>
 
           <div className="mt-6 flex gap-3">
-            <button type="button" disabled={isSaving} onClick={() => persist(draft)} className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="submit" disabled={isSaving} className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60">
               {isSaving ? "Saving..." : editingId ? "Save changes" : `Create ${itemName}`}
             </button>
             {editingId ? (
@@ -450,7 +486,7 @@ export function SimpleCmsResourceManager({
 
           {message ? <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">{message}</div> : null}
           {error ? <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{error}</div> : null}
-        </div>
+        </form>
       </div>
     </div>
   );

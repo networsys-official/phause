@@ -1,4 +1,3 @@
-
 "use client"
 
 import Image from "next/image"
@@ -247,7 +246,7 @@ export default function ServicesPage() {
             .then((payload) => setPage(payload.page ?? null))
             .catch(() => setPage(null));
 
-        fetch("/api/cms/services")
+        fetch("/api/cms/services?published=true")
             .then((response) => response.json())
             .then((payload) => {
                 if (Array.isArray(payload.items)) {

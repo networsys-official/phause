@@ -62,7 +62,7 @@ export const STUDIO_PAGE_ACTIONS: Record<string, StudioPageAction[]> = {
   "/studio/pages": [{ label: "Create Page", href: "/studio/pages?view=create" }],
   "/studio/forms": [{ label: "Create Form", href: "/studio/forms?view=create" }],
   "/studio/leads": [{ label: "Review Leads", href: "/studio/leads" }],
-  "/studio/services": [{ label: "Create Service", href: "/studio/services?view=create" }],
+  "/studio/services": [{ label: "Create Service", href: "/studio/services#create-resource-form" }],
 };
 
 export const STUDIO_STATUS_BADGES = new Set(["/studio/forms", "/studio/leads", "/studio/blog"]);

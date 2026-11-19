@@ -93,6 +93,8 @@ describe("CMS validation", () => {
     expect(isPublicCmsReadRoute("/api/cms/blog", "GET")).toBe(true);
     expect(isPublicCmsReadRoute("/api/cms/faqs", "GET")).toBe(true);
     expect(isPublicCmsReadRoute("/api/cms/pages", "GET")).toBe(true);
+    expect(isPublicCmsReadRoute("/api/cms/services", "GET")).toBe(true);
+    expect(isPublicCmsReadRoute("/api/cms/services", "POST")).toBe(false);
     expect(isPublicCmsReadRoute("/api/cms/blog", "POST")).toBe(false);
     expect(isPublicCmsReadRoute("/api/cms/forms", "GET")).toBe(false);
   });

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useSyncExternalStore } from "react";
 import { getToken, clearToken } from "@/lib/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -33,11 +33,16 @@ export default function Navbar() {
   const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>(NAV_LINKS);
   const [brandName, setBrandName] = useState("Phause");
   const router = useRouter();
+  const pathname = usePathname();
   const isLoggedIn = useSyncExternalStore(
     subscribeToAuthChanges,
     () => Boolean(getToken()),
     () => false,
   );
+
+  const isActiveRoute = (href: string) => href === "/"
+    ? pathname === "/"
+    : pathname === href || pathname.startsWith(`${href}/`);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 40);
@@ -56,7 +61,14 @@ export default function Navbar() {
             label: item.label,
             href: item.href,
           }));
-          setNavLinks(cmsItems);
+
+          const mergedItems = NAV_LINKS.map((required) => {
+            const existing = cmsItems.find((item: { label: string; href: string }) => item.href === required.href);
+            return existing ? { ...required, label: existing.label } : required;
+          });
+
+          const extraItems = cmsItems.filter((item: { label: string; href: string }) => !NAV_LINKS.some((required) => required.href === item.href));
+          setNavLinks([...mergedItems, ...extraItems]);
         }
 
         if (payload?.navigation?.label) {
@@ -98,10 +110,10 @@ export default function Navbar() {
               >
                 <Link
                   href={link.href}
-                  className="group relative text-sm font-medium text-slate-300 transition-colors hover:text-phause-cyan"
+                  className={`group relative text-sm font-medium transition-colors ${isActiveRoute(link.href) ? "text-phause-cyan" : "text-slate-300 hover:text-phause-cyan"}`}
                 >
                   {link.label}
-                  <span className="absolute -bottom-1 left-0 h-[2px] w-0 bg-phause-cyan transition-all duration-300 group-hover:w-full" />
+                  <span className={`absolute -bottom-1 left-0 h-[2px] bg-phause-cyan transition-all duration-300 ${isActiveRoute(link.href) ? "w-full" : "w-0 group-hover:w-full"}`} />
                 </Link>
               </motion.div>
             ))}
@@ -174,7 +186,7 @@ export default function Navbar() {
                     key={link.label}
                     href={link.href}
                     onClick={() => setOpen(false)}
-                    className="font-medium text-slate-200 transition-colors hover:text-phause-cyan"
+                    className={`font-medium transition-colors ${isActiveRoute(link.href) ? "text-phause-cyan" : "text-slate-200 hover:text-phause-cyan"}`}
                   >
                     {link.label}
                   </Link>

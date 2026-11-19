@@ -20,8 +20,10 @@ import {
 import { usePlanStore } from "@/store/plan.store";
 import { ROUTES } from "@/lib/routes";
 import { getBlockProp } from "@/features/cms/page-builder";
+import type { SubscriptionPlanResponse } from "@/types/plan";
 
 import SubscriptionModal from "./SubscriptionModal"
+import { SubscriptionCmsPage } from "@/components/subscription/subscription-cms-page"
 
 /* ══════════════════ ANIMATED BACKGROUNDS ══════════════════ */
 function GridBackground() {
@@ -113,12 +115,27 @@ function SectionHeading({
 }
 
 /* ══════════════════ PAGE HERO ══════════════════ */
-function PageHero({ eyebrow = "Pricing & Plans", title = "Security that scales with you", description = "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid." }: { eyebrow?: string; title?: string; description?: string }) {
+function PageHero({
+    eyebrow = "Pricing & Plans",
+    title = "Security that scales with you",
+    highlightedWord = "scales",
+    description = "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid.",
+    backgroundImage,
+}: {
+    eyebrow?: string;
+    title?: string;
+    highlightedWord?: string;
+    description?: string;
+    backgroundImage?: string;
+}) {
     const { scrollY } = useScroll();
     const y = useTransform(scrollY, [0, 400], [0, 100]);
 
     return (
-        <section className="relative min-h-[65vh] flex items-center justify-center overflow-hidden pt-24">
+        <section
+            className="relative min-h-[65vh] flex items-center justify-center overflow-hidden pt-24"
+            style={backgroundImage ? { backgroundImage: `linear-gradient(rgba(5,9,15,.72), rgba(5,9,15,.92)), url(${backgroundImage})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+        >
             <GridBackground />
             <ParticleField />
             <motion.div style={{ y }} className="relative z-10 max-w-4xl mx-auto px-6 text-center">
@@ -136,7 +153,12 @@ function PageHero({ eyebrow = "Pricing & Plans", title = "Security that scales w
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="text-5xl md:text-7xl font-black leading-[1.05] mb-6"
                 >
-                    {title}
+                    {title.split(highlightedWord).map((part, index, parts) => (
+                        <span key={`${part}-${index}`}>
+                            {part}
+                            {index < parts.length - 1 ? <span className="text-gradient">{highlightedWord}</span> : null}
+                        </span>
+                    ))}
                 </motion.h1>
                 <motion.p
                     initial={{ opacity: 0, y: 30 }}
@@ -165,14 +187,31 @@ function PageHero({ eyebrow = "Pricing & Plans", title = "Security that scales w
 }
 
 /* ══════════════════ TRUST STRIP ══════════════════ */
-function TrustStrip() {
-    const items = [
+function TrustStrip({ items: cmsItems }: { items?: Array<Record<string, unknown>> }) {
+    const iconLookup: Record<string, React.ElementType> = {
+        badge: BadgeCheck,
+        lock: Lock,
+        globe: Globe,
+        headset: Headset,
+        trend: TrendingUp,
+    };
+    const fallbackItems = [
         { icon: BadgeCheck, label: "SOC 2 Type II Certified" },
         { icon: Lock, label: "Zero-Trust Architecture" },
         { icon: Globe, label: "40+ Countries Served" },
         { icon: Headset, label: "24/7 Human Support" },
         { icon: TrendingUp, label: "99.98% Uptime SLA" },
     ];
+    const items = Array.isArray(cmsItems) && cmsItems.length > 0
+        ? cmsItems
+            .slice()
+            .sort((a, b) => Number(a.displayOrder ?? 0) - Number(b.displayOrder ?? 0))
+            .map((item) => ({
+                icon: iconLookup[String(item.icon ?? "badge").toLowerCase()] ?? BadgeCheck,
+                label: String(item.title ?? ""),
+            }))
+        : fallbackItems;
+
     return (
         <section className="relative py-10 border-y border-phause-border/50">
             <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-5">
@@ -489,11 +528,6 @@ function PlansSection({
                 </div>
 
                 <BillingToggle cycle={cycle} onChange={setCycle} />
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-stretch">
-                    {plans.map((plan, i) => (
-                        <PlanCard key={plan.id} plan={plan} cycle={cycle} index={i} />
-                    ))}
-                </div>
 
                 {error && (
                     <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-red-500/20 bg-red-500/10 text-center">
@@ -541,13 +575,13 @@ function PlansSection({
                 {!isLoading && !error && plans.length > 0 && (
                     <motion.div
                         layout
-                        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch"
+                        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-stretch"
                     >
                         {plans.map((plan, index) => (
                             <PlanCard
                                 key={plan.id}
                                 plan={plan}
-                                cycle="monthly"
+                                cycle={cycle}
                                 index={index}
                             />
                         ))}
@@ -612,21 +646,20 @@ function ComparisonRow({
 
 function ComparisonTable({
     plans,
+    cmsRows = [],
 }: {
     plans: Plan[];
+    cmsRows?: Array<Record<string, unknown>>;
 }) {
-    const featureLabels = Array.from(
-        new Set(
-            plans.flatMap((plan) =>
-                plan.features.map((feature) => feature.label)
-            )
-        )
-    );
+    const cmsComparisonRows = cmsRows.map((row) => ({
+        label: String(row.featureName ?? ""),
+        values: [row.free, row.starter, row.professional, row.business, row.enterprise].map((value) => String(value ?? "")),
+    }));
 
     const rows: {
         label: string;
         values: (string | boolean)[];
-    }[] = [
+    }[] = cmsComparisonRows.length > 0 ? cmsComparisonRows : [
         {
             label: "Maximum Campaigns",
             values: plans.map((p) =>
@@ -643,12 +676,12 @@ function ComparisonTable({
                     : p.maxUsers.toLocaleString()
             ),
         },
-        ...featureLabels.map((label) => ({
-            label,
+        ...plans[0]?.features.map((feature) => ({
+            label: feature.label,
             values: plans.map((plan) => {
                 return (
                     plan.features.find(
-                        (feature) => feature.label === label
+                        (f) => f.label === feature.label
                     )?.included ?? false
                 );
             }),
@@ -878,15 +911,19 @@ function RequestDemo() {
 
 
 /* ══════════════════ FAQ ══════════════════ */
-function FAQ() {
-    const faqs = [
-        { q: "Can I switch plans after subscribing?", a: "Absolutely. Upgrades take effect instantly and are prorated to the day. Downgrades apply at the start of your next billing cycle, and your historical data is always preserved according to the higher plan's retention window." },
-        { q: "What happens after my 14-day trial ends?", a: "On day 15 we ask for a payment method. If you don't add one, your account gracefully downgrades to Sentinel Free — no data deletion, no service interruption, no awkward sales calls." },
-        { q: "Is there a minimum contract length?", a: "Monthly plans are month-to-month with zero lock-in. Yearly plans are paid upfront with a 20% discount, and you can request a prorated refund within the first 60 days if Phause isn't a fit." },
-        { q: "How is per-endpoint pricing counted?", a: "An endpoint is any device, server, container, or cloud workload running the Phause agent. Ephemeral workloads like CI runners are averaged over the month so burst builds don't inflate your bill." },
-        { q: "Do you offer discounts for nonprofits or education?", a: "Yes. Registered nonprofits, educational institutions, and open-source projects receive 50% off any paid tier, forever. Reach out to our community team to apply." },
-        { q: "What makes Sentinel Sovereign different?", a: "Sovereign is a fully air-gapped deployment of the entire Phause platform — it runs entirely inside your perimeter with zero external telemetry. It includes our post-quantum cryptography migration lab and a dedicated on-site incident response retainer." },
+function FAQ({ items: cmsItems }: { items?: Array<Record<string, unknown>> }) {
+    const fallbackFaqs = [
+        { q: "Can I switch plans after subscribing?", a: "Absolutely. Upgrades take effect instantly and are prorated to the day. Downgrades apply at the start of your next billing cycle." },
+        { q: "What happens after my 14-day trial ends?", a: "We ask for a payment method. If you do not add one, your account can gracefully downgrade to the free tier." },
+        { q: "Is there a minimum contract length?", a: "Monthly plans are month-to-month with zero lock-in. Yearly plans are paid upfront with a discount." },
     ];
+    const faqs = Array.isArray(cmsItems) && cmsItems.length > 0
+        ? cmsItems
+            .slice()
+            .sort((a, b) => Number(a.displayOrder ?? 0) - Number(b.displayOrder ?? 0))
+            .map((item) => ({ q: String(item.question ?? ""), a: String(item.answer ?? "") }))
+        : fallbackFaqs;
+
     const [open, setOpen] = useState<number | null>(0);
 
     return (
@@ -990,7 +1027,12 @@ function GuaranteeBanner() {
 }
 
 /* ══════════════════ FINAL CTA ══════════════════ */
-function FinalCTA() {
+function FinalCTA({ cta }: { cta?: Record<string, unknown> }) {
+    const heading = String(cta?.heading ?? "Still unsure? Talk to a human.");
+    const description = String(cta?.description ?? "Our solutions engineers will map your environment to the right tier in a free 30-minute call.");
+    const buttonText = String(cta?.buttonText ?? "Book a Free Consultation");
+    const buttonLink = String(cta?.buttonLink ?? "/contact");
+
     return (
         <section className="relative py-24 overflow-hidden">
             <div className="absolute left-1/2 bottom-0 w-[800px] h-[400px] rounded-full bg-phause-cyan/10 blur-[160px] -translate-x-1/2" />
@@ -1001,7 +1043,7 @@ function FinalCTA() {
                     viewport={{ once: true }}
                     className="text-4xl md:text-6xl font-black mb-6 leading-tight"
                 >
-                    Still unsure? <span className="text-gradient">Talk to a human.</span>
+                    {heading}
                 </motion.h2>
                 <motion.p
                     initial={{ opacity: 0, y: 20 }}
@@ -1010,16 +1052,15 @@ function FinalCTA() {
                     transition={{ delay: 0.15 }}
                     className="text-slate-400 text-lg max-w-xl mx-auto mb-10"
                 >
-                    Our solutions engineers (real security people, not sales scripts) will map
-                    your environment to the right tier in a free 30-minute call.
+                    {description}
                 </motion.p>
                 <motion.a
-                    href="/contact"
+                    href={buttonLink}
                     whileHover={{ scale: 1.08 }}
                     whileTap={{ scale: 0.95 }}
                     className="inline-flex items-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold text-lg shadow-[0_0_50px_rgba(0,216,201,0.5)]"
                 >
-                    Book a Free Consultation <ArrowRight className="w-5 h-5" />
+                    {buttonText} <ArrowRight className="w-5 h-5" />
                 </motion.a>
             </div>
         </section>
@@ -1028,64 +1069,5 @@ function FinalCTA() {
 
 /* ══════════════════ PAGE ══════════════════ */
 export default function SubscriptionPage() {
-    const {
-        plans: apiPlans,
-        isLoading,
-        error,
-        fetchPlans,
-    } = usePlanStore();
-
-    const [page, setPage] = useState<Record<string, unknown> | null>(null);
-
-    useEffect(() => {
-        void fetchPlans();
-    }, [fetchPlans]);
-
-    useEffect(() => {
-        const loadPage = async () => {
-            try {
-                const response = await fetch("/api/cms/pages?slug=subscription");
-                const payload = await response.json();
-                setPage(payload.page ?? null);
-            } catch {
-                setPage(null);
-            }
-        };
-
-        void loadPage();
-    }, []);
-
-    const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
-    const heroBlock = (pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "hero")?.props as Record<string, unknown>) ?? {};
-    const plans = apiPlans.length > 0 ? apiPlans.map(mapApiPlanToPlan) : [];
-
-    return (
-        <>
-            <PageHero
-                eyebrow={getBlockProp(heroBlock, "eyebrow", "Pricing & Plans")}
-                title={getBlockProp(heroBlock, "title", "Security that scales with you")}
-                description={getBlockProp(heroBlock, "description", "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid.")}
-            />
-
-            <TrustStrip />
-
-            <PlansSection
-                plans={plans.length > 0 ? plans : []}
-                isLoading={isLoading}
-                error={error}
-            />
-
-            {!isLoading && !error && plans.length > 0 && (
-                <ComparisonTable plans={plans} />
-            )}
-
-            <GuaranteeBanner />
-
-            <RequestDemo />
-
-            <FAQ />
-
-            <FinalCTA />
-        </>
-    );
+    return <SubscriptionCmsPage />;
 }
