@@ -89,10 +89,13 @@ function getPlanCTA(name: string): string {
 export function mapApiPlanToPlan(apiPlan: SubscriptionPlanResponse): Plan {
     const price = Number(apiPlan.price);
 
-    const features = Object.entries(apiPlan.features || {}).map(([key, value]) => ({
-        label: formatFeatureName(key),
-        included: value === true,
-    }));
+    const features = Object.entries(apiPlan.features || {}).map(([key, value]) => {
+        const cmsFeatureText = key.startsWith("feature_") && typeof value === "string" ? value : null;
+        return {
+            label: cmsFeatureText ?? formatFeatureName(key),
+            included: cmsFeatureText ? true : value === true,
+        };
+    });
 
     const stats = [
         {

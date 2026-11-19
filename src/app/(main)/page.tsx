@@ -83,7 +83,7 @@ export function getDefaultHomeServices() {
     { icon: ShieldCheck, title: "Security Audits", desc: "Deep-dive penetration testing and compliance audits by certified experts." },
     { icon: Cloud, title: "Cloud Protection", desc: "Zero-trust security architecture for AWS, Azure, GCP and hybrid clouds." },
     { icon: Server, title: "Infrastructure Defense", desc: "Harden your servers, APIs and databases against zero-day exploits." },
-    { icon: Lock, title: "Training follow-through", desc: "End-to-end AES-256 encryption with automated key rotation." },
+    { icon: Lock, title: "Data Encryption", desc: "End-to-end AES-256 encryption with automated key rotation." },
     { icon: Eye, title: "SIEM Monitoring", desc: "Centralized log intelligence with instant anomaly alerting." },
   ];
 }
@@ -386,21 +386,21 @@ function About({
                 <ShieldCheck className="w-6 h-6 text-phause-dark" />
               </div>
               <div>
-                <p className="font-bold">Phause Programme Overview</p>
+                <p className="font-bold">Live Threat Dashboard</p>
                 <p className="text-xs text-phause-cyan flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute h-full w-full rounded-full bg-phause-cyan opacity-75" />
                     <span className="relative rounded-full h-2 w-2 bg-phause-cyan" />
                   </span>
-                  Campaign activity at a glance
+                  All systems protected
                 </p>
               </div>
             </div>
             {[
-              { label: "Employee readiness", val: 100 },
-              { label: "Simulation engagement", val: 98 },
+              { label: "Firewall Integrity", val: 100 },
+              { label: "Intrusion Prevention", val: 98 },
               { label: "Data Encryption", val: 100 },
-              { label: "Programme coverage", val: 96 },
+              { label: "Endpoint Defense", val: 96 },
             ].map((row, i) => (
               <div key={row.label} className="mb-5">
                 <div className="flex justify-between text-sm mb-2">
@@ -428,8 +428,8 @@ function About({
 /* ══════════════════ COMPANY PHILOSOPHY ══════════════════ */
 function Philosophy({
   cards,
-  title = "Awareness improves through practice.",
-  subtitle = "A repeatable cycle helps teams learn, measure and improve.",
+  title = "Security is not a product. It's a mindset.",
+  subtitle = "Three core principles guide everything we build, ship, and defend.",
 }: {
   cards: Array<{ icon: typeof Shield; title: string; desc: string }>;
   title?: string;
@@ -567,8 +567,8 @@ function Services({ services }: { services: Array<{ icon: typeof Radar; title: s
       <div className="max-w-7xl mx-auto px-6">
         <SectionHeading
           tag="Our Services"
-          title={<>Practical awareness, <span className="text-gradient">from one platform</span></>}
-          subtitle="Plan a simulation, observe engagement and use the findings to guide the next learning activity."
+          title={<>Complete security, <span className="text-gradient">end to end</span></>}
+          subtitle="Every layer of your stack covered — from infrastructure to the last byte of data."
         />
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((s, i) => (
@@ -694,7 +694,7 @@ function Testimonials({ testimonials }: { testimonials: Array<{ name: string; ro
       <div className="max-w-7xl mx-auto px-6 mb-14">
         <SectionHeading
           tag="Testimonials"
-          title={<>Designed for security teams <span className="text-gradient">that need visibility</span></>}
+          title={<>Loved by security teams <span className="text-gradient">everywhere</span></>}
           subtitle="Don't take our word for it — hear it from the people we protect every day."
         />
       </div>
@@ -900,10 +900,10 @@ export default function Home() {
   const defaults = {
     hero: {
       eyebrow: "Strengthen. Aware. Defend.",
-      title: "Measure awareness. Build resilience.",
-      description: "Phause helps organisations run authorised phishing simulations, understand employee interactions and strengthen security awareness through practical reporting and training.",
-      ctaPrimary: "Start with Phause",
-      ctaSecondary: "See how it works",
+      title: "Strengthen. Aware.Defend.",
+      description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+      ctaPrimary: "Get Protected Now",
+      ctaSecondary: "Explore Platform",
       stats: [
         { icon: Shield, val: "99.9%", label: "Threat Block Rate" },
         { icon: Radar, val: "24/7", label: "Active Monitoring" },
@@ -912,14 +912,14 @@ export default function Home() {
     },
     about: {
       tag: "About Us",
-      title: "Help your people recognise phishing before it becomes a problem",
-      description: "Phause gives security and IT teams a practical way to organise phishing simulations, review employee engagement and plan follow-up awareness activity.",
-      secondaryDescription: "Bring employee eligibility, templates, campaigns, tracking, reporting and training into one connected workflow.",
+      title: "We Build Digital Fortresses for the Modern Enterprise",
+      description: "Phause builds practical, resilient security programs for modern organizations that cannot afford downtime or uncertainty.",
+      secondaryDescription: "From governance and detection to response and resilience, we help teams protect what matters without slowing product velocity.",
       items: [
-        { icon: Award, text: "Phishing simulations" },
-        { icon: Users, text: "Employee insights" },
-        { icon: Globe, text: "Campaign reporting" },
-        { icon: Cpu, text: "Awareness training" },
+        { icon: Award, text: "Threat Intelligence" },
+        { icon: Users, text: "Human-led SOC" },
+        { icon: Globe, text: "Global coverage" },
+        { icon: Cpu, text: "AI-assisted defense" },
       ],
     },
     philosophy: [
@@ -946,9 +946,9 @@ export default function Home() {
       { q: "Can we customize the plan?", a: "Absolutely. We tailor coverage, support, and controls to the scale, compliance obligations, and risk profile of your organization." },
     ],
     cta: {
-      title: "Make phishing awareness part of your security routine.",
-      description: "Explore how Phause can help your organisation plan simulations, understand engagement and organise security-awareness follow-up.",
-      cta: "Explore Phause",
+      title: "See smarter security in action.",
+      description: "Discover how Phause can help your team detect threats, simplify operations, and choose the right protection for your needs.",
+      cta: "Book a demo",
     },
   };
 
@@ -1015,8 +1015,8 @@ export default function Home() {
   const ctaBannerTitle = getBlockProp(ctaBlock ?? {}, "title", defaults.cta.title);
   const ctaBannerDescription = getBlockProp(ctaBlock ?? {}, "description", defaults.cta.description);
   const ctaBannerCta = getBlockProp(ctaBlock ?? {}, "buttonText", getBlockProp(ctaBlock ?? {}, "cta", defaults.cta.cta));
-  const philosophyTitle = getBlockProp(philosophyBlock ?? {}, "title", "Awareness improves through practice.");
-  const philosophySubtitle = getBlockProp(philosophyBlock ?? {}, "subtitle", "A repeatable cycle helps teams learn, measure and improve.");
+  const philosophyTitle = getBlockProp(philosophyBlock ?? {}, "title", "Security is not a product. It's a mindset.");
+  const philosophySubtitle = getBlockProp(philosophyBlock ?? {}, "subtitle", "Three core principles guide everything we build, ship, and defend.");
 
   const hero = {
     eyebrow: getBlockProp(heroBlock, "eyebrow", defaults.hero.eyebrow),
@@ -1069,7 +1069,7 @@ export default function Home() {
       <Services services={servicesData} />
       <WhatWeOffer offers={offersData} />
       <WorkingProcess steps={stepsData} />
-
+      <Testimonials testimonials={testimonialsData} />
       <FAQ faqs={faqData} />
       <CTABanner title={ctaBannerTitle} description={ctaBannerDescription} cta={ctaBannerCta} />
     </>

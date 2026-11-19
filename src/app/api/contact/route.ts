@@ -1,80 +1,83 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LEAD_CATEGORIES = [
+  "General Enquiry",
+  "Platform Demo Request",
+  "Pricing & Subscription",
+  "Incident / Emergency Support",
+  "Partnership Opportunity",
+] as const;
 
-function clean(value: unknown, maxLength: number): string {
-  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
-}
+const contactSubmissionSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  email: z.string().trim().email().max(254),
+  phone: z.string().trim().max(40).optional().default(""),
+  company: z.string().trim().max(160).optional().default(""),
+  subject: z.enum(LEAD_CATEGORIES).optional().default("General Enquiry"),
+  message: z.string().trim().min(20).max(5000),
+});
 
 export async function POST(request: NextRequest) {
-  const forwardedFor = request.headers.get("x-forwarded-for") ?? "";
-  const clientIp = forwardedFor.split(",")[0]?.trim() || "unknown";
-  const rateLimit = checkRateLimit(`public-contact:${clientIp}`, 5, 15 * 60_000);
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "global";
+  const rateLimit = checkRateLimit(`contact-submit:${ip}`, 10, 60_000);
 
   if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { success: false, message: "Too many enquiries have been submitted. Please try again later." },
-      { status: 429 },
-    );
+    return NextResponse.json({ success: false, message: "Too many enquiries. Please try again shortly." }, { status: 429 });
   }
 
-  let body: unknown;
+  let payload: z.infer<typeof contactSubmissionSchema>;
+
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { success: false, message: "Please submit a valid enquiry." },
-      { status: 400 },
-    );
+    payload = contactSubmissionSchema.parse(await request.json());
+  } catch (error) {
+    logger.warn("CONTACT_SUBMIT_VALIDATION_ERROR", {
+      error: error instanceof Error ? error.message : "Invalid payload",
+    });
+    return NextResponse.json({ success: false, message: "Please check the enquiry details and try again." }, { status: 400 });
   }
 
-  const payload = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
-  const name = clean(payload.name, 120);
-  const email = clean(payload.email, 254).toLowerCase();
-  const company = clean(payload.company, 160);
-  const subject = clean(payload.subject, 120) || "General enquiry";
-  const message = clean(payload.message, 5000);
-
-  if (name.length < 2) {
-    return NextResponse.json({ success: false, message: "Please enter your name." }, { status: 400 });
-  }
-  if (!EMAIL_PATTERN.test(email)) {
-    return NextResponse.json({ success: false, message: "Please enter a valid email address." }, { status: 400 });
-  }
-  if (message.length < 20) {
-    return NextResponse.json({ success: false, message: "Please provide a little more detail (at least 20 characters)." }, { status: 400 });
-  }
+  console.info("CONTACT_SUBMIT_START", {
+    email: payload.email,
+    subject: payload.subject,
+  });
 
   try {
     const lead = await prisma.lead.create({
       data: {
-        slug: `website-enquiry-${randomUUID()}`,
-        name,
-        email,
-        company: company || null,
-        message: `Subject: ${subject}\n\n${message}`,
-        source: "website-contact-form",
-        status: "DRAFT",
+        slug: `contact-${randomUUID()}`,
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        company: payload.company,
+        category: payload.subject,
+        message: payload.message,
+        source: "Contact Us",
+        status: "NEW",
       },
-      select: { id: true },
     });
 
-    return NextResponse.json(
-      { success: true, reference: lead.id },
-      { status: 201 },
-    );
+    console.info("CONTACT_SUBMIT_DB_WRITE", { leadId: lead.id, slug: lead.slug });
+    console.info("CONTACT_SUBMIT_SUCCESS", { leadId: lead.id });
+
+    return NextResponse.json({
+      success: true,
+      leadId: lead.id,
+      message: "Enquiry received.",
+    }, { status: 201 });
   } catch (error) {
-    logger.error("Public contact enquiry could not be saved", {
-      error: error instanceof Error ? error.message : "Unknown error",
+    console.error("CONTACT_SUBMIT_DB_ERROR", error instanceof Error ? error.message : String(error));
+    logger.error("Contact enquiry persistence failed", {
+      error: error instanceof Error ? error.message : "Unknown database error",
     });
-    return NextResponse.json(
-      { success: false, message: "We couldn't save your enquiry just now. Please try again." },
-      { status: 500 },
-    );
+    return NextResponse.json({
+      success: false,
+      message: "We could not save your enquiry. Please try again.",
+    }, { status: 500 });
   }
 }

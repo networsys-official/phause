@@ -396,20 +396,23 @@ model Form {
 }
 
 model Lead {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  name        String?
-  email       String?
-  company     String?
-  message     String?
-  source      String?
-  status      ContentStatus @default(DRAFT)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  publishedAt DateTime?
-  deletedAt   DateTime?
-  version     Int           @default(0)
-  AuditLog    AuditLog[]    @relation("LeadAuditLog")
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  name       String?
+  email      String?
+  phone      String?
+  company    String?
+  category   String     @default("General Enquiry")
+  message    String?
+  source     String?
+  assignedTo String?
+  status     LeadStatus @default(NEW)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+  AuditLog   AuditLog[] @relation("LeadAuditLog")
+
+  @@index([status, createdAt])
 }
 
 model AuditLog {
@@ -479,6 +482,217 @@ model CrawlUrl {
   @@index([status, fetchedAt])
 }
 
+model SubscriptionPage {
+  id              String   @id @default(cuid())
+  title           String
+  slug            String   @unique
+  metaTitle       String?
+  metaDescription String?
+  ogImage         String?
+  active          Boolean  @default(true)
+  sectionOrder    Json     @default("[]")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model SubscriptionHeroSection {
+  id               String  @id @default(cuid())
+  badgeText        String
+  badgeIcon        String  @default("sparkles")
+  badgeVisible     Boolean @default(true)
+  heading          String
+  highlightedWord  String
+  subtitle         String
+  backgroundImage  String?
+  ctaPrimaryText   String
+  ctaPrimaryUrl    String
+  ctaSecondaryText String?
+  ctaSecondaryUrl  String?
+  accentColor      String  @default("cyan")
+  overlayColor     String  @default("#05090f")
+  visible          Boolean @default(true)
+  sortOrder        Int     @default(0)
+}
+
+model SubscriptionTrustItem {
+  id          String  @id @default(cuid())
+  icon        String  @default("badge")
+  title       String
+  description String?
+  visible     Boolean @default(true)
+  sortOrder   Int     @default(0)
+}
+
+model SubscriptionPricingSection {
+  id          String  @id @default(cuid())
+  title       String
+  subtitle    String?
+  badgeText   String?
+  accentColor String  @default("cyan")
+  visible     Boolean @default(true)
+  sortOrder   Int     @default(0)
+}
+
+model SubscriptionPlan {
+  id             String        @id @default(cuid())
+  slug           String?       @unique
+  deletedAt      DateTime?
+  name           String
+  badge          String?
+  description    String
+  price          Decimal       @default(0)
+  yearlyPrice    Decimal?
+  billingCycle   String        @default("MONTHLY")
+  buttonText     String
+  buttonUrl      String
+  popular        Boolean       @default(false)
+  active         Boolean       @default(true)
+  sortOrder      Int           @default(0)
+  icon           String        @default("shield")
+  accent         String        @default("cyan")
+  cardBackground String?
+  badgeColor     String?
+  borderColor    String?
+  features       PlanFeature[]
+
+  @@index([active, sortOrder])
+}
+
+model PlanFeature {
+  id        String           @id @default(cuid())
+  planId    String
+  text      String
+  icon      String?
+  visible   Boolean          @default(true)
+  sortOrder Int              @default(0)
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@index([planId, sortOrder])
+}
+
+model SubscriptionComparisonSection {
+  id        String  @id @default(cuid())
+  title     String
+  subtitle  String?
+  visible   Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model SubscriptionComparisonRow {
+  id                String  @id @default(cuid())
+  name              String
+  freeValue         String
+  starterValue      String
+  professionalValue String
+  businessValue     String
+  enterpriseValue   String
+  sortOrder         Int     @default(0)
+  active            Boolean @default(true)
+}
+
+model SubscriptionFaqSection {
+  id        String  @id @default(cuid())
+  title     String
+  subtitle  String?
+  visible   Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model SubscriptionFaqItem {
+  id        String  @id @default(cuid())
+  question  String
+  answer    String
+  sortOrder Int     @default(0)
+  active    Boolean @default(true)
+
+  @@index([active, sortOrder])
+}
+
+model SubscriptionTestimonialSection {
+  id        String  @id @default(cuid())
+  title     String
+  subtitle  String?
+  visible   Boolean @default(true)
+  sortOrder Int     @default(0)
+}
+
+model SubscriptionTestimonialItem {
+  id          String  @id @default(cuid())
+  name        String
+  company     String?
+  designation String?
+  image       String?
+  rating      Int     @default(5)
+  review      String
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  @@index([active, sortOrder])
+}
+
+model SubscriptionCtaSection {
+  id              String  @id @default(cuid())
+  title           String
+  description     String?
+  buttonText      String
+  buttonUrl       String
+  backgroundImage String?
+  visible         Boolean @default(true)
+  sortOrder       Int     @default(0)
+}
+
+model SubscriptionSection {
+  id          String  @id @default(cuid())
+  sectionType String
+  title       String?
+  enabled     Boolean @default(true)
+  sortOrder   Int     @default(0)
+  props       Json    @default("{}")
+
+  @@unique([sectionType])
+  @@index([enabled, sortOrder])
+}
+
+model SubscriptionComparisonFeature {
+  id           String  @id @default(cuid())
+  featureName  String
+  free         String  @default("")
+  starter      String  @default("")
+  professional String  @default("")
+  business     String  @default("")
+  enterprise   String  @default("")
+  sortOrder    Int     @default(0)
+  active       Boolean @default(true)
+
+  @@index([active, sortOrder])
+}
+
+model SubscriptionFaq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, sortOrder])
+}
+
+model SubscriptionTestimonial {
+  id           String  @id @default(cuid())
+  customerName String
+  designation  String?
+  company      String?
+  image        String?
+  review       String
+  rating       Int     @default(5)
+  sortOrder    Int     @default(0)
+  active       Boolean @default(true)
+
+  @@index([active, sortOrder])
+}
+
 enum Role {
   SUPER_ADMIN
   ADMIN
@@ -535,6 +749,9 @@ enum PageBlockType {
   ABOUT_VALUES
   ABOUT_COMMITMENTS
   ABOUT_TIMELINE
+  SUBSCRIPTION_FEATURES
+  SUBSCRIPTION_FAQ
+  SUBSCRIPTION_CTA
 }
 
 enum AuditAction {
@@ -545,4 +762,16 @@ enum AuditAction {
   DELETE
   SCRAPE_IMPORT
   SYNC
+}
+
+enum LeadStatus {
+  NEW
+  ASSIGNED
+  QUALIFIED
+  CONTACTED
+  MEETING_SCHEDULED
+  PROPOSAL_SENT
+  CLOSED_WON
+  CLOSED_LOST
+  SPAM
 }

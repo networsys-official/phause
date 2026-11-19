@@ -63,6 +63,8 @@ const defaultNavigation = {
     { label: "Services", href: "/services", position: 2 },
     { label: "Blog", href: "/blog", position: 3 },
     { label: "Docs", href: "/docs", position: 4 },
+    { label: "Subscription", href: "/subscription", position: 5 },
+    { label: "Contact Us", href: "/contact", position: 6 },
   ],
 };
 
@@ -138,8 +140,6 @@ const defaultForms = [
           "Pricing & Subscription",
           "Incident / Emergency Support",
           "Partnership Opportunity",
-          "Careers",
-          "Press & Media",
         ],
       },
       { key: "message", label: "Message", type: "textarea", placeholder: "Tell us about your infrastructure, current security stack, and what you're trying to achieve…", required: true },
@@ -167,7 +167,7 @@ const defaultLeads = [
     company: "Acme Security",
     message: "Interested in a reseller package and rapid rollout onboarding.",
     source: "Website",
-    status: "PUBLISHED",
+    status: "QUALIFIED",
   },
   {
     slug: "raul-perez",
@@ -176,7 +176,7 @@ const defaultLeads = [
     company: "Northstar Systems",
     message: "Need help with compliance monitoring and incident response coverage.",
     source: "Outbound",
-    status: "SCHEDULED",
+    status: "MEETING_SCHEDULED",
   },
   {
     slug: "megan-chen",
@@ -185,7 +185,7 @@ const defaultLeads = [
     company: "Cyberdock AI",
     message: "Looking for pricing details and a product walkthrough for the enterprise plan.",
     source: "Demo Request",
-    status: "DRAFT",
+    status: "NEW",
   },
 ] as const;
 
@@ -650,15 +650,54 @@ const defaultPages = [
         type: "hero",
         order: 0,
         props: {
+          badgeText: "Pricing & Plans",
           eyebrow: "Pricing & Plans",
           title: "Security that scales with you",
+          highlightedWord: "scales",
+          subtitle:
+            "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid.",
           description:
             "Five tiers. One platform. Zero compromises. Start free, upgrade when you're ready — every plan runs the same battle-tested defense grid.",
+          ctaText: "Choose your shield",
+        },
+      },
+      {
+        type: "subscriptionFeatures",
+        order: 1,
+        props: {
+          items: [
+            { icon: "badge", title: "SOC 2 Type II Certified", displayOrder: 0 },
+            { icon: "lock", title: "Zero-Trust Architecture", displayOrder: 1 },
+            { icon: "globe", title: "40+ Countries Served", displayOrder: 2 },
+            { icon: "headset", title: "24/7 Human Support", displayOrder: 3 },
+            { icon: "trend", title: "99.98% Uptime SLA", displayOrder: 4 },
+          ],
+        },
+      },
+      {
+        type: "subscriptionFaq",
+        order: 2,
+        props: {
+          items: [
+            { question: "Can I switch plans after subscribing?", answer: "Yes. Upgrades take effect instantly and downgrades apply at the start of your next billing cycle.", displayOrder: 0 },
+            { question: "What happens after my trial ends?", answer: "If no payment method is added, your account can gracefully move to the free tier without data deletion.", displayOrder: 1 },
+            { question: "Is there a minimum contract length?", answer: "Monthly plans are month-to-month. Yearly plans include a discount and remain available with flexible terms.", displayOrder: 2 },
+          ],
+        },
+      },
+      {
+        type: "subscriptionCta",
+        order: 3,
+        props: {
+          heading: "Still unsure? Talk to a human.",
+          description: "Our security engineers will map your environment to the right tier in a free 30-minute call.",
+          buttonText: "Book a Free Consultation",
+          buttonLink: "/contact",
         },
       },
       {
         type: "pricing",
-        order: 1,
+        order: 4,
         props: {
           title: "Choose Your Shield",
           plans: [
@@ -721,6 +760,9 @@ function toPrismaBlockType(type: string) {
     faq: "FAQ",
     stats: "STATS",
     pricing: "PRICING",
+    subscriptionFeatures: "SUBSCRIPTION_FEATURES",
+    subscriptionFaq: "SUBSCRIPTION_FAQ",
+    subscriptionCta: "SUBSCRIPTION_CTA",
     team: "TEAM",
     richText: "RICHTEXT",
     video: "VIDEO",
@@ -778,6 +820,12 @@ export async function ensureDefaultCmsContent() {
   if (!prismaReady) {
     logger.warn("CMS bootstrap skipped because Prisma models are unavailable.");
     return;
+  }
+
+  if (process.env.NODE_ENV !== "development") {
+    await prisma.lead.deleteMany({
+      where: { slug: { in: defaultLeads.map((lead) => lead.slug) } },
+    });
   }
 
   if (await hasDefaultCmsContent()) {
@@ -983,27 +1031,31 @@ export async function ensureDefaultCmsContent() {
         });
       }
 
-      for (const lead of defaultLeads) {
+      if (process.env.NODE_ENV === "development") for (const lead of defaultLeads) {
         await tx.lead.upsert({
           where: { slug: lead.slug },
           update: {
             name: lead.name,
             email: lead.email,
+            phone: null,
             company: lead.company,
+            category: "General Enquiry",
             message: lead.message,
             source: lead.source,
+            assignedTo: null,
             status: lead.status,
-            version: { increment: 1 },
           },
           create: {
             slug: lead.slug,
             name: lead.name,
             email: lead.email,
+            phone: null,
             company: lead.company,
+            category: "General Enquiry",
             message: lead.message,
             source: lead.source,
+            assignedTo: null,
             status: lead.status,
-            version: 1,
           },
         });
       }
@@ -1065,6 +1117,12 @@ function normalizeBlockType(type: string) {
       return "stats";
     case "pricing":
       return "pricing";
+    case "subscriptionfeatures":
+      return "subscriptionFeatures";
+    case "subscriptionfaq":
+      return "subscriptionFaq";
+    case "subscriptioncta":
+      return "subscriptionCta";
     case "team":
       return "team";
     case "contact":
@@ -1134,7 +1192,9 @@ function isMissingCmsTableError(error: unknown) {
     return false;
   }
 
-  const code = typeof (error as { code?: unknown }).code === "string" ? (error as { code: string }).code : undefined;
+  const code = typeof (error as unknown as { code?: unknown }).code === "string"
+    ? (error as unknown as { code: string }).code
+    : undefined;
   const message = error.message.toLowerCase();
 
   return (
@@ -1155,10 +1215,17 @@ export async function getNavigationConfig() {
     });
 
     if (navigation) {
+      const cmsItems = navigation.items.map((item) => ({ label: item.label, href: item.href, position: item.position }));
+      const requiredItems = defaultNavigation.items;
+      const mergedItems = requiredItems.map((required) => {
+        const existing = cmsItems.find((item) => item.href === required.href);
+        return existing ? { ...required, label: existing.label, position: required.position } : required;
+      });
+
       return {
         key: navigation.key,
         label: navigation.label,
-        items: navigation.items.map((item) => ({ label: item.label, href: item.href, position: item.position })),
+        items: mergedItems,
       };
     }
 

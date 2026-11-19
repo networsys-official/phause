@@ -35,7 +35,7 @@ export function isPublicCmsReadRoute(pathname: string, method: string): boolean 
     return false;
   }
 
-  return pathname === "/api/cms/pages" || pathname === "/api/cms/blog" || pathname === "/api/cms/faqs" || pathname === "/api/cms/media";
+  return pathname === "/api/cms/pages" || pathname === "/api/cms/blog" || pathname === "/api/cms/faqs" || pathname === "/api/cms/services" || pathname === "/api/cms/subscription" || pathname === "/api/cms/media";
 }
 
 export function canAccessCmsPage(sessionUser?: { role?: string | null } | null, hostname?: string | null): boolean {

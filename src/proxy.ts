@@ -5,10 +5,6 @@ import { hasCmsRequestAccess, hasCmsRoleAccess, isAdminManagementPath, isPublicC
 
 const localAuthSecret = "local-test-secret";
 
-if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
-  throw new Error("AUTH_SECRET is required for authentication.");
-}
-
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isProtectedCmsRoute = pathname.startsWith("/studio") || pathname.startsWith("/cms") || pathname.startsWith("/api/cms");
@@ -19,6 +15,10 @@ export async function proxy(request: NextRequest) {
 
   if (isPublicCmsReadRoute(pathname, request.method)) {
     return NextResponse.next();
+  }
+
+  if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build" && !process.env.AUTH_SECRET) {
+    throw new Error("AUTH_SECRET is required for authentication.");
   }
 
   const token = await getToken({

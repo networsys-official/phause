@@ -1,6 +1,6 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { act, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SimpleCmsResourceManager } from "@/components/cms/resource-manager";
 import {
@@ -93,11 +93,16 @@ describe("CMS validation", () => {
     expect(isPublicCmsReadRoute("/api/cms/blog", "GET")).toBe(true);
     expect(isPublicCmsReadRoute("/api/cms/faqs", "GET")).toBe(true);
     expect(isPublicCmsReadRoute("/api/cms/pages", "GET")).toBe(true);
+    expect(isPublicCmsReadRoute("/api/cms/services", "GET")).toBe(true);
+    expect(isPublicCmsReadRoute("/api/cms/services", "POST")).toBe(false);
     expect(isPublicCmsReadRoute("/api/cms/blog", "POST")).toBe(false);
     expect(isPublicCmsReadRoute("/api/cms/forms", "GET")).toBe(false);
   });
 
   it("refreshes resource rows when fetched items arrive after initial render", () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn().mockResolvedValue({ json: async () => ({ items: [] }), ok: true }) as typeof fetch;
+
     const { rerender } = render(
       React.createElement(SimpleCmsResourceManager, {
         title: "Frequently asked questions",
@@ -118,24 +123,28 @@ describe("CMS validation", () => {
 
     expect(screen.getByText("No FAQs published yet")).toBeTruthy();
 
-    rerender(
-      React.createElement(SimpleCmsResourceManager, {
-        title: "Frequently asked questions",
-        description: "FAQ records",
-        endpoint: "/api/cms/faqs",
-        defaultItem: { question: "", answer: "", slug: "", status: "DRAFT" },
-        fields: [
-          { key: "question", label: "Question", type: "text" },
-          { key: "answer", label: "Answer", type: "textarea" },
-          { key: "slug", label: "Slug", type: "text" },
-          { key: "status", label: "Status", type: "select", options: ["DRAFT", "PUBLISHED"] },
-        ],
-        itemName: "FAQ",
-        initialItems: [{ id: "faq-1", question: "What is Phause?", answer: "Security platform", slug: "what-is-phause", status: "PUBLISHED" }],
-        emptyState: { title: "No FAQs published yet", description: "Create your first question" },
-      }),
-    );
+    act(() => {
+      rerender(
+        React.createElement(SimpleCmsResourceManager, {
+          title: "Frequently asked questions",
+          description: "FAQ records",
+          endpoint: "/api/cms/faqs",
+          defaultItem: { question: "", answer: "", slug: "", status: "DRAFT" },
+          fields: [
+            { key: "question", label: "Question", type: "text" },
+            { key: "answer", label: "Answer", type: "textarea" },
+            { key: "slug", label: "Slug", type: "text" },
+            { key: "status", label: "Status", type: "select", options: ["DRAFT", "PUBLISHED"] },
+          ],
+          itemName: "FAQ",
+          initialItems: [{ id: "faq-1", question: "What is Phause?", answer: "Security platform", slug: "what-is-phause", status: "PUBLISHED" }],
+          emptyState: { title: "No FAQs published yet", description: "Create your first question" },
+        }),
+      );
+    });
 
     expect(screen.getByText("What is Phause?")).toBeTruthy();
+
+    globalThis.fetch = originalFetch;
   });
 });
