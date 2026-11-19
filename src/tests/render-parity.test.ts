@@ -1,4 +1,6 @@
-import { spawn, spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { spawn } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { chromium, type Page } from "playwright";
@@ -11,6 +13,8 @@ const ROUTES = ["/", "/about", "/contact", "/subscription", "/registration"] as 
 
 let localServer: ReturnType<typeof spawn> | null = null;
 let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+let localServerExit: number | null = null;
+let localServerOutput = "";
 
 function normalizeText(value: string | null | undefined) {
   return (value ?? "").replace(/\s+/g, " ").trim();
@@ -49,15 +53,36 @@ async function ensureLocalServer() {
     return;
   }
 
-  spawnSync("pkill", ["-f", `next dev -H 127.0.0.1 -p ${LOCAL_PORT}`], { stdio: "ignore" });
-  await delay(1000);
+  const productionBuildExists = existsSync(join(process.cwd(), ".next", "BUILD_ID"));
+  const serverArgs = productionBuildExists
+    ? ["next", "start", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)]
+    : ["next", "dev", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)];
 
-  localServer = spawn("npx", ["next", "dev", "-H", "127.0.0.1", "-p", String(LOCAL_PORT)], {
+  localServer = spawn("npx", serverArgs, {
+    cwd: process.cwd(),
     env: { ...process.env, PORT: String(LOCAL_PORT) },
-    stdio: "inherit",
+    stdio: ["ignore", "pipe", "pipe"],
   });
 
-  await waitForLocalServer();
+  localServerExit = null;
+  localServerOutput = "";
+
+  const collectOutput = (chunk: Buffer) => {
+    localServerOutput += chunk.toString();
+  };
+  localServer.stdout?.on("data", collectOutput);
+  localServer.stderr?.on("data", collectOutput);
+  localServer.once("exit", (code) => {
+    localServerExit = code;
+  });
+
+  try {
+    await waitForLocalServer();
+  } catch (error) {
+    throw new Error(
+      `${error instanceof Error ? error.message : "Local server failed"}\nServer exit code: ${localServerExit ?? "still running"}\nServer output:\n${localServerOutput}`,
+    );
+  }
 }
 
 async function extractSnapshot(page: Page) {

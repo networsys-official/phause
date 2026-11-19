@@ -73,10 +73,20 @@ export function SubscriptionCmsPage() {
   const [payload, setPayload] = useState<SubscriptionPayload>(fallbackPayload);
 
   useEffect(() => {
-    void fetch("/api/cms/subscription-page", { cache: "no-store" })
+    let active = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 4_000);
+
+    console.info("[subscription-cms] client:fetch:start");
+    void fetch("/api/cms/subscription-page", { cache: "no-store", signal: controller.signal })
       .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        if (!data?.success) return;
+        if (!active) return;
+        if (!data?.success) {
+          console.warn("[subscription-cms] client:fetch:fallback", data?.message ?? "CMS response unsuccessful");
+          return;
+        }
+        console.info("[subscription-cms] client:fetch:success");
         setPayload({
           ...fallbackPayload,
           ...data,
@@ -94,7 +104,20 @@ export function SubscriptionCmsPage() {
           cta: data.cta ?? fallbackPayload.cta,
         });
       })
-      .catch(() => setPayload(fallbackPayload));
+      .catch((error) => {
+        if (!active) return;
+        console.warn("[subscription-cms] client:fetch:fallback", error instanceof Error ? error.message : String(error));
+        setPayload(fallbackPayload);
+      })
+      .finally(() => {
+        if (active) window.clearTimeout(timeout);
+      });
+
+    return () => {
+      active = false;
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   if (!payload || !payload.page?.active) return null;
