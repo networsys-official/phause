@@ -1,4 +1,5 @@
-import NextAuth, { CredentialsSignin } from "next-auth";
+import NextAuth, { CredentialsSignin, type Session } from "next-auth";
+import type { NextRequest } from "next/server";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
@@ -7,17 +8,25 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { passwordMeetsRequirements } from "@/lib/security";
 import { logger } from "@/shared/lib/logger";
 
-const localAuthSecret = "local-test-secret";
+const LOCAL_DEVELOPMENT_SECRET = "local-test-secret";
 
-if (process.env.NODE_ENV === "production" && !process.env.AUTH_SECRET) {
-  throw new Error("AUTH_SECRET is required for authentication.");
+function resolveAuthSecret(): string | undefined {
+  if (process.env.AUTH_SECRET) return process.env.AUTH_SECRET;
+  return process.env.NODE_ENV === "production" ? undefined : LOCAL_DEVELOPMENT_SECRET;
+}
+
+export function assertRuntimeAuthSecret(): void {
+  const isProductionBuild = process.env.NEXT_PHASE === "phase-production-build";
+  if (process.env.NODE_ENV === "production" && !isProductionBuild && !process.env.AUTH_SECRET) {
+    throw new Error("AUTH_SECRET is required for authentication.");
+  }
 }
 
 export const runtime = "nodejs";
 
 const DUMMY_HASH = "$2b$12$odqCBNjCW5OHzRxj6YoNaOupn.HNeHGfSqAB.DdXuAjC9q/8VZEsq";
 
-export const { auth, handlers, signIn, signOut } = NextAuth({
+const nextAuth = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   pages: {
@@ -25,7 +34,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     error: "/auth/login",
   },
   trustHost: true,
-  secret: process.env.AUTH_SECRET ?? localAuthSecret,
+  secret: resolveAuthSecret(),
   providers: [
     Credentials({
       name: "Credentials",
@@ -293,6 +302,17 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     },
   },
 });
+
+export function auth(): Promise<Session | null>;
+export function auth(request: NextRequest): Promise<Session | Response | null>;
+export function auth(request?: NextRequest): Promise<Session | Response | null> {
+  assertRuntimeAuthSecret();
+  return nextAuth.auth();
+}
+
+export const handlers = nextAuth.handlers;
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;
 
 export async function createPasswordHash(password: string) {
   if (!passwordMeetsRequirements(password)) {

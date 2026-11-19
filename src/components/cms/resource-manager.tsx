@@ -39,14 +39,16 @@ export function SimpleCmsResourceManager({
   emptyState?: { title: string; description: string };
 }) {
   const [resourceState, setResourceState] = useState({ initialItems, items: initialItems });
+  const [resourceOverride, setResourceOverride] = useState<{
+    source: Array<Record<string, string>>;
+    items: Array<Record<string, string>>;
+  } | null>(null);
 
-  if (resourceState.initialItems !== initialItems) {
-    setResourceState({ initialItems, items: initialItems });
-  }
-
-  const localItems = resourceState.items;
+  const localItems = resourceOverride?.source === initialItems
+    ? resourceOverride.items
+    : initialItems;
   const setLocalItems = (items: Array<Record<string, string>>) => {
-    setResourceState((current) => ({ ...current, items }));
+    setResourceOverride({ source: initialItems, items });
   };
 
   const [draft, setDraft] = useState<Record<string, string>>(defaultItem);

@@ -1,6 +1,6 @@
 import React from "react";
 import { act, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SimpleCmsResourceManager } from "@/components/cms/resource-manager";
 import {
@@ -100,6 +100,9 @@ describe("CMS validation", () => {
   });
 
   it("refreshes resource rows when fetched items arrive after initial render", () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn().mockResolvedValue({ json: async () => ({ items: [] }), ok: true }) as typeof fetch;
+
     const { rerender } = render(
       React.createElement(SimpleCmsResourceManager, {
         title: "Frequently asked questions",
@@ -141,5 +144,7 @@ describe("CMS validation", () => {
     });
 
     expect(screen.getByText("What is Phause?")).toBeTruthy();
+
+    globalThis.fetch = originalFetch;
   });
 });
