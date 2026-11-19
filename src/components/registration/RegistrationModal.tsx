@@ -787,7 +787,7 @@ const handleResendOtp = async () => {
                     {/* Resend OTP */}
                     <div className="mt-5 flex flex-wrap items-center justify-center gap-1.5 text-sm">
                       <span className="text-slate-400">
-                        Didn't receive the code?
+                        Didn&apos;t receive the code?
                       </span>
 
                       <button
