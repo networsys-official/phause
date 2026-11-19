@@ -44,6 +44,19 @@ export default function Navbar() {
     () => false
   );
 
+  useEffect(() => {
+  const handlePageShow = () => {
+    // Recheck the saved session when returning through browser history.
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
+  };
+
+  window.addEventListener("pageshow", handlePageShow);
+
+  return () => {
+    window.removeEventListener("pageshow", handlePageShow);
+  };
+}, []);
+
   // Navbar scroll effect
   useEffect(() => {
     const handleScroll = () => {
