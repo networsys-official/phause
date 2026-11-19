@@ -1209,24 +1209,31 @@ export function SettingsEditor({ settings }: { settings: Array<{ id: string; key
   );
 }
 
-export function LeadsEditor({ leads }: { leads: Array<{ id: string; name: string; email: string; company: string; message: string; source: string; status: string }> }) {
+export function LeadsEditor({ leads }: { leads: Array<{ id: string; name: string; email: string; phone: string; company: string; category: string; message: string; source: string; assignedTo: string; createdAt: string; status: string }> }) {
   const router = useRouter();
   const [items, setItems] = useState(leads);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [message, setMessage] = useState("");
 
+  const leadStatuses = [
+    ["NEW", "New"], ["ASSIGNED", "Assigned"], ["QUALIFIED", "Qualified"],
+    ["CONTACTED", "Contacted"], ["MEETING_SCHEDULED", "Meeting Scheduled"],
+    ["PROPOSAL_SENT", "Proposal Sent"], ["CLOSED_WON", "Closed Won"],
+    ["CLOSED_LOST", "Closed Lost"], ["SPAM", "Spam"],
+  ] as const;
+
   const filtered = items.filter((lead) => {
-    const matchesSearch = [lead.name, lead.email, lead.company, lead.message].some((field) => field.toLowerCase().includes(search.toLowerCase()));
+    const matchesSearch = [lead.name, lead.email, lead.phone, lead.company, lead.category, lead.message, lead.assignedTo].some((field) => field.toLowerCase().includes(search.toLowerCase()));
     const matchesStatus = statusFilter === "ALL" || lead.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const updateStatus = async (leadId: string, status: string) => {
+  const updateLead = async (leadId: string, updates: { status?: string; assignedTo?: string }) => {
     try {
-      await requestJson("/api/cms/leads", "PUT", { id: leadId, status });
-      setItems((current) => current.map((lead) => (lead.id === leadId ? { ...lead, status } : lead)));
-      setMessage("Lead status updated.");
+      await requestJson("/api/cms/leads", "PUT", { id: leadId, ...updates });
+      setItems((current) => current.map((lead) => (lead.id === leadId ? { ...lead, ...updates } : lead)));
+      setMessage("Lead updated.");
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Lead update failed.");
@@ -1240,284 +1247,89 @@ export function LeadsEditor({ leads }: { leads: Array<{ id: string; name: string
           <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search leads" className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white">
             <option value="ALL">All statuses</option>
-            <option value="DRAFT">Draft</option>
-            <option value="PUBLISHED">Published</option>
-            <option value="ARCHIVED">Archived</option>
-            <option value="SCHEDULED">Scheduled</option>
+            {leadStatuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select>
         </div>
       </div>
+
+      {message ? <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">{message}</div> : null}
 
       <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
         {filtered.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/50 p-8 text-center">
             <div className="text-lg font-semibold text-white">No leads match the current filters</div>
-            <p className="mt-2 text-sm text-slate-400">New submissions will appear here as soon as prospects start engaging with the site.</p>
+            <p className="mt-2 text-sm text-slate-400">New enquiries will appear here after they are submitted.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {filtered.map((lead) => (
-              <div key={lead.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <article key={lead.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
+                <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr_1fr]">
                   <div>
                     <div className="font-semibold text-white">{lead.name}</div>
-                    <div className="text-sm text-slate-300">{lead.email}</div>
-                    <div className="text-sm text-cyan-300">{lead.company}</div>
+                    <div className="mt-1 text-sm text-slate-300">{lead.email}</div>
+                    <div className="mt-1 text-sm text-slate-300">Phone: {lead.phone || "Not provided"}</div>
+                    <div className="mt-1 text-sm text-cyan-300">{lead.company || "Company not provided"}</div>
                   </div>
-                  <div className="w-full md:max-w-[200px]">
-                    <select value={lead.status} onChange={(event) => updateStatus(lead.id, event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white">
-                      <option value="DRAFT">Draft</option>
-                      <option value="PUBLISHED">Published</option>
-                      <option value="ARCHIVED">Archived</option>
-                      <option value="SCHEDULED">Scheduled</option>
-                    </select>
+                  <dl className="grid gap-2 text-sm">
+                    <div><dt className="text-slate-500">Lead Source</dt><dd className="text-slate-200">{lead.source}</dd></div>
+                    <div><dt className="text-slate-500">Category</dt><dd className="text-slate-200">{lead.category}</dd></div>
+                    <div><dt className="text-slate-500">Created</dt><dd className="text-slate-200">{new Date(lead.createdAt).toLocaleString()}</dd></div>
+                  </dl>
+                  <div className="space-y-3">
+                    <label className="block text-xs text-slate-500">Assigned Owner
+                      <input value={lead.assignedTo} onChange={(event) => setItems((current) => current.map((item) => item.id === lead.id ? { ...item, assignedTo: event.target.value } : item))} onBlur={(event) => void updateLead(lead.id, { assignedTo: event.target.value })} placeholder="Unassigned" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white" />
+                    </label>
+                    <label className="block text-xs text-slate-500">Current Status
+                      <select value={lead.status} onChange={(event) => void updateLead(lead.id, { status: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white">
+                        {leadStatuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                      </select>
+                    </label>
                   </div>
                 </div>
-                <div className="mt-3 text-sm text-slate-300">Source: {lead.source}</div>
-                <div className="mt-2 text-sm text-slate-300">{lead.message}</div>
-              </div>
+                <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm text-slate-300">{lead.message}</div>
+              </article>
             ))}
           </div>
         )}
       </div>
-
-      {message ? <div className="text-sm text-cyan-200">{message}</div> : null}
     </div>
   );
 }
 
 export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[] }> }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [items, setItems] = useState(forms);
-
-  const createBlankDraft = () => ({
-    id: "",
-    name: "",
-    slug: "",
-    status: "PUBLISHED",
-    fields: [{ label: "Full name", type: "text", placeholder: "Full name", required: true }],
-  });
-
-  const [draft, setDraft] = useState(createBlankDraft());
   const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    if (searchParams.get("view") !== "create") {
-      return;
-    }
-
-    const frame = window.requestAnimationFrame(() => {
-      setDraft(createBlankDraft());
-      router.replace("/studio/forms");
-    });
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [router, searchParams]);
-
-  const updateField = (index: number, key: string, value: string | boolean) => {
-    setDraft((current) => ({
-      ...current,
-      fields: current.fields.map((field, fieldIndex) => {
-        if (fieldIndex !== index) {
-          return field;
-        }
-
-        return { ...field, [key]: value };
-      }),
-    }));
-  };
-
-  const addField = () => {
-    setDraft((current) => ({
-      ...current,
-      fields: [...current.fields, { label: "New field", type: "text", placeholder: "Enter value", required: false }],
-    }));
-  };
-
-  const removeField = (index: number) => {
-    setDraft((current) => ({
-      ...current,
-      fields: current.fields.filter((_, fieldIndex) => fieldIndex !== index),
-    }));
-  };
-
-  const selectForm = (form: { id: string; name: string; slug: string; status: string; fields: unknown[] }) => {
-    setDraft({
-      id: form.id,
-      name: form.name,
-      slug: form.slug,
-      status: form.status,
-      fields: Array.isArray(form.fields)
-        ? form.fields.map((field) => ({
-            label: typeof field === "object" && field !== null && "label" in field ? String((field as { label?: unknown }).label ?? "Field") : "Field",
-            type: typeof field === "object" && field !== null && "type" in field ? String((field as { type?: unknown }).type ?? "text") : "text",
-            placeholder: typeof field === "object" && field !== null && "placeholder" in field ? String((field as { placeholder?: unknown }).placeholder ?? "") : "",
-            required: typeof field === "object" && field !== null && "required" in field ? Boolean((field as { required?: unknown }).required) : false,
-          }))
-        : [{ label: "Full name", type: "text", placeholder: "Full name", required: true }],
-    });
-  };
-
-  const startNewForm = () => {
-    setDraft(createBlankDraft());
-    router.push("/studio/forms?view=create");
-  };
-
-  const save = async () => {
+  const save = async (form: typeof items[number]) => {
     try {
-      const payload = {
-        id: draft.id || undefined,
-        name: draft.name,
-        slug: draft.slug,
-        status: draft.status,
-        fields: draft.fields.map((field) => ({
-          label: String(field.label ?? "Field"),
-          type: String(field.type ?? "text"),
-          placeholder: String(field.placeholder ?? ""),
-          required: Boolean(field.required),
-        })),
-      };
-
-      const method = draft.id ? "PUT" : "POST";
-      const response = await requestJson<{ success: true; form: { id: string; name: string; slug: string; status: string; fields: unknown[] } }>("/api/cms/forms", method, payload);
-
-      setItems((current) => {
-        if (draft.id) {
-          return current.map((item) => (item.id === draft.id ? { ...item, ...payload, id: response.form.id } : item));
-        }
-        return [{ id: response.form.id, name: response.form.name, slug: response.form.slug, status: response.form.status, fields: response.form.fields ?? [] }, ...current];
-      });
-
-      setDraft(createBlankDraft());
-      setMessage("Form saved.");
+      await requestJson("/api/cms/forms", "PUT", form);
+      setMessage("Form saved successfully.");
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Form save failed.");
     }
   };
 
-  const remove = async (formId: string) => {
-    const target = items.find((item) => item.id === formId);
-    if (!target) return;
-
-    if (!confirmDeleteAction(`form "${target.name}"`)) {
-      return;
-    }
-
-    try {
-      await requestJson("/api/cms/forms", "DELETE", { id: formId });
-      setItems((current) => current.filter((item) => item.id !== formId));
-      setMessage("Form deleted.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Delete failed.");
-    }
-  };
-
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-bold text-white">Forms</h2>
-          <button type="button" onClick={startNewForm} className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">New form</button>
+    <div className="space-y-4">
+      {items.map((form) => (
+        <div key={form.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="text-sm text-slate-300">Name
+              <input value={form.name} onChange={(event) => setItems((current) => current.map((item) => item.id === form.id ? { ...item, name: event.target.value } : item))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white" />
+            </label>
+            <label className="text-sm text-slate-300">Status
+              <select value={form.status} onChange={(event) => setItems((current) => current.map((item) => item.id === form.id ? { ...item, status: event.target.value } : item))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white">
+                <option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="SCHEDULED">Scheduled</option><option value="ARCHIVED">Archived</option>
+              </select>
+            </label>
+          </div>
+          <button type="button" onClick={() => void save(form)} className="mt-4 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Save form</button>
         </div>
-        {items.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/50 p-8 text-center">
-            <div className="text-lg font-semibold text-white">No forms created yet</div>
-            <p className="mt-2 text-sm text-slate-400">Create a form on the right to capture leads, appointments, or customer inquiries.</p>
-          </div>
-        ) : (
-          <div className="mt-4 space-y-3">
-            {items.map((form) => (
-              <div key={form.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">
-                <div>
-                  <div className="font-semibold text-white">{form.name}</div>
-                  <div className="text-sm text-cyan-300">/{form.slug}</div>
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => selectForm(form)} className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Edit</button>
-                  <button type="button" onClick={() => remove(form.id)} className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200">Delete</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <h2 className="text-xl font-bold text-white">{draft.id ? "Edit form" : "Create form"}</h2>
-        <div className="mt-4 space-y-4">
-          <label className="block text-sm text-slate-300">
-            Name
-            <input value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          </label>
-          <label className="block text-sm text-slate-300">
-            Slug
-            <input value={draft.slug} onChange={(event) => setDraft((current) => ({ ...current, slug: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          </label>
-          <label className="block text-sm text-slate-300">
-            Status
-            <select value={draft.status} onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white">
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
-          </label>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-300">Fields</span>
-              <button type="button" onClick={addField} className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs font-medium text-cyan-200">Add field</button>
-            </div>
-
-            {draft.fields.map((field, index) => (
-              <div key={`${field.label}-${index}`} className="rounded-2xl border border-white/10 bg-slate-950/60 p-3">
-                <div className="mb-3 flex items-center justify-between gap-2">
-                  <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Field {index + 1}</span>
-                  <button type="button" onClick={() => removeField(index)} className="text-xs text-red-300">Remove</button>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="block text-xs text-slate-300">
-                    Label
-                    <input value={String(field.label ?? "")} onChange={(event) => updateField(index, "label", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white" />
-                  </label>
-
-                  <div className="grid gap-3 md:grid-cols-2">
-                    <label className="block text-xs text-slate-300">
-                      Type
-                      <select value={String(field.type ?? "text")} onChange={(event) => updateField(index, "type", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white">
-                        <option value="text">Text</option>
-                        <option value="email">Email</option>
-                        <option value="tel">Phone</option>
-                        <option value="textarea">Textarea</option>
-                        <option value="select">Dropdown</option>
-                      </select>
-                    </label>
-
-                    <label className="block text-xs text-slate-300">
-                      Placeholder
-                      <input value={String(field.placeholder ?? "")} onChange={(event) => updateField(index, "placeholder", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white" />
-                    </label>
-                  </div>
-
-                  <label className="flex items-center gap-2 text-xs text-slate-300">
-                    <input checked={Boolean(field.required)} onChange={(event) => updateField(index, "required", event.target.checked)} type="checkbox" className="h-4 w-4 rounded border-white/20 bg-slate-900 text-cyan-500" />
-                    Required field
-                  </label>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button type="button" onClick={save} className="w-full rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">Save form</button>
-        </div>
-      </div>
-
-      {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
+      ))}
+      {message ? <div className="text-sm text-cyan-200">{message}</div> : null}
     </div>
   );
 }

@@ -98,7 +98,7 @@ export function buildSidebarStatusCounts(data: { blog?: Array<Record<string, unk
 
   return {
     "/studio/blog": blogItems.filter((item) => String(item.status ?? "").toUpperCase() === "DRAFT").length,
-    "/studio/leads": leadItems.filter((item) => String(item.status ?? "").toUpperCase() === "DRAFT").length,
+    "/studio/leads": leadItems.filter((item) => String(item.status ?? "").toUpperCase() === "NEW").length,
     "/studio/forms": formItems.filter((item) => String(item.status ?? "").toUpperCase() === "DRAFT").length,
   };
 }

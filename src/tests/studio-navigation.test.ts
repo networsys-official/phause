@@ -45,7 +45,7 @@ describe("studio navigation integrity", () => {
   it("only shows sidebar status counts when there is real pending work", () => {
     const counts = buildSidebarStatusCounts({
       blog: [{ status: "DRAFT" }, { status: "PUBLISHED" }],
-      leads: [{ status: "DRAFT" }, { status: "DRAFT" }],
+      leads: [{ status: "NEW" }, { status: "NEW" }],
       forms: [{ status: "PUBLISHED" }],
     });
 

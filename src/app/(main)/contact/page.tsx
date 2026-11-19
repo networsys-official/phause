@@ -146,8 +146,6 @@ const enquirySubjects = [
     "Pricing & Subscription",
     "Incident / Emergency Support",
     "Partnership Opportunity",
-    "Careers",
-    "Press & Media",
 ];
 
 type ContactField = {
@@ -199,7 +197,7 @@ function EnquiryForm() {
         subject: enquirySubjects[0], message: "",
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
-    const [status, setStatus] = useState<"idle" | "sending" | "success">("idle");
+    const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
 
     useEffect(() => {
         let isMounted = true;
@@ -286,10 +284,34 @@ function EnquiryForm() {
     const handleSubmit = async (ev: React.FormEvent) => {
         ev.preventDefault();
         if (!validate()) return;
+
         setStatus("sending");
-        // Replace with: await fetch("/api/contact", { method: "POST", body: JSON.stringify(form) })
-        await new Promise((r) => setTimeout(r, 1800));
-        setStatus("success");
+        console.info("CONTACT_SUBMIT_START", { email: form.email, subject: form.subject });
+
+        try {
+            const controller = new AbortController();
+            const timeout = window.setTimeout(() => controller.abort(), 15_000);
+
+            const response = await fetch("/api/contact", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(form),
+                signal: controller.signal,
+            });
+            window.clearTimeout(timeout);
+
+            const payload = await response.json().catch(() => null) as { success?: boolean; message?: string } | null;
+            if (!response.ok || payload?.success !== true) {
+                setStatus("error");
+                return;
+            }
+
+            console.info("CONTACT_SUBMIT_SUCCESS", payload);
+            setStatus("success");
+        } catch (error) {
+            console.error("CONTACT_SUBMIT_DB_ERROR", error instanceof Error ? error.message : String(error));
+            setStatus("error");
+        }
     };
 
     const inputCls = (field: string) =>
@@ -395,6 +417,28 @@ function EnquiryForm() {
                                             className="px-7 py-3 rounded-full border border-phause-cyan/40 text-phause-cyan font-semibold hover:bg-phause-cyan/10 transition-colors"
                                         >
                                             Send Another Enquiry
+                                        </motion.button>
+                                    </motion.div>
+                                ) : status === "error" ? (
+                                    <motion.div
+                                        key="error"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="h-full min-h-[420px] flex flex-col items-center justify-center text-center relative z-10"
+                                        role="alert"
+                                    >
+                                        <h3 className="text-2xl font-extrabold mb-3">Unable to send enquiry</h3>
+                                        <p className="text-slate-400 max-w-sm mb-8">
+                                            Your enquiry was not saved. Please try again.
+                                        </p>
+                                        <motion.button
+                                            type="button"
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => setStatus("idle")}
+                                            className="px-7 py-3 rounded-full border border-red-400/40 text-red-300 font-semibold hover:bg-red-400/10 transition-colors"
+                                        >
+                                            Try Again
                                         </motion.button>
                                     </motion.div>
                                 ) : (

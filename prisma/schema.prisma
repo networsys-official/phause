@@ -396,20 +396,23 @@ model Form {
 }
 
 model Lead {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  name        String?
-  email       String?
-  company     String?
-  message     String?
-  source      String?
-  status      ContentStatus @default(DRAFT)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  publishedAt DateTime?
-  deletedAt   DateTime?
-  version     Int           @default(0)
-  AuditLog    AuditLog[]    @relation("LeadAuditLog")
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  name       String?
+  email      String?
+  phone      String?
+  company    String?
+  category   String     @default("General Enquiry")
+  message    String?
+  source     String?
+  assignedTo String?
+  status     LeadStatus @default(NEW)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+  AuditLog   AuditLog[] @relation("LeadAuditLog")
+
+  @@index([status, createdAt])
 }
 
 model AuditLog {
@@ -759,4 +762,16 @@ enum AuditAction {
   DELETE
   SCRAPE_IMPORT
   SYNC
+}
+
+enum LeadStatus {
+  NEW
+  ASSIGNED
+  QUALIFIED
+  CONTACTED
+  MEETING_SCHEDULED
+  PROPOSAL_SENT
+  CLOSED_WON
+  CLOSED_LOST
+  SPAM
 }

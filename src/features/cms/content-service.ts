@@ -140,8 +140,6 @@ const defaultForms = [
           "Pricing & Subscription",
           "Incident / Emergency Support",
           "Partnership Opportunity",
-          "Careers",
-          "Press & Media",
         ],
       },
       { key: "message", label: "Message", type: "textarea", placeholder: "Tell us about your infrastructure, current security stack, and what you're trying to achieve…", required: true },
@@ -169,7 +167,7 @@ const defaultLeads = [
     company: "Acme Security",
     message: "Interested in a reseller package and rapid rollout onboarding.",
     source: "Website",
-    status: "PUBLISHED",
+    status: "QUALIFIED",
   },
   {
     slug: "raul-perez",
@@ -178,7 +176,7 @@ const defaultLeads = [
     company: "Northstar Systems",
     message: "Need help with compliance monitoring and incident response coverage.",
     source: "Outbound",
-    status: "SCHEDULED",
+    status: "MEETING_SCHEDULED",
   },
   {
     slug: "megan-chen",
@@ -187,7 +185,7 @@ const defaultLeads = [
     company: "Cyberdock AI",
     message: "Looking for pricing details and a product walkthrough for the enterprise plan.",
     source: "Demo Request",
-    status: "DRAFT",
+    status: "NEW",
   },
 ] as const;
 
@@ -824,6 +822,12 @@ export async function ensureDefaultCmsContent() {
     return;
   }
 
+  if (process.env.NODE_ENV !== "development") {
+    await prisma.lead.deleteMany({
+      where: { slug: { in: defaultLeads.map((lead) => lead.slug) } },
+    });
+  }
+
   if (await hasDefaultCmsContent()) {
     logger.info("CMS bootstrap skipped because the default content is already seeded.");
     return;
@@ -1027,27 +1031,31 @@ export async function ensureDefaultCmsContent() {
         });
       }
 
-      for (const lead of defaultLeads) {
+      if (process.env.NODE_ENV === "development") for (const lead of defaultLeads) {
         await tx.lead.upsert({
           where: { slug: lead.slug },
           update: {
             name: lead.name,
             email: lead.email,
+            phone: null,
             company: lead.company,
+            category: "General Enquiry",
             message: lead.message,
             source: lead.source,
+            assignedTo: null,
             status: lead.status,
-            version: { increment: 1 },
           },
           create: {
             slug: lead.slug,
             name: lead.name,
             email: lead.email,
+            phone: null,
             company: lead.company,
+            category: "General Enquiry",
             message: lead.message,
             source: lead.source,
+            assignedTo: null,
             status: lead.status,
-            version: 1,
           },
         });
       }
