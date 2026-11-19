@@ -34,27 +34,23 @@ export default function Footer() {
   useEffect(() => {
     let active = true;
 
-    Promise.all([fetch("/api/footer"), fetch("/api/navigation")])
-      .then(async ([footerResponse, navigationResponse]) => {
+    fetch("/api/footer")
+      .then(async (footerResponse) => {
         const footerPayload = await footerResponse.json();
-        const navigationPayload = await navigationResponse.json();
 
         if (!active) {
           return;
         }
 
         if (footerPayload?.footer) {
-          const cmsLinks = Array.isArray(footerPayload.footer.links) && footerPayload.footer.links.length > 0 ? footerPayload.footer.links : FOOTER_SERVICES;
+          const cmsLinks = Array.isArray(footerPayload.footer.links) && footerPayload.footer.links.length > 0 ? footerPayload.footer.links : FOOTER_LINKS;
           setFooter((current) => ({
             title: footerPayload.footer.title ?? "Phause",
             description: footerPayload.footer.description ?? current.description,
             copyright: footerPayload.footer.copyright ?? current.copyright,
             links: cmsLinks,
           }));
-        }
-
-        if (navigationPayload?.navigation?.items?.length) {
-          setNavigation({ items: navigationPayload.navigation.items });
+          setNavigation({ items: cmsLinks });
         }
 
         const emailLink = footerPayload?.footer?.links?.find((link: { href?: string; label?: string }) => link.href?.includes("@"));

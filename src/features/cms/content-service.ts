@@ -1214,14 +1214,10 @@ export async function getNavigationConfig() {
         return existing ? { ...required, label: existing.label, position: required.position } : required;
       });
 
-      const extraItems = cmsItems
-        .filter((item) => !requiredItems.some((required) => required.href === item.href))
-        .map((item, index) => ({ ...item, position: requiredItems.length + index }));
-
       return {
         key: navigation.key,
         label: navigation.label,
-        items: [...mergedItems, ...extraItems],
+        items: mergedItems,
       };
     }
 
