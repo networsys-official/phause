@@ -101,24 +101,30 @@ const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         const refreshToken = extractRefreshToken(result);
 
         // IMPORTANT:
-        // Save token on the Phause website before redirecting.
-        storeToken(token);
+// Save the session on the Phause website.
+storeToken(token);
 
-        // Preserve your existing dashboard redirect.
-        const dashboardUrl = new URL(DASHBOARD_URL);
+// Prepare the existing dashboard SSO redirect.
+const dashboardUrl = new URL(DASHBOARD_URL);
 
-        const handoff = new URLSearchParams({
-            access_token: token,
-        });
+const handoff = new URLSearchParams({
+    access_token: token,
+});
 
-        if (refreshToken) {
-            handoff.set("refresh_token", refreshToken);
-        }
+if (refreshToken) {
+    handoff.set("refresh_token", refreshToken);
+}
 
-        dashboardUrl.hash = handoff.toString();
+dashboardUrl.hash = handoff.toString();
 
-        // Existing redirection remains unchanged.
-        window.location.assign(dashboardUrl.toString());
+// Close the modal before navigating.
+// This prevents the browser from restoring it when the user presses Back.
+submittingRef.current = false;
+setSubmitting(false);
+onClose();
+
+// Perform a full navigation to the dashboard.
+window.location.assign(dashboardUrl.toString());
 
     } catch (error) {
         setServerError(
