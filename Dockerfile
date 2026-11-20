@@ -32,5 +32,9 @@ CMD ["node", "server.js"]
 FROM dependencies AS migrator
 WORKDIR /app
 COPY prisma ./prisma
+RUN npx prisma generate
+COPY tsconfig.json ./tsconfig.json
 COPY src/features/cms/seed-defaults.ts ./src/features/cms/seed-defaults.ts
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run prisma:seed && npm run deploy:patch"]
+COPY src/features/cms/content-patches.ts ./src/features/cms/content-patches.ts
+COPY src/infrastructure/database/prisma.ts ./src/infrastructure/database/prisma.ts
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts"]

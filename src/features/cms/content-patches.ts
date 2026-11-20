@@ -1,4 +1,4 @@
-import { prisma } from "@/infrastructure/database/prisma";
+import { prisma } from "../../infrastructure/database/prisma";
 
 const PATCHES = [
   { id: "20261120-01-aware-spacing", old: "Strengthen. Aware.Defend.", new: "Strengthen. Aware. Defend." },
