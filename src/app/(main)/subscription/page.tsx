@@ -1077,19 +1077,27 @@ export default function SubscriptionPage() {
     useEffect(() => {
         const controller = new AbortController();
         void fetch("/api/plans", { cache: "no-store", signal: controller.signal })
-            .then((response) => {
-                if (!response.ok) throw new Error("Unable to load subscription plans.");
-                return response.json();
+            .then(async (response) => {
+                const payload = await response.json() as { success?: boolean; plans?: unknown[]; code?: string };
+                if (!response.ok) throw new Error(payload.code === "CONFIG_ERROR" ? "Plans coming soon" : "Unable to load subscription plans.");
+                return payload;
             })
-            .then((plans: unknown) => {
-                setAdminPlans(Array.isArray(plans) ? plans as AdminPlan[] : []);
+            .then((payload) => {
+                setAdminPlans(Array.isArray(payload.plans) ? payload.plans as AdminPlan[] : []);
                 setAdminPlansLoading(false);
+                setAdminPlansError(null);
             })
             .catch((error) => {
                 if (!controller.signal.aborted) {
                     setAdminPlansLoading(false);
-                    setAdminPlansError("Unable to load subscription plans.");
-                    console.warn("[subscription] admin plans unavailable", error instanceof Error ? error.message : String(error));
+                    const message = error instanceof Error ? error.message : "Unable to load subscription plans.";
+                    if (message === "Plans coming soon") {
+                        setAdminPlans([]);
+                        setAdminPlansError(null);
+                    } else {
+                        setAdminPlansError("Unable to load subscription plans.");
+                    }
+                    console.warn("[subscription] admin plans unavailable", message);
                 }
             });
         return () => controller.abort();

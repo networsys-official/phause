@@ -35,24 +35,57 @@ export type PlanFeatureView = {
   included: boolean;
 };
 
+export class AdminPlansConfigError extends Error {
+  constructor() { super("ADMIN_PLANS_API_URL is not configured."); this.name = "AdminPlansConfigError"; }
+}
+
+export class AdminPlansUpstreamError extends Error {
+  constructor(public readonly status: number) { super(`Admin plans upstream returned HTTP ${status}.`); this.name = "AdminPlansUpstreamError"; }
+}
+
+export class AdminPlansNetworkError extends Error {
+  constructor(public readonly cause: unknown) { super("Unable to reach the admin plans upstream."); this.name = "AdminPlansNetworkError"; }
+}
+
+export class AdminPlansValidationError extends Error {
+  constructor(public readonly issues: Array<{ path: string; message: string }>) { super("The admin plans response did not match the expected schema."); this.name = "AdminPlansValidationError"; }
+}
+
 export async function getAdminPlans(): Promise<AdminPlan[]> {
   const baseUrl = process.env.ADMIN_PLANS_API_URL?.trim();
-  if (!baseUrl) throw new Error("ADMIN_PLANS_API_URL is not configured.");
+  if (!baseUrl) throw new AdminPlansConfigError();
+
   const endpoint = `${baseUrl.replace(/\/$/, "")}/api/plans`;
-  const response = await fetch(endpoint, { cache: "no-store" });
-  if (!response.ok) throw new Error(`Admin plans request failed (${response.status}).`);
+  let response: Response;
+  try {
+    response = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
+  } catch (error) {
+    throw new AdminPlansNetworkError(error);
+  }
 
-  const result: unknown = await response.json();
-  const rows = Array.isArray(result) ? result : (result && typeof result === "object" && "data" in result && Array.isArray((result as { data?: unknown }).data))
-    ? (result as { data: unknown[] }).data
-    : [];
+  if (!response.ok) throw new AdminPlansUpstreamError(response.status);
 
-  return rows
-    .map((row) => adminPlanSchema.safeParse(row))
-    .filter((parsed): parsed is z.ZodSafeParseSuccess<AdminPlan> => parsed.success)
-    .map((parsed) => parsed.data)
-    .filter((plan) => plan.isActive !== false && plan.active !== false)
-    .sort((a, b) => a.sortOrder - b.sortOrder);
+  let result: unknown;
+  try { result = await response.json(); }
+  catch (error) { throw new AdminPlansValidationError([{ path: "body", message: error instanceof Error ? error.message : "Invalid JSON" }]); }
+
+  const rows = Array.isArray(result)
+    ? result
+    : (result && typeof result === "object" && "data" in result && Array.isArray((result as { data?: unknown }).data))
+      ? (result as { data: unknown[] }).data
+      : [];
+
+  const issues: Array<{ path: string; message: string }> = [];
+  const valid: AdminPlan[] = [];
+  rows.forEach((row, index) => {
+    const parsed = adminPlanSchema.safeParse(row);
+    if (parsed.success) valid.push(parsed.data);
+    else parsed.error.issues.forEach((issue) => issues.push({ path: `[${index}]${issue.path.length ? `.${issue.path.join(".")}` : ""}`, message: issue.message }));
+  });
+
+  if (rows.length > 0 && valid.length === 0) throw new AdminPlansValidationError(issues);
+
+  return valid.filter((plan) => plan.isActive !== false && plan.active !== false).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 export function formatAdminPrice(plan: AdminPlan): string {

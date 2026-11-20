@@ -19,6 +19,8 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && r
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ARG ADMIN_PLANS_API_URL
+ENV ADMIN_PLANS_API_URL=$ADMIN_PLANS_API_URL
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs

@@ -92,4 +92,4 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            "cd '$VPS_DEPLOY_PATH' && git fetch origin main && git checkout -f -B main origin/main && docker compose --env-file .env.production --profile migrate run --build --rm migrator sh -lc 'npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts' && docker compose --env-file .env.production up -d --build --remove-orphans"
+            "cd '$VPS_DEPLOY_PATH' && git fetch origin main && git checkout -f -B main origin/main && grep -q '^ADMIN_PLANS_API_URL=' .env.production && docker compose --env-file .env.production --profile migrate run --build --rm migrator sh -lc 'npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts' && docker compose --env-file .env.production up -d --build --remove-orphans"

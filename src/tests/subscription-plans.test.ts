@@ -63,4 +63,9 @@ describe("subscription admin plan cards", () => {
     render(React.createElement(SubscriptionPlanSection, { plans: [], isLoading: false, error: null }));
     expect(screen.getByText("Plans coming soon")).toBeTruthy();
   });
+
+  it("renders the friendly service error state for a failing upstream", () => {
+    render(React.createElement(SubscriptionPlanSection, { plans: [], isLoading: false, error: "Unable to load subscription plans." }));
+    expect(screen.getByText("Unable to load subscription plans.")).toBeTruthy();
+  });
 });
