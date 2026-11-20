@@ -6,6 +6,7 @@ import { normalizePageInput, normalizeSlug } from "@/features/cms/cms-service";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
+import { cmsSaveResponseSchema } from "@/features/cms/cms-page-contract";
 
 function canAccess(request: NextRequest) {
   return hasCmsRequestAccess(request.headers);
@@ -228,7 +229,16 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
       if (!persisted) {
         throw new Error(`A submitted section could not be persisted: ${submitted.type}`);
       }
-      if (JSON.stringify(normalizeEditableValue(persisted.props)) !== JSON.stringify(normalizeEditableValue(submitted.props))) {
+      const persistedProps = normalizeEditableValue(persisted.props);
+      const submittedProps = normalizeEditableValue(submitted.props);
+      const stableProps = (value: unknown): string => {
+        if (Array.isArray(value)) return JSON.stringify(value.map(stableProps));
+        if (value && typeof value === "object") {
+          return JSON.stringify(Object.keys(value as Record<string, unknown>).sort().map((key) => [key, stableProps((value as Record<string, unknown>)[key])]));
+        }
+        return JSON.stringify(value);
+      };
+      if (stableProps(persistedProps) !== stableProps(submittedProps)) {
         throw new Error(`The persisted section did not match the saved value: ${submitted.type}`);
       }
     }
@@ -252,7 +262,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const page = await savePageRecord(body, "create");
     invalidateCmsRoute(page.slug);
-    return NextResponse.json({ success: true, page }, { status: 201 });
+    const response = cmsSaveResponseSchema.parse({ success: true, page });
+    return NextResponse.json(response, { status: 201 });
   } catch (error) {
     logger.error("Page creation failed", { error: error instanceof Error ? error.message : "Unknown error" });
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Page creation failed." }, { status: 500 });
@@ -291,8 +302,9 @@ export async function PUT(request: NextRequest) {
         pageId: page.id,
       },
     });
+    const response = cmsSaveResponseSchema.parse({ success: true, page });
     invalidateCmsRoute(page.slug);
-    return NextResponse.json({ success: true, page });
+    return NextResponse.json(response);
   } catch (error) {
     logger.error("Page update failed", { error: error instanceof Error ? error.message : "Unknown error" });
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Page update failed." }, { status: 500 });

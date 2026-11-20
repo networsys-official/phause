@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
+import type { CmsSaveResponse } from "@/features/cms/cms-page-contract";
 import { prisma } from "@/infrastructure/database/prisma";
 
 vi.mock("@/lib/cms-access", () => ({ hasCmsRequestAccess: () => true }));
@@ -32,20 +33,41 @@ async function heroTitleFromPublicApi() {
 }
 
 describe("CMS hero persistence integration", () => {
+  const testSlug = `cms-persistence-${process.pid}-${Date.now()}`;
+  let testPageId = "";
+
   beforeAll(async () => {
-    await prisma.page.upsert({
-      where: { slug: "home" },
-      update: {},
-      create: { slug: "home", title: "Home", status: "PUBLISHED", version: 1 },
+    const page = await prisma.page.create({
+      data: {
+        slug: testSlug,
+        title: "CMS persistence test",
+        status: "PUBLISHED",
+        version: 1,
+        blocks: {
+          create: [{
+            type: "HERO",
+            order: 0,
+            props: { title: "Initial title", subtitle: "Initial subtitle", visibility: true },
+            version: 1,
+          }],
+        },
+      },
+      include: { blocks: true },
     });
+    testPageId = page.id;
   });
 
   afterAll(async () => {
+    if (testPageId) {
+      await prisma.auditLog.deleteMany({ where: { pageId: testPageId } }).catch(() => undefined);
+      await prisma.pageBlock.deleteMany({ where: { pageId: testPageId } }).catch(() => undefined);
+      await prisma.page.delete({ where: { id: testPageId } }).catch(() => undefined);
+    }
     await prisma.$disconnect();
   });
 
   it("saves twice, rejects stale versions, and preserves unchanged saves", async () => {
-    const loaded = await cmsRequest("GET", "http://localhost/api/cms/pages?slug=home");
+    const loaded = await cmsRequest("GET", `http://localhost/api/cms/pages?slug=${testSlug}`);
     const loadedPayload = await loaded.json() as { page: { id: string; slug: string; title: string; status: string; version: number; seo?: { title?: string | null; description?: string | null; keywords?: string | null; canonical?: string | null }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }> } };
     expect(loaded.status).toBe(200);
 
@@ -82,7 +104,9 @@ describe("CMS hero persistence integration", () => {
     });
     expect(secondSave.status).toBe(200);
 
-    const persisted = await secondSave.json() as { page: { version: number; blocks: Array<{ type: string; props: Record<string, unknown> }> } };
+    const persistedBody = await secondSave.json() as unknown;
+    console.log("SECOND_SAVE_RESPONSE", JSON.stringify({ status: secondSave.status, body: persistedBody }, null, 2));
+    const persisted = persistedBody as CmsSaveResponse;
     expect(persisted.page.blocks.find((block) => block.type === "HERO")?.props.title).toBe("Second save title two");
 
     const staleSave = await cmsRequest("PUT", "http://localhost/api/cms/pages", {

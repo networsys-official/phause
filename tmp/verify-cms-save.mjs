@@ -1,0 +1,23 @@
+import { chromium } from 'playwright';
+const browser=await chromium.launch({headless:true});
+const context=await browser.newContext({viewport:{width:1440,height:1000}});
+const page=await context.newPage();
+page.on('request',r=>{if(r.url().includes('/api/cms/pages')&&r.method()==='PUT') console.log('PUT_PAYLOAD',JSON.stringify(r.postDataJSON(),null,2));});
+page.on('response',async r=>{if(r.url().includes('/api/cms/pages')) console.log('NETWORK',r.request().method(),r.status(),r.url(),JSON.stringify(await r.json().catch(()=>null)));});
+await page.goto('http://localhost:3000/auth/login',{waitUntil:'networkidle'});
+await page.getByPlaceholder('you@phause.com').fill('phause@gmail.com');
+await page.getByPlaceholder('••••••••••••').fill('Phause@321');
+await page.getByRole('button',{name:'Sign in'}).click();
+await page.waitForURL(/\/studio|\/cms/,{timeout:30000}).catch(()=>{});
+await page.goto('http://localhost:3000/cms/pages/home',{waitUntil:'networkidle',timeout:60000});
+await page.waitForTimeout(1000);
+const titleInput=page.getByLabel(/Title for section 1/i).first();
+if(await titleInput.count()){
+ const before=await titleInput.inputValue(); const after=`CMS verified ${Date.now()}`;
+ await titleInput.fill(after); await page.getByRole('button',{name:/save/i}).click(); await page.waitForTimeout(2500);
+ await page.reload({waitUntil:'networkidle'}); await page.waitForTimeout(1000);
+ const refreshed=await page.getByLabel(/Title for section 1/i).first().inputValue();
+ console.log('UI_SAVE',{before,after,refreshed,persisted:refreshed===after});
+ await page.goto('http://localhost:3000',{waitUntil:'networkidle'}); await page.waitForTimeout(1000); console.log('PUBLIC_HAS_TITLE',((await page.locator('body').innerText()).includes(after)));
+}else console.log('NO_TITLE_INPUT');
+await browser.close();

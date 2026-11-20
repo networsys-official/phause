@@ -12,6 +12,7 @@ import {
 } from "@/features/cms/cms-service";
 import { serializeContactDetails } from "@/features/cms/page-builder";
 import { cn } from "@/lib/utils";
+import type { CmsSaveResponse } from "@/features/cms/cms-page-contract";
 
 type PageRecord = {
   id: string;
@@ -444,7 +445,7 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           .sort((left, right) => left.order - right.order),
       };
 
-      const saved = await requestJson<{ success: true; page: { version?: number; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }> } }>("/api/cms/pages", "PUT", payload);
+      const saved = await requestJson<CmsSaveResponse>("/api/cms/pages", "PUT", payload);
       if (!saved.success || !saved.page) throw new Error("The server did not return the saved page.");
       if (typeof saved.page.version === "number") setPageVersion(saved.page.version);
       window.localStorage.setItem("phause:cms-page-updated", String(Date.now()));
