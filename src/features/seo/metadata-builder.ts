@@ -14,15 +14,15 @@ export type SeoMetadataInput = {
 };
 
 export function buildMetadata(input: SeoMetadataInput): Metadata {
-  const title = input.title ?? "Phause | Strengthen. Aware. Defend.";
-  const description = input.description ?? "Enterprise-grade cybersecurity solutions for modern organizations.";
+  const title = input.title ?? "Phause | Phishing Simulation & Security Awareness";
+  const description = input.description ?? "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.";
   const canonical = input.canonical ?? input.baseUrl ?? "https://phause.com";
   const ogImage = input.ogImage ?? "/logo.png";
 
   return {
     title,
     description,
-    keywords: input.keywords ?? ["cybersecurity", "security audit", "threat detection"],
+    keywords: input.keywords ?? ["phishing simulation", "security awareness", "cybersecurity"],
     alternates: {
       canonical,
     },

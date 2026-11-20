@@ -71,8 +71,8 @@ const defaultNavigation = {
 const defaultFooter = {
   title: "Phause",
   description:
-    "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
-  copyright: "© 2025 Phause. All rights reserved. Strengthen. Aware. Defend.",
+    "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+  copyright: "© 2026 Phause. All rights reserved.",
   links: [
     { label: "Home", href: "/", position: 0 },
     { label: "About Us", href: "/about", position: 1 },
@@ -195,10 +195,10 @@ const defaultPages = [
     title: "Home",
     status: "PUBLISHED",
     seo: {
-      title: "Phause | Strengthen. Aware. Defend.",
+      title: "Phause | Phishing Simulation & Security Awareness",
       description:
-        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
-      keywords: ["cybersecurity", "threat detection", "cloud protection", "phause"],
+        "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+      keywords: ["phishing simulation", "security awareness", "employee engagement", "phause"],
       canonical: "https://phause.com/",
     },
     blocks: [
@@ -206,10 +206,10 @@ const defaultPages = [
         type: "hero",
         order: 0,
         props: {
-          eyebrow: "Strengthen. Aware. Defend.",
-          title: "Strengthen. Aware.Defend.",
+          eyebrow: "Phishing awareness for every team",
+          title: "Help your people recognise phishing before it becomes a problem",
           description:
-            "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+            "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
           ctaPrimary: "Get Protected Now",
           ctaSecondary: "Explore Platform",
           ctaPrimaryHref: "/subscription",
