@@ -22,12 +22,7 @@ export const subscriptionCmsPayloadSchema = z.object({
   }),
   trustItems: z.array(z.object({ id: z.string().optional(), icon: z.string(), title: z.string(), description: z.string().optional().nullable(), visible: z.boolean(), sortOrder: z.number().int().min(0) })),
   pricing: z.object({ title: z.string(), subtitle: z.string().optional().nullable(), badgeText: z.string().optional().nullable(), accentColor: z.string(), visible: z.boolean(), sortOrder: z.number().int().min(0) }),
-  plans: z.array(z.object({
-    id: z.string().optional(), name: z.string(), badge: z.string().optional().nullable(), description: z.string(), price: z.string(), yearlyPrice: z.string().optional().nullable(),
-    billingCycle: z.string(), buttonText: z.string(), buttonUrl: z.string(), popular: z.boolean(), active: z.boolean(), sortOrder: z.number().int().min(0), icon: z.string(), accent: z.string(),
-    cardBackground: z.string().optional().nullable(), badgeColor: z.string().optional().nullable(), borderColor: z.string().optional().nullable(),
-    features: z.array(z.object({ id: z.string().optional(), text: z.string(), icon: z.string().optional().nullable(), visible: z.boolean(), sortOrder: z.number().int().min(0) })),
-  })),
+  plans: z.array(z.unknown()).optional().default([]),
   comparison: z.object({ title: z.string(), subtitle: z.string().optional().nullable(), visible: z.boolean(), sortOrder: z.number().int().min(0) }),
   comparisonRows: z.array(z.object({ id: z.string().optional(), name: z.string(), freeValue: z.string(), starterValue: z.string(), professionalValue: z.string(), businessValue: z.string(), enterpriseValue: z.string(), sortOrder: z.number().int().min(0), active: z.boolean() })),
   faq: z.object({ title: z.string(), subtitle: z.string().optional().nullable(), visible: z.boolean(), sortOrder: z.number().int().min(0) }),

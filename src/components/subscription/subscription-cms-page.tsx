@@ -3,7 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { BadgeCheck, Building2, Check, Globe, Headset, Landmark, Lock, Rocket, Shield, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
+import { BadgeCheck, Building2, Globe, Headset, Landmark, Lock, Rocket, Shield, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
+import type { AdminPlan } from "@/features/subscription/admin-plan-repository";
+import { SubscriptionPlanSection } from "@/components/subscription/subscription-plan-section";
+import { mapApiPlanToPlan } from "@/app/(main)/subscription/plans";
 
 interface SubscriptionPlanRecord {
   id: string; name: string; badge: string | null; description: string; price: string;
@@ -56,10 +59,7 @@ const fallbackPayload: SubscriptionPayload = {
     { id: "fallback-3", icon: "globe", title: "40+ Countries Served", visible: true },
   ],
   pricing: { title: "Plans that scale with your security", subtitle: "Find the right level of protection.", badgeText: "Pricing", visible: true },
-  plans: [
-    { id: "starter", name: "Starter", badge: "Most Popular", description: "For growing teams that need more protection.", price: "29", yearlyPrice: "24", billingCycle: "MONTHLY", buttonText: "Choose Starter", buttonUrl: "/registration", popular: true, active: true, sortOrder: 0, icon: "rocket", accent: "teal", cardBackground: null, badgeColor: null, borderColor: null, features: [{ id: "starter-feature", text: "Behavioral threat detection", icon: "check", visible: true, sortOrder: 0 }] },
-    { id: "free", name: "Free", badge: null, description: "For individuals and small teams getting started.", price: "0", yearlyPrice: "0", billingCycle: "MONTHLY", buttonText: "Start Free", buttonUrl: "/registration", popular: false, active: true, sortOrder: 1, icon: "shield", accent: "slate", cardBackground: null, badgeColor: null, borderColor: null, features: [{ id: "free-feature", text: "Core threat detection", icon: "check", visible: true, sortOrder: 0 }] },
-  ],
+  plans: [],
   comparison: { title: "Compare every dimension", subtitle: "Compare limits and features.", visible: true },
   comparisonRows: [{ id: "fallback-comparison", name: "Maximum users", freeValue: "10", starterValue: "25", professionalValue: "100", businessValue: "500", enterpriseValue: "Unlimited" }],
   faq: { title: "Frequently asked questions", subtitle: "Answers about plans and billing.", visible: true },
@@ -69,7 +69,7 @@ const fallbackPayload: SubscriptionPayload = {
   cta: { title: "Still unsure? Talk to a human.", description: "Our security engineers will map your environment to the right tier.", buttonText: "Book a free consultation", buttonUrl: "/contact", backgroundImage: null, visible: true },
 };
 
-export function SubscriptionCmsPage() {
+export function SubscriptionCmsPage({ adminPlans, adminPlansLoading = false, adminPlansError = null }: { adminPlans: AdminPlan[]; adminPlansLoading?: boolean; adminPlansError?: string | null }) {
   const [payload, setPayload] = useState<SubscriptionPayload>(fallbackPayload);
 
   useEffect(() => {
@@ -155,25 +155,11 @@ export function SubscriptionCmsPage() {
       </section>
     ) : null,
     pricing: pricing?.visible ? (
-      <section id="pricing" className="relative py-28">
-        <div className="text-center max-w-3xl mx-auto mb-16 px-6">
-          {pricing.badgeText ? <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold uppercase bg-phause-cyan/10 text-phause-cyan border border-phause-cyan/20 mb-4">{String(pricing.badgeText)}</span> : null}
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4">{String(pricing.title ?? "")}</h2>
-          {pricing.subtitle ? <p className="text-slate-400 text-lg">{String(pricing.subtitle)}</p> : null}
-        </div>
-        <div className="max-w-7xl mx-auto px-6 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
-          {plans.map((plan, index) => (
-            <motion.article key={plan.id} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.08 }} style={plan.cardBackground ? { background: plan.cardBackground } : undefined} className={`relative glass rounded-3xl p-8 flex flex-col overflow-hidden ${plan.popular ? "border-phause-cyan/50 shadow-[0_0_50px_rgba(0,216,201,0.15)]" : ""}`}>
-              {plan.badge ? <div className="absolute top-0 left-1/2 -translate-x-1/2 px-5 py-1.5 rounded-b-2xl text-xs font-black uppercase" style={{ background: plan.badgeColor ?? undefined }}>{plan.badge}</div> : null}
-              <div className="flex items-center gap-3 mt-3 mb-4"><div className="w-12 h-12 rounded-2xl bg-phause-cyan/15 flex items-center justify-center"><CMSIcon name={plan.icon} className="w-6 h-6 text-phause-cyan" /></div><div><h3 className="text-xl font-extrabold">{plan.name}</h3></div></div>
-              <p className="text-sm text-slate-400 mb-6 min-h-[60px]">{plan.description}</p>
-              <div className="mb-6"><span className="text-5xl font-black text-gradient">{plan.price}</span></div>
-              <ul className="space-y-3 mb-8 flex-1">{plan.features.map((feature) => <li key={feature.id} className="flex items-start gap-3 text-sm text-slate-300"><Check className="w-4 h-4 text-phause-cyan mt-0.5 shrink-0" /><span>{feature.text}</span></li>)}</ul>
-              <Link href={plan.buttonUrl} className="mt-auto block text-center py-3 rounded-xl bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold">{plan.buttonText}</Link>
-            </motion.article>
-          ))}
-        </div>
-      </section>
+      <SubscriptionPlanSection
+        plans={adminPlans.map((plan) => mapApiPlanToPlan(plan as unknown as import("@/types/plan").SubscriptionPlanResponse))}
+        isLoading={adminPlansLoading}
+        error={adminPlansError}
+      />
     ) : null,
     comparison: comparison?.visible ? (
       <section className="relative py-28">

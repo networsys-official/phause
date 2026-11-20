@@ -2,14 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-type Tab = "General" | "Hero" | "Trust Bar" | "Plans" | "Comparison Table" | "FAQ" | "Testimonials" | "CTA" | "SEO";
+type Tab = "General" | "Hero" | "Trust Bar" | "Comparison Table" | "FAQ" | "Testimonials" | "CTA" | "SEO";
 
-const tabs: Tab[] = ["General", "Hero", "Trust Bar", "Plans", "Comparison Table", "FAQ", "Testimonials", "CTA", "SEO"];
+const tabs: Tab[] = ["General", "Hero", "Trust Bar", "Comparison Table", "FAQ", "Testimonials", "CTA", "SEO"];
 
 export function SubscriptionCmsEditor({ pageSeo }: { pageSeo?: { title?: string | null; description?: string | null; canonical?: string | null } }) {
   const [tab, setTab] = useState<Tab>("General");
   const [sections, setSections] = useState<Array<Record<string, unknown>>>([]);
-  const [plans, setPlans] = useState<Array<Record<string, unknown>>>([]);
   const [comparisons, setComparisons] = useState<Array<Record<string, unknown>>>([]);
   const [faqs, setFaqs] = useState<Array<Record<string, unknown>>>([]);
   const [testimonials, setTestimonials] = useState<Array<Record<string, unknown>>>([]);
@@ -19,7 +18,6 @@ export function SubscriptionCmsEditor({ pageSeo }: { pageSeo?: { title?: string 
   useEffect(() => {
     void fetch("/api/cms/subscription").then((response) => response.json()).then((payload) => {
       setSections(Array.isArray(payload.sections) ? payload.sections : []);
-      setPlans(Array.isArray(payload.plans) ? payload.plans : []);
       setComparisons(Array.isArray(payload.comparisons) ? payload.comparisons : []);
       setFaqs(Array.isArray(payload.faqs) ? payload.faqs : []);
       setTestimonials(Array.isArray(payload.testimonials) ? payload.testimonials : []);
@@ -30,7 +28,7 @@ export function SubscriptionCmsEditor({ pageSeo }: { pageSeo?: { title?: string 
     setMessage("");
     const response = await fetch("/api/cms/subscription", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sections, plans, comparisons, faqs, testimonials }),
+      body: JSON.stringify({ sections, comparisons, faqs, testimonials }),
     });
     const payload = await response.json();
     setMessage(response.ok ? "Subscription CMS saved successfully." : String(payload.message ?? "Save failed."));
@@ -78,22 +76,6 @@ export function SubscriptionCmsEditor({ pageSeo }: { pageSeo?: { title?: string 
           <label className="text-sm text-slate-300">Meta title<input className={input} value={seo.title} onChange={(event) => setSeo((value) => ({ ...value, title: event.target.value }))} /></label>
           <label className="text-sm text-slate-300">Canonical URL<input className={input} value={seo.canonical} onChange={(event) => setSeo((value) => ({ ...value, canonical: event.target.value }))} /></label>
           <label className="text-sm text-slate-300 md:col-span-2">Meta description<textarea className={input} rows={3} value={seo.description} onChange={(event) => setSeo((value) => ({ ...value, description: event.target.value }))} /></label>
-        </div>
-      ) : null}
-
-      {tab === "Plans" ? (
-        <div className="space-y-4 rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <button type="button" onClick={() => setPlans((items) => [...items, { name: "New Plan", slug: `plan-${items.length + 1}`, description: "", price: "0", billingCycle: "MONTHLY", buttonText: "Choose Plan", buttonUrl: "/registration", active: true, featured: false, sortOrder: items.length, features: [] }])} className="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950">Add plan</button>
-          {plans.map((plan, planIndex) => (
-            <div key={String(plan.id ?? planIndex)} className="grid gap-3 rounded-2xl border border-white/10 bg-slate-950 p-4 md:grid-cols-3">
-              {[["name","Plan name"],["slug","Slug"],["price","Price"],["billingCycle","Billing cycle"],["buttonText","Button text"],["buttonUrl","Button URL"],["badge","Badge"],["badgeColor","Badge color"],["cardBackground","Card background"],["borderColor","Border color"],["hoverColor","Hover color"],["icon","Icon"],["image","Image"],["description","Description"]].map(([key, label]) => (
-                <label key={key} className="text-xs text-slate-300">{label}<input className={input} value={String(plan[key] ?? "")} onChange={(event) => setPlans((items) => items.map((item, index) => index === planIndex ? { ...item, [key]: event.target.value } : item))} /></label>
-              ))}
-              <label className="text-xs text-slate-300">Featured<input type="checkbox" className="ml-2" checked={plan.featured === true} onChange={(event) => setPlans((items) => items.map((item, index) => index === planIndex ? { ...item, featured: event.target.checked } : item))} /></label>
-              <label className="text-xs text-slate-300">Active<input type="checkbox" className="ml-2" checked={plan.active !== false} onChange={(event) => setPlans((items) => items.map((item, index) => index === planIndex ? { ...item, active: event.target.checked } : item))} /></label>
-              <button type="button" onClick={() => setPlans((items) => items.filter((_, index) => index !== planIndex))} className="self-end rounded-xl border border-red-500/30 px-3 py-2 text-xs text-red-200">Delete plan</button>
-            </div>
-          ))}
         </div>
       ) : null}
 
@@ -168,7 +150,7 @@ export function SubscriptionCmsEditor({ pageSeo }: { pageSeo?: { title?: string 
         </div>
       ) : null}
 
-      {!(["Plans", "FAQ", "Testimonials", "Comparison Table"] as Tab[]).includes(tab) && tab !== "General" && tab !== "SEO" ? (
+      {!(["FAQ", "Testimonials", "Comparison Table"] as Tab[]).includes(tab) && tab !== "General" && tab !== "SEO" ? (
         <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6 text-sm text-slate-300">
           Edit this section from the page section blocks below. Select the matching section in the page builder and update its title, description, items, image, button text, and button URL.
         </div>

@@ -1,5 +1,4 @@
 import { prisma } from "@/infrastructure/database/prisma";
-import { ensureDefaultCmsContent } from "../features/cms/content-service";
 import { scraperService } from "../features/scraper/scraper.service";
 
 async function main() {
@@ -41,8 +40,6 @@ async function main() {
       },
     });
   }
-
-  await ensureDefaultCmsContent();
 
   console.log(
     JSON.stringify(

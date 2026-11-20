@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS "ContentPatch" (
+    "id" TEXT NOT NULL,
+    "appliedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ContentPatch_pkey" PRIMARY KEY ("id")
+);

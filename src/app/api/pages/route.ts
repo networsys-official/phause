@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { ensureDefaultCmsContent, getPageBySlug } from "@/features/cms/content-service";
+import { getPageBySlug } from "@/features/cms/content-service";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
@@ -16,8 +16,6 @@ export async function GET(request: NextRequest) {
   if (!rateLimit.allowed) {
     return NextResponse.json({ success: false, message: "Rate limit exceeded." }, { status: 429 });
   }
-
-  await ensureDefaultCmsContent();
 
   const pageSlug = request.nextUrl.searchParams.get("slug") ?? "home";
   const page = await getPageBySlug(pageSlug);

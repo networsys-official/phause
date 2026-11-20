@@ -25,7 +25,7 @@ vi.mock("@/infrastructure/database/prisma", () => ({
   },
 }));
 
-import { ensureDefaultCmsContent } from "@/features/cms/content-service";
+import { hasDefaultCmsContent } from "@/features/cms/content-service";
 
 describe("cms content service", () => {
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe("cms content service", () => {
   it("does not overwrite existing CMS content when records already exist", async () => {
     countMock.mockResolvedValue(5);
 
-    await ensureDefaultCmsContent();
+    await hasDefaultCmsContent();
 
     expect(upsertMock).not.toHaveBeenCalled();
     expect(deleteManyMock).not.toHaveBeenCalled();

@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 
 import { AppSessionProvider } from "@/components/providers/session-provider";
 import { cn } from "@/lib/utils";
+import { liveSiteDefaults } from "@/features/cms/seed-defaults";
 
 const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 

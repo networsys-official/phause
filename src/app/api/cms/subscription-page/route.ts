@@ -54,16 +54,6 @@ export async function PUT(request: NextRequest) {
       await tx.subscriptionTrustItem.createMany({ data: payload.trustItems });
       await tx.subscriptionPricingSection.deleteMany();
       await tx.subscriptionPricingSection.create({ data: payload.pricing });
-      await tx.planFeature.deleteMany();
-      await tx.subscriptionPlan.deleteMany();
-      for (const [index, plan] of payload.plans.entries()) {
-        const created = await tx.subscriptionPlan.create({ data: {
-          name: plan.name, badge: plan.badge ?? null, description: plan.description, price: plan.price, yearlyPrice: plan.yearlyPrice ?? null,
-          billingCycle: plan.billingCycle, buttonText: plan.buttonText, buttonUrl: plan.buttonUrl, popular: plan.popular, active: plan.active,
-          sortOrder: plan.sortOrder ?? index, icon: plan.icon, accent: plan.accent, cardBackground: plan.cardBackground ?? null, badgeColor: plan.badgeColor ?? null, borderColor: plan.borderColor ?? null,
-        } });
-        if (plan.features.length) await tx.planFeature.createMany({ data: plan.features.map((feature, featureIndex) => ({ planId: created.id, text: feature.text, icon: feature.icon ?? null, visible: feature.visible, sortOrder: feature.sortOrder ?? featureIndex })) });
-      }
       await tx.subscriptionComparisonSection.deleteMany(); await tx.subscriptionComparisonSection.create({ data: payload.comparison });
       await tx.subscriptionComparisonRow.deleteMany(); await tx.subscriptionComparisonRow.createMany({ data: payload.comparisonRows });
       await tx.subscriptionFaqSection.deleteMany(); await tx.subscriptionFaqSection.create({ data: payload.faq });

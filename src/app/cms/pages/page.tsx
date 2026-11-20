@@ -1,11 +1,8 @@
 import { prisma } from "@/infrastructure/database/prisma";
-import { ensureDefaultCmsContent } from "@/features/cms/content-service";
 import { PagesEditor } from "@/components/cms/content-editors";
 import { CmsShell } from "@/components/cms/admin-shell";
 
 export default async function CmsPagesPage() {
-  await ensureDefaultCmsContent();
-
   const pages = await prisma.page.findMany({
     where: { deletedAt: null },
     orderBy: { createdAt: "asc" },

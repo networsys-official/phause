@@ -40,16 +40,24 @@ export async function PUT(request: NextRequest) {
         create: { key: navKey, label: String(payload.label ?? "Main navigation"), href: "/", position: 0, slug: `${navKey}-navigation`, status: "PUBLISHED", version: 1 },
       });
 
-      await tx.navigationItem.deleteMany({ where: { navigationId: record.id } });
-      await tx.navigationItem.createMany({
-        data: items.map((item) => ({
-          navigationId: record.id,
-          label: item.label,
-          href: item.href,
-          position: item.position,
-          status: "PUBLISHED",
-        })),
-      });
+      await Promise.all(
+        items.map(async (item) => {
+          const existingItem = await tx.navigationItem.findFirst({
+            where: { navigationId: record.id, href: item.href },
+          });
+
+          if (existingItem) {
+            await tx.navigationItem.update({
+              where: { id: existingItem.id },
+              data: { label: item.label, href: item.href, position: item.position, status: "PUBLISHED" },
+            });
+          } else {
+            await tx.navigationItem.create({
+              data: { navigationId: record.id, label: item.label, href: item.href, position: item.position, status: "PUBLISHED" },
+            });
+          }
+        }),
+      );
 
       return tx.navigation.findFirst({
         where: { id: record.id },
@@ -64,3 +72,5 @@ export async function PUT(request: NextRequest) {
     return NextResponse.json({ success: false, message: "Navigation update failed." }, { status: 500 });
   }
 }
+
+export const revalidate = 60;

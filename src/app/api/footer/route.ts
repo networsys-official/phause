@@ -51,18 +51,25 @@ export async function PUT(request: NextRequest) {
         },
       });
 
-      await tx.footerLink.deleteMany({ where: { footerId: record.id } });
-      await tx.footerLink.createMany({
-        data: links.map((item) => ({
-          footerId: record.id,
-          label: item.label,
-          href: item.href,
-          position: item.position,
-          type: item.href.includes("http") || item.href.startsWith("#") ? "SOCIAL" : "LINK",
-          status: "PUBLISHED",
-        })),
-      });
-
+      await Promise.all(
+        links.map(async (item) => {
+          const existing = await tx.footerLink.findFirst({
+            where: { footerId: record.id, href: item.href, deletedAt: null },
+          });
+          const data = {
+            label: item.label,
+            href: item.href,
+            position: item.position,
+            type: item.href.includes("http") || item.href.startsWith("#") ? "SOCIAL" : "LINK",
+            status: "PUBLISHED" as const,
+          };
+          if (existing) {
+            await tx.footerLink.update({ where: { id: existing.id }, data });
+          } else {
+            await tx.footerLink.create({ data: { footerId: record.id, ...data, version: 1 } });
+          }
+        }),
+      );
       return tx.footer.findFirst({ where: { id: record.id }, include: { links: { orderBy: { position: "asc" } } } });
     });
 

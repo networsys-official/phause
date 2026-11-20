@@ -1,15 +1,12 @@
 import { notFound } from "next/navigation";
 
 import { prisma } from "@/infrastructure/database/prisma";
-import { ensureDefaultCmsContent } from "@/features/cms/content-service";
 import { CmsShell } from "@/components/cms/admin-shell";
 import { PageSectionEditor } from "@/components/cms/content-editors";
 import { SubscriptionCmsEditorV2 } from "@/components/cms/subscription-cms-editor-v2";
 
 export default async function CmsPageDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-
-  await ensureDefaultCmsContent();
 
   const page = await prisma.page.findFirst({
     where: { slug, deletedAt: null },
@@ -37,6 +34,7 @@ export default async function CmsPageDetailPage({ params }: { params: Promise<{ 
       slug: page.slug,
       title: page.title,
       status: page.status,
+      version: page.version,
     },
     blocks: page.blocks.map((block) => ({
       id: block.id,

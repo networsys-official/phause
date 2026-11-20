@@ -900,7 +900,7 @@ export default function Home() {
   const defaults = {
     hero: {
       eyebrow: "Strengthen. Aware. Defend.",
-      title: "Strengthen. Aware.Defend.",
+      title: "Strengthen. Aware. Defend.",
       description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
       ctaPrimary: "Get Protected Now",
       ctaSecondary: "Explore Platform",

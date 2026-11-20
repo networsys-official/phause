@@ -133,12 +133,6 @@ export class ScraperService {
           data: { seoId: seoRecord.id },
         });
 
-        const existingBlockCount = await tx.pageBlock.count({ where: { pageId: pageRecord.id } });
-
-        if (existingBlockCount > 0) {
-          await tx.pageBlock.deleteMany({ where: { pageId: pageRecord.id } });
-        }
-
         if (page.blocks.length > 0) {
           for (const [index, block] of page.blocks.entries()) {
             const nextProps = { ...block.props } as Record<string, unknown>;
@@ -193,8 +187,6 @@ export class ScraperService {
           version: 1,
         },
       });
-
-      await tx.navigationItem.deleteMany({ where: { navigationId: navRecord.id } });
       if (navSource.length > 0) {
         await tx.navigationItem.createMany({
           data: navSource.slice(0, 12).map((item, index) => ({
@@ -226,8 +218,6 @@ export class ScraperService {
           version: 1,
         },
       });
-
-      await tx.footerLink.deleteMany({ where: { footerId: footerRecord.id } });
       if (footerLinks.length > 0) {
         await tx.footerLink.createMany({
           data: footerLinks.slice(0, 12).map((item, index) => ({

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-type Tab = "SEO" | "Hero" | "Trust Bar" | "Pricing" | "Plans" | "Comparison Table" | "FAQ" | "Testimonials" | "CTA";
-const tabs: Tab[] = ["SEO", "Hero", "Trust Bar", "Pricing", "Plans", "Comparison Table", "FAQ", "Testimonials", "CTA"];
+type Tab = "SEO" | "Hero" | "Trust Bar" | "Pricing" | "Comparison Table" | "FAQ" | "Testimonials" | "CTA";
+const tabs: Tab[] = ["SEO", "Hero", "Trust Bar", "Pricing", "Comparison Table", "FAQ", "Testimonials", "CTA"];
 const input = "w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white outline-none focus:border-cyan-400";
 
 type Row = Record<string, unknown>;
@@ -87,22 +87,6 @@ export function SubscriptionCmsEditorV2() {
       {tab === "Pricing" && <div className="grid gap-4 rounded-3xl border border-white/10 bg-slate-900/80 p-6 md:grid-cols-2">
         {textField("pricing", "title", "Heading")}{textField("pricing", "subtitle", "Subtitle")}{textField("pricing", "badgeText", "Badge text")}{textField("pricing", "accentColor", "Accent color")}
         <label className="text-sm text-slate-300">Visible<input type="checkbox" className="ml-2" checked={record("pricing").visible !== false} onChange={(event) => update("pricing", "visible", event.target.checked)} /></label>
-      </div>}
-
-      {tab === "Plans" && <div className="space-y-4 rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <button type="button" className="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950" onClick={() => setRows("plans", [...rows("plans"), { name:"", badge:"", description:"", price:"0", yearlyPrice:"0", billingCycle:"MONTHLY", buttonText:"", buttonUrl:"/registration", popular:false, active:true, sortOrder:rows("plans").length, icon:"shield", accent:"cyan", features:[] }])}>Add plan</button>
-        {rows("plans").map((plan, index) => {
-          const features = (plan.features ?? []) as Row[];
-          return <div key={String(plan.id ?? index)} className="grid gap-3 rounded-2xl border border-white/10 bg-slate-950 p-4 md:grid-cols-3">
-            {[ ["name","Name"],["badge","Badge"],["description","Description"],["price","Price"],["yearlyPrice","Yearly price"],["billingCycle","Billing cycle"],["buttonText","Button text"],["buttonUrl","Button URL"],["icon","Icon"],["accent","Accent"],["cardBackground","Card background"],["badgeColor","Badge color"],["borderColor","Border color"] ].map(([field,label]) => <label key={field} className="text-xs text-slate-300">{label}<input className={input} value={String(plan[field] ?? "")} onChange={(event) => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, [field]:event.target.value } : value))} /></label>)}
-            <label className="text-xs text-slate-300">Popular<input className="ml-2" type="checkbox" checked={plan.popular === true} onChange={(event) => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, popular:event.target.checked } : value))} /></label>
-            <label className="text-xs text-slate-300">Active<input className="ml-2" type="checkbox" checked={plan.active !== false} onChange={(event) => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, active:event.target.checked } : value))} /></label>
-            <div className="md:col-span-3 space-y-2"><button type="button" className="rounded-lg border border-cyan-400/30 px-3 py-1.5 text-xs text-cyan-200" onClick={() => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, features:[...features,{ text:"", icon:"check", visible:true, sortOrder:features.length }] } : value))}>Add feature</button>
-              {features.map((feature, featureIndex) => <div key={String(feature.id ?? featureIndex)} className="grid gap-2 md:grid-cols-4"><input className={input} value={String(feature.text ?? "")} onChange={(event) => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, features:features.map((item, j) => j === featureIndex ? { ...item, text:event.target.value } : item) } : value))} /><input className={input} value={String(feature.icon ?? "")} onChange={(event) => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, features:features.map((item, j) => j === featureIndex ? { ...item, icon:event.target.value } : item) } : value))} /><label className="text-xs text-slate-300">Visible<input className="ml-2" type="checkbox" checked={feature.visible !== false} onChange={(event) => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, features:features.map((item, j) => j === featureIndex ? { ...item, visible:event.target.checked } : item) } : value))} /></label><button type="button" className="text-xs text-red-300" onClick={() => setRows("plans", rows("plans").map((value, i) => i === index ? { ...value, features:features.filter((_, j) => j !== featureIndex) } : value))}>Delete feature</button></div>)}
-            </div>
-            <div className="md:col-span-3 flex items-center justify-between">{reorder("plans", index)}<button type="button" className="rounded-lg border border-red-500/30 px-3 py-2 text-xs text-red-200" onClick={() => setRows("plans", rows("plans").filter((_, i) => i !== index))}>Delete plan</button></div>
-          </div>;
-        })}
       </div>}
 
       {tab === "Comparison Table" && <div className="space-y-4 rounded-3xl border border-white/10 bg-slate-900/80 p-6">

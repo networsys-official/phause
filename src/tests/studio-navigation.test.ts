@@ -16,7 +16,6 @@ describe("studio navigation integrity", () => {
     expect(hrefs).toContain("/studio/footer");
     expect(hrefs).toContain("/studio/seo");
     expect(hrefs).toContain("/studio/forms");
-    expect(hrefs).toContain("/studio/leads");
     expect(hrefs).toContain("/studio/settings");
   });
 
@@ -45,17 +44,14 @@ describe("studio navigation integrity", () => {
   it("only shows sidebar status counts when there is real pending work", () => {
     const counts = buildSidebarStatusCounts({
       blog: [{ status: "DRAFT" }, { status: "PUBLISHED" }],
-      leads: [{ status: "NEW" }, { status: "NEW" }],
       forms: [{ status: "PUBLISHED" }],
     });
 
     expect(counts).toEqual({
       "/studio/blog": 1,
-      "/studio/leads": 2,
       "/studio/forms": 0,
     });
     expect(getSidebarStatusCount("/studio/blog", counts)).toBe(1);
-    expect(getSidebarStatusCount("/studio/leads", counts)).toBe(2);
     expect(getSidebarStatusCount("/studio/forms", counts)).toBeNull();
     expect(getSidebarStatusCount("/studio/pages", counts)).toBeNull();
   });

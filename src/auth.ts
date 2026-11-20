@@ -3,7 +3,6 @@ import type { NextRequest } from "next/server";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
-import { ensureDefaultAdminUser } from "@/features/cms/content-service";
 import { prisma } from "@/infrastructure/database/prisma";
 import { passwordMeetsRequirements } from "@/lib/security";
 import { logger } from "@/shared/lib/logger";
@@ -54,8 +53,6 @@ const nextAuth = NextAuth({
         });
 
         try {
-          await ensureDefaultAdminUser();
-
           if (!email || !password) {
             console.error("AUTHORIZE_INVALID_INPUT", {
               suppliedEmail: credentials?.email ?? null,

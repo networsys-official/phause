@@ -33,7 +33,6 @@ export function buildSiteSeo(input: PageSeoInput) {
       description:
         input.description ??
         "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
-      image: `${baseUrl}/logo.png`,
     },
   };
 }

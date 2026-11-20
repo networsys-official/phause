@@ -4,7 +4,7 @@ import { logger } from "@/shared/lib/logger";
 const DEFAULT_ADMIN_EMAIL = "phause@gmail.com";
 const BOOTSTRAP_ADMIN_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD;
 
-export async function ensureDefaultAdminUser() {
+export async function bootstrapAdminUser() {
   const hasSuperAdmin = await prisma.user.findFirst({
     where: { role: "SUPER_ADMIN" },
   });
@@ -159,35 +159,7 @@ const defaultForms = [
   },
 ] as const;
 
-const defaultLeads = [
-  {
-    slug: "ava-johnson",
-    name: "Ava Johnson",
-    email: "ava.johnson@acme.io",
-    company: "Acme Security",
-    message: "Interested in a reseller package and rapid rollout onboarding.",
-    source: "Website",
-    status: "QUALIFIED",
-  },
-  {
-    slug: "raul-perez",
-    name: "Raul Perez",
-    email: "raul.perez@northstar.co",
-    company: "Northstar Systems",
-    message: "Need help with compliance monitoring and incident response coverage.",
-    source: "Outbound",
-    status: "MEETING_SCHEDULED",
-  },
-  {
-    slug: "megan-chen",
-    name: "Megan Chen",
-    email: "megan.chen@cyberdock.ai",
-    company: "Cyberdock AI",
-    message: "Looking for pricing details and a product walkthrough for the enterprise plan.",
-    source: "Demo Request",
-    status: "NEW",
-  },
-] as const;
+const defaultLeads = [] as const;
 
 const defaultPages = [
   {
@@ -207,7 +179,7 @@ const defaultPages = [
         order: 0,
         props: {
           eyebrow: "Strengthen. Aware. Defend.",
-          title: "Strengthen. Aware.Defend.",
+          title: "Strengthen. Aware. Defend.",
           description:
             "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
           ctaPrimary: "Get Protected Now",
@@ -462,7 +434,6 @@ const defaultPages = [
           items: [
             { id: "audience-growing-businesses", title: "Growing Businesses", description: "Build stronger email security practices as your organisation grows.", icon: "building", position: 0 },
             { id: "audience-enterprise-teams", title: "Enterprise Teams", description: "Support consistent security awareness across larger teams.", icon: "network", position: 1 },
-            { id: "audience-it-security-teams", title: "IT & Security Teams", description: "Improve visibility, reporting and phishing response processes.", icon: "security", position: 2 },
             { id: "audience-remote-workforces", title: "Remote Workforces", description: "Help distributed employees recognise suspicious communication.", icon: "remote", position: 3 },
             { id: "audience-operations-teams", title: "Operations Teams", description: "Establish practical procedures for reporting potential threats.", icon: "operations", position: 4 },
             { id: "audience-business-leadership", title: "Business Leadership", description: "Understand organisational phishing risks and improvement priorities.", icon: "leadership", position: 5 },
@@ -811,258 +782,6 @@ export async function hasDefaultCmsContent() {
   }
 }
 
-export async function ensureDefaultCmsContent() {
-  const prismaReady =
-    typeof prisma !== "undefined" &&
-    typeof (prisma as { page?: { upsert?: unknown } }).page?.upsert === "function" &&
-    typeof (prisma as { navigation?: { upsert?: unknown } }).navigation?.upsert === "function";
-
-  if (!prismaReady) {
-    logger.warn("CMS bootstrap skipped because Prisma models are unavailable.");
-    return;
-  }
-
-  if (process.env.NODE_ENV !== "development") {
-    await prisma.lead.deleteMany({
-      where: { slug: { in: defaultLeads.map((lead) => lead.slug) } },
-    });
-  }
-
-  try {
-    await ensureDefaultAdminUser();
-
-    await prisma.$transaction(async (tx) => {
-      await tx.media.upsert({
-        where: { slug: defaultBrandMedia.slug },
-        update: {
-          title: defaultBrandMedia.title,
-          filename: defaultBrandMedia.filename,
-          mimeType: defaultBrandMedia.mimeType,
-          url: defaultBrandMedia.url,
-          altText: defaultBrandMedia.altText,
-          caption: defaultBrandMedia.caption,
-          width: defaultBrandMedia.width,
-          height: defaultBrandMedia.height,
-          size: defaultBrandMedia.size,
-          tags: defaultBrandMedia.tags,
-          checksum: defaultBrandMedia.checksum,
-          status: "PUBLISHED",
-          version: { increment: 1 },
-          updatedAt: new Date(),
-        },
-        create: {
-          slug: defaultBrandMedia.slug,
-          title: defaultBrandMedia.title,
-          filename: defaultBrandMedia.filename,
-          mimeType: defaultBrandMedia.mimeType,
-          url: defaultBrandMedia.url,
-          altText: defaultBrandMedia.altText,
-          caption: defaultBrandMedia.caption,
-          width: defaultBrandMedia.width,
-          height: defaultBrandMedia.height,
-          size: defaultBrandMedia.size,
-          tags: defaultBrandMedia.tags,
-          checksum: defaultBrandMedia.checksum,
-          status: "PUBLISHED",
-          version: 1,
-        },
-      });
-
-      for (const page of defaultPages) {
-        const createdPage = await tx.page.upsert({
-          where: { slug: page.slug },
-          update: {
-            title: page.title,
-            status: page.status,
-            version: { increment: 1 },
-            updatedAt: new Date(),
-          },
-          create: {
-            slug: page.slug,
-            title: page.title,
-            status: page.status,
-            version: 1,
-          },
-        });
-
-        const pageSeo = page.seo ?? {
-          title: page.title,
-          description: `${page.title} content`,
-          keywords: [],
-          canonical: `https://phause.com/${page.slug}`,
-        };
-
-        const seo = await tx.seo.upsert({
-          where: { slug: page.slug },
-          update: {
-            title: pageSeo.title ?? page.title,
-            description: pageSeo.description ?? `${page.title} content`,
-            keywords: Array.isArray(pageSeo.keywords) ? pageSeo.keywords.join(",") : null,
-            canonical: pageSeo.canonical ?? `https://phause.com/${page.slug}`,
-          },
-          create: {
-            slug: page.slug,
-            title: pageSeo.title ?? page.title,
-            description: pageSeo.description ?? `${page.title} content`,
-            keywords: Array.isArray(pageSeo.keywords) ? pageSeo.keywords.join(",") : null,
-            canonical: pageSeo.canonical ?? `https://phause.com/${page.slug}`,
-          },
-        });
-
-        await tx.page.update({
-          where: { id: createdPage.id },
-          data: { seoId: seo.id },
-        });
-
-        await tx.pageBlock.deleteMany({ where: { pageId: createdPage.id } });
-
-        if (page.blocks.length) {
-          await tx.pageBlock.createMany({
-            data: page.blocks.map((block, index) => ({
-              pageId: createdPage.id,
-              type: toPrismaBlockType(block.type) as never,
-              order: block.order ?? index,
-              props: block.props as never,
-            })),
-          });
-        }
-      }
-
-      const mainNavigation = await tx.navigation.upsert({
-        where: { key: defaultNavigation.key },
-        update: {
-          label: defaultNavigation.label,
-          href: "/",
-          position: 0,
-          version: { increment: 1 },
-        },
-        create: {
-          key: defaultNavigation.key,
-          label: defaultNavigation.label,
-          href: "/",
-          position: 0,
-          slug: "main-navigation",
-          status: "PUBLISHED",
-          version: 1,
-        },
-      });
-
-      await tx.navigationItem.deleteMany({ where: { navigationId: mainNavigation.id } });
-      await tx.navigationItem.createMany({
-        data: defaultNavigation.items.map((item) => ({
-          navigationId: mainNavigation.id,
-          label: item.label,
-          href: item.href,
-          position: item.position,
-          status: "PUBLISHED",
-        })),
-      });
-
-      const footer = await tx.footer.upsert({
-        where: { slug: "main-footer" },
-        update: {
-          title: defaultFooter.title,
-          description: defaultFooter.description,
-          copyright: defaultFooter.copyright,
-          version: { increment: 1 },
-        },
-        create: {
-          slug: "main-footer",
-          title: defaultFooter.title,
-          description: defaultFooter.description,
-          copyright: defaultFooter.copyright,
-          status: "PUBLISHED",
-          version: 1,
-        },
-      });
-
-      await tx.footerLink.deleteMany({ where: { footerId: footer.id } });
-      await tx.footerLink.createMany({
-        data: [...defaultFooter.links, ...defaultFooter.socials].map((item, index) => ({
-          footerId: footer.id,
-          label: item.label,
-          href: item.href,
-          position: index,
-          type: item.href.includes("http") || item.href.startsWith("#") ? "SOCIAL" : "LINK",
-          status: "PUBLISHED",
-        })),
-      });
-
-      for (const setting of defaultSettings) {
-        await tx.setting.upsert({
-          where: { key: setting.key },
-          update: {
-            slug: setting.slug,
-            value: setting.value,
-            status: setting.status,
-            version: { increment: 1 },
-          },
-          create: {
-            slug: setting.slug,
-            key: setting.key,
-            value: setting.value,
-            status: setting.status,
-            version: 1,
-          },
-        });
-      }
-
-      for (const form of defaultForms) {
-        await tx.form.upsert({
-          where: { slug: form.slug },
-          update: {
-            name: form.name,
-            fields: form.fields as never,
-            status: form.status,
-            version: { increment: 1 },
-          },
-          create: {
-            slug: form.slug,
-            name: form.name,
-            fields: form.fields as never,
-            status: form.status,
-            version: 1,
-          },
-        });
-      }
-
-      if (process.env.NODE_ENV === "development") for (const lead of defaultLeads) {
-        await tx.lead.upsert({
-          where: { slug: lead.slug },
-          update: {
-            name: lead.name,
-            email: lead.email,
-            phone: null,
-            company: lead.company,
-            category: "General Enquiry",
-            message: lead.message,
-            source: lead.source,
-            assignedTo: null,
-            status: lead.status,
-          },
-          create: {
-            slug: lead.slug,
-            name: lead.name,
-            email: lead.email,
-            phone: null,
-            company: lead.company,
-            category: "General Enquiry",
-            message: lead.message,
-            source: lead.source,
-            assignedTo: null,
-            status: lead.status,
-          },
-        });
-      }
-    });
-
-    logger.info("CMS bootstrap content ensured successfully.");
-  } catch (error) {
-    logger.error("Failed to ensure default CMS content", {
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-  }
-}
 
 function normalizeBlockType(type: string) {
   const normalized = type.toString().trim().replace(/[^a-z0-9]+/gi, "").toLowerCase();

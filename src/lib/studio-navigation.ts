@@ -20,7 +20,6 @@ export const STUDIO_NAV_ITEMS: StudioNavItem[] = [
   { href: "/studio/footer", label: "Footer", group: "Studio" },
   { href: "/studio/seo", label: "SEO", group: "Studio" },
   { href: "/studio/forms", label: "Forms", group: "Studio" },
-  { href: "/studio/leads", label: "Leads", group: "Studio" },
   { href: "/studio/settings", label: "Settings", group: "Studio" },
   { href: "/studio/profile", label: "Profile", group: "Access" },
   { href: "/studio/users", label: "Users", group: "Access" },
@@ -38,7 +37,6 @@ export const STUDIO_VALID_ROUTES = new Set([
   "/studio/footer",
   "/studio/seo",
   "/studio/forms",
-  "/studio/leads",
   "/studio/settings",
   "/studio/profile",
   "/studio/users",
@@ -61,11 +59,10 @@ export const STUDIO_PAGE_ACTIONS: Record<string, StudioPageAction[]> = {
   ],
   "/studio/pages": [{ label: "Create Page", href: "/studio/pages?view=create" }],
   "/studio/forms": [{ label: "Create Form", href: "/studio/forms?view=create" }],
-  "/studio/leads": [{ label: "Review Leads", href: "/studio/leads" }],
   "/studio/services": [{ label: "Create Service", href: "/studio/services#create-resource-form" }],
 };
 
-export const STUDIO_STATUS_BADGES = new Set(["/studio/forms", "/studio/leads", "/studio/blog"]);
+export const STUDIO_STATUS_BADGES = new Set(["/studio/forms", "/studio/blog"]);
 
 function normalizeStudioPath(pathname: string) {
   return pathname.split("?")[0].split("#")[0];
@@ -91,14 +88,12 @@ export function getSidebarStatusCount(pathname: string, counts: Record<string, n
   return count > 0 ? count : null;
 }
 
-export function buildSidebarStatusCounts(data: { blog?: Array<Record<string, unknown>>; leads?: Array<Record<string, unknown>>; forms?: Array<Record<string, unknown>> } = {}) {
+export function buildSidebarStatusCounts(data: { blog?: Array<Record<string, unknown>>; forms?: Array<Record<string, unknown>> } = {}) {
   const blogItems = Array.isArray(data.blog) ? data.blog : [];
-  const leadItems = Array.isArray(data.leads) ? data.leads : [];
   const formItems = Array.isArray(data.forms) ? data.forms : [];
 
   return {
     "/studio/blog": blogItems.filter((item) => String(item.status ?? "").toUpperCase() === "DRAFT").length,
-    "/studio/leads": leadItems.filter((item) => String(item.status ?? "").toUpperCase() === "NEW").length,
     "/studio/forms": formItems.filter((item) => String(item.status ?? "").toUpperCase() === "DRAFT").length,
   };
 }

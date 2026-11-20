@@ -12,7 +12,6 @@ const statsConfig = [
   { key: "faqs", label: "FAQs", icon: MessageSquareText, accent: "from-emerald-400/20 to-emerald-500/5" },
   { key: "services", label: "Services", icon: Globe, accent: "from-amber-400/20 to-amber-500/5" },
   { key: "media", label: "Media", icon: ImageIcon, accent: "from-pink-400/20 to-pink-500/5" },
-  { key: "leads", label: "Leads", icon: Users, accent: "from-rose-400/20 to-rose-500/5" },
 ] as const;
 
 const menu = [
@@ -21,7 +20,6 @@ const menu = [
   { href: "/cms/faqs", label: "FAQs" },
   { href: "/cms/services", label: "Services" },
   { href: "/cms/media", label: "Media" },
-  { href: "/cms/leads", label: "Leads" },
 ];
 
 function getCount(response: Record<string, unknown>, key: string) {
@@ -33,12 +31,10 @@ function getCount(response: Record<string, unknown>, key: string) {
     const items = record.items;
     const pages = record.pages;
     const media = record.media;
-    const leads = record.leads;
 
     if (Array.isArray(items)) return items.length;
     if (Array.isArray(pages)) return pages.length;
     if (Array.isArray(media)) return media.length;
-    if (Array.isArray(leads)) return leads.length;
   }
   return 0;
 }
@@ -56,7 +52,6 @@ export default function CmsOverviewPage() {
           ["faqs", "/api/cms/faqs"],
           ["services", "/api/cms/services"],
           ["media", "/api/media"],
-          ["leads", "/api/cms/leads"],
         ] as const;
 
         const values = await Promise.all(
@@ -69,7 +64,7 @@ export default function CmsOverviewPage() {
 
         setCounts(Object.fromEntries(values));
       } catch {
-        setCounts({ pages: 0, blog: 0, faqs: 0, services: 0, media: 0, leads: 0 });
+        setCounts({ pages: 0, blog: 0, faqs: 0, services: 0, media: 0 });
       } finally {
         setLoading(false);
       }

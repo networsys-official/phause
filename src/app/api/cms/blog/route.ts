@@ -50,64 +50,6 @@ function validateMediaAsset(fieldName: string, value: unknown) {
   return media;
 }
 
-async function ensureDefaultBlogPosts() {
-  const existingCount = await prisma.post.count();
-  if (existingCount > 0) {
-    return;
-  }
-
-  for (const post of fallbackBlogPosts) {
-    const mediaSlug = `${post.slug}-featured`;
-    const media = await prisma.media.upsert({
-      where: { slug: mediaSlug },
-      update: {
-        title: post.title,
-        filename: `${post.slug}.jpg`,
-        mimeType: "image/jpeg",
-        url: post.image,
-        altText: post.imageAlt ?? post.title,
-        size: 0,
-        status: "PUBLISHED",
-      },
-      create: {
-        slug: mediaSlug,
-        title: post.title,
-        filename: `${post.slug}.jpg`,
-        mimeType: "image/jpeg",
-        url: post.image,
-        altText: post.imageAlt ?? post.title,
-        size: 0,
-        status: "PUBLISHED",
-      },
-    });
-
-    await prisma.post.upsert({
-      where: { slug: post.slug },
-      update: {
-        title: post.title,
-        excerpt: post.excerpt,
-        body: post.content.join("\n\n"),
-        imageAlt: post.imageAlt ?? post.title,
-        status: "PUBLISHED",
-        featuredImageId: media.id,
-        thumbnailImageId: media.id,
-        ogImageId: media.id,
-      },
-      create: {
-        slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt,
-        body: post.content.join("\n\n"),
-        imageAlt: post.imageAlt ?? post.title,
-        status: "PUBLISHED",
-        featuredImageId: media.id,
-        thumbnailImageId: media.id,
-        ogImageId: media.id,
-      },
-    });
-  }
-}
-
 function normalizePost(payload: Record<string, unknown>) {
   const title = String(payload.title ?? "").trim();
   const rawSlug = String(payload.slug ?? "").trim();
@@ -176,8 +118,6 @@ async function resolveMediaId(mediaRef: { id?: string; url?: string; altText?: s
 
 export async function GET() {
   try {
-    await ensureDefaultBlogPosts();
-
     const posts = await prisma.post.findMany({
       orderBy: { createdAt: "desc" },
       select: {

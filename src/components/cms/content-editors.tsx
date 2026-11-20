@@ -162,7 +162,7 @@ export function normalizeEditableSectionItems(sectionType: string, items: unknow
   });
 }
 
-export function PageSectionEditor({ page, blocks, media }: { page: { id: string; slug: string; title: string; status: string }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>; media: Array<{ id: string; title: string; url: string; mimeType: string }> }) {
+export function PageSectionEditor({ page, blocks, media }: { page: { id: string; slug: string; title: string; status: string; version?: number }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>; media: Array<{ id: string; title: string; url: string; mimeType: string }> }) {
   const router = useRouter();
   const initialSectionsRef = useRef(blocks.map((block) => normalizeBlockRecord(block)));
   const [sections, setSections] = useState(() => blocks.map((block) => normalizeBlockRecord(block)));
@@ -172,7 +172,9 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
   const [saveState, setSaveState] = useState<"idle" | "saving" | "success" | "error">("idle");
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [pageVersion, setPageVersion] = useState(page.version ?? 1);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [conflictReloadAvailable, setConflictReloadAvailable] = useState(false);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -412,6 +414,8 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
 
     try {
       const payload = {
+        id: page.id,
+        version: pageVersion,
         slug: page.slug,
         title: page.title,
         status: page.status,
@@ -440,18 +444,24 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           .sort((left, right) => left.order - right.order),
       };
 
-      await requestJson("/api/cms/pages", "PUT", payload);
+      const saved = await requestJson<{ success: true; page: { version?: number; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }> } }>("/api/cms/pages", "PUT", payload);
+      if (!saved.success || !saved.page) throw new Error("The server did not return the saved page.");
+      if (typeof saved.page.version === "number") setPageVersion(saved.page.version);
       window.localStorage.setItem("phause:cms-page-updated", String(Date.now()));
       setSaveState("success");
       setHasUnsavedChanges(false);
-      initialSectionsRef.current = sections.map((section) => ({ ...section }));
+      setSections(saved.page.blocks.map((block) => normalizeBlockRecord(block)));
+      initialSectionsRef.current = saved.page.blocks.map((block) => normalizeBlockRecord(block));
       setMessage("✅ Changes saved successfully.");
       setToast({ type: "success", message: "✅ Home page updated successfully" });
       router.refresh();
     } catch (error) {
       setSaveState("error");
-      setToast({ type: "error", message: "❌ Save failed" });
-      setMessage(error instanceof Error ? error.message : "❌ Failed to save changes.");
+      const detail = error instanceof Error ? error.message : "The page could not be saved.";
+      const conflict = /another tab|changed|VERSION_CONFLICT/i.test(detail);
+      setConflictReloadAvailable(conflict);
+      setToast({ type: "error", message: conflict ? "Someone else changed this page. Reload latest, or keep editing and retry." : detail });
+      setMessage(detail);
     } finally {
       setIsLoading(false);
       window.setTimeout(() => setSaveState("idle"), 1800);
@@ -481,6 +491,12 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
         </div>
       ) : null}
 
+      {conflictReloadAvailable ? (
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
+          <span>Someone else changed this page. Your unsaved text is still here.</span>
+          <button type="button" onClick={() => { if (window.confirm("Reload latest page? Unsaved text in this editor will be replaced.")) router.refresh(); }} className="rounded-lg border border-amber-300/40 px-3 py-1.5 font-semibold text-amber-100">Reload latest</button>
+        </div>
+      ) : null}
       <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -1209,94 +1225,6 @@ export function SettingsEditor({ settings }: { settings: Array<{ id: string; key
   );
 }
 
-export function LeadsEditor({ leads }: { leads: Array<{ id: string; name: string; email: string; phone: string; company: string; category: string; message: string; source: string; assignedTo: string; createdAt: string; status: string }> }) {
-  const router = useRouter();
-  const [items, setItems] = useState(leads);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ALL");
-  const [message, setMessage] = useState("");
-
-  const leadStatuses = [
-    ["NEW", "New"], ["ASSIGNED", "Assigned"], ["QUALIFIED", "Qualified"],
-    ["CONTACTED", "Contacted"], ["MEETING_SCHEDULED", "Meeting Scheduled"],
-    ["PROPOSAL_SENT", "Proposal Sent"], ["CLOSED_WON", "Closed Won"],
-    ["CLOSED_LOST", "Closed Lost"], ["SPAM", "Spam"],
-  ] as const;
-
-  const filtered = items.filter((lead) => {
-    const matchesSearch = [lead.name, lead.email, lead.phone, lead.company, lead.category, lead.message, lead.assignedTo].some((field) => field.toLowerCase().includes(search.toLowerCase()));
-    const matchesStatus = statusFilter === "ALL" || lead.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const updateLead = async (leadId: string, updates: { status?: string; assignedTo?: string }) => {
-    try {
-      await requestJson("/api/cms/leads", "PUT", { id: leadId, ...updates });
-      setItems((current) => current.map((lead) => (lead.id === leadId ? { ...lead, ...updates } : lead)));
-      setMessage("Lead updated.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Lead update failed.");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="grid gap-3 md:grid-cols-[1.5fr_0.6fr]">
-          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search leads" className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white">
-            <option value="ALL">All statuses</option>
-            {leadStatuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {message ? <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-sm text-cyan-200">{message}</div> : null}
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        {filtered.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/50 p-8 text-center">
-            <div className="text-lg font-semibold text-white">No leads match the current filters</div>
-            <p className="mt-2 text-sm text-slate-400">New enquiries will appear here after they are submitted.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((lead) => (
-              <article key={lead.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-                <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr_1fr]">
-                  <div>
-                    <div className="font-semibold text-white">{lead.name}</div>
-                    <div className="mt-1 text-sm text-slate-300">{lead.email}</div>
-                    <div className="mt-1 text-sm text-slate-300">Phone: {lead.phone || "Not provided"}</div>
-                    <div className="mt-1 text-sm text-cyan-300">{lead.company || "Company not provided"}</div>
-                  </div>
-                  <dl className="grid gap-2 text-sm">
-                    <div><dt className="text-slate-500">Lead Source</dt><dd className="text-slate-200">{lead.source}</dd></div>
-                    <div><dt className="text-slate-500">Category</dt><dd className="text-slate-200">{lead.category}</dd></div>
-                    <div><dt className="text-slate-500">Created</dt><dd className="text-slate-200">{new Date(lead.createdAt).toLocaleString()}</dd></div>
-                  </dl>
-                  <div className="space-y-3">
-                    <label className="block text-xs text-slate-500">Assigned Owner
-                      <input value={lead.assignedTo} onChange={(event) => setItems((current) => current.map((item) => item.id === lead.id ? { ...item, assignedTo: event.target.value } : item))} onBlur={(event) => void updateLead(lead.id, { assignedTo: event.target.value })} placeholder="Unassigned" className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white" />
-                    </label>
-                    <label className="block text-xs text-slate-500">Current Status
-                      <select value={lead.status} onChange={(event) => void updateLead(lead.id, { status: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white">
-                        {leadStatuses.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                      </select>
-                    </label>
-                  </div>
-                </div>
-                <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm text-slate-300">{lead.message}</div>
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[] }> }) {
   const router = useRouter();
   const [items, setItems] = useState(forms);
@@ -1333,3 +1261,4 @@ export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string
     </div>
   );
 }
+

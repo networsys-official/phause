@@ -1,1 +1,5 @@
-export { default } from "@/app/cms/leads/page";
+import { notFound } from "next/navigation";
+
+export default function StudioLeadsPage() {
+  notFound();
+}

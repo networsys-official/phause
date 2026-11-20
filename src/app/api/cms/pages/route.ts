@@ -1,8 +1,7 @@
-import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 import { prisma } from "@/infrastructure/database/prisma";
-import { ensureDefaultCmsContent } from "@/features/cms/content-service";
 import { normalizePageInput, normalizeSlug } from "@/features/cms/cms-service";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
@@ -66,11 +65,22 @@ function pageBlockEnum(type: string) {
   return record[key] ?? normalizedLookup[key.toLowerCase()] ?? normalizedLookup[compact] ?? "FEATURES";
 }
 
+function normalizeEditableValue(value: unknown): unknown {
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "boolean") return value;
+  if (Array.isArray(value)) return value.map(normalizeEditableValue);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, normalizeEditableValue(item)]));
+  }
+  return null;
+}
+
 function serializePage(page: {
   id: string;
   slug: string;
   title: string;
   status: string;
+  version: number;
   seo?: { id: string; title?: string | null; description?: string | null; keywords?: string | null; canonical?: string | null } | null;
   blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>;
 }) {
@@ -79,6 +89,7 @@ function serializePage(page: {
     slug: page.slug,
     title: page.title,
     status: page.status,
+    version: page.version,
     seo: page.seo ?? undefined,
     blocks: page.blocks.map((block) => ({
       id: block.id,
@@ -89,6 +100,19 @@ function serializePage(page: {
   };
 }
 
+function invalidateCmsRoute(slug: string) {
+  try {
+    revalidateTag("cms-pages", "max");
+    revalidateTag("cms-seo", "max");
+    revalidatePath(`/${slug === "home" ? "" : slug}`);
+    revalidatePath("/", "layout");
+  } catch (error) {
+    logger.warn("CMS cache revalidation skipped outside Next runtime", {
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+}
+
 export async function GET(request: NextRequest) {
   const key = request.headers.get("x-forwarded-for") ?? "global";
   const rateLimit = checkRateLimit(`cms-pages:${key}`, 120, 60_000);
@@ -97,7 +121,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, message: "Rate limit exceeded." }, { status: 429 });
   }
 
-  await ensureDefaultCmsContent();
   const slug = request.nextUrl.searchParams.get("slug");
 
   if (slug) {
@@ -119,6 +142,10 @@ export async function GET(request: NextRequest) {
     success: true,
     pages: pages.map((page) => serializePage({ ...page, blocks: page.blocks.map((block) => ({ ...block, props: (block.props ?? {}) as Record<string, unknown> })) })),
   });
+}
+
+function normalizeBlockTypeFromDb(type: string) {
+  return pageBlockEnum(type.toLowerCase().replace(/_/g, ""));
 }
 
 async function savePageRecord(payload: Record<string, unknown>, mode: "create" | "update") {
@@ -158,17 +185,29 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
     });
 
     await tx.page.update({ where: { id: page.id }, data: { seoId: seo.id } });
-    await tx.pageBlock.deleteMany({ where: { pageId: page.id } });
 
-    if (normalized.blocks.length > 0) {
-      await tx.pageBlock.createMany({
-        data: normalized.blocks.map((block, index) => ({
-          pageId: page.id,
-          type: pageBlockEnum(block.type) as never,
-          order: block.order ?? index,
-          props: block.props as Prisma.InputJsonValue,
-        })),
+    for (const [index, block] of normalized.blocks.entries()) {
+      const blockId = typeof block.id === "string" ? block.id : "";
+      const blockType = pageBlockEnum(block.type) as never;
+      const existingById = blockId ? await tx.pageBlock.findFirst({
+        where: { id: blockId, pageId: page.id, deletedAt: null },
+      }) : null;
+      const existingByType = existingById ? null : await tx.pageBlock.findFirst({
+        where: { pageId: page.id, type: blockType, deletedAt: null },
+        orderBy: { order: "asc" },
       });
+      const existing = existingById ?? existingByType;
+
+      if (existing) {
+        await tx.pageBlock.update({
+          where: { id: existing.id },
+          data: { type: blockType, order: block.order ?? index, props: block.props as never, version: { increment: 1 } },
+        });
+      } else {
+        await tx.pageBlock.create({
+          data: { pageId: page.id, type: blockType, order: block.order ?? index, props: block.props as never, version: 1 },
+        });
+      }
     }
 
     const savedPage = await tx.page.findFirst({
@@ -178,6 +217,20 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
 
     if (!savedPage) {
       throw new Error("Saved page could not be loaded.");
+    }
+
+    for (const submitted of normalized.blocks) {
+      const persisted = savedPage.blocks.find((block) =>
+        submitted.id && block.id === submitted.id
+          ? true
+          : normalizePageInput({ slug: normalized.slug, title: normalized.title, status: normalized.status, blocks: [{ type: submitted.type }] }).blocks[0].type === normalizePageInput({ slug: normalized.slug, title: normalized.title, status: normalized.status, blocks: [{ type: normalizeBlockTypeFromDb(String(block.type)) }] }).blocks[0].type
+      );
+      if (!persisted) {
+        throw new Error(`A submitted section could not be persisted: ${submitted.type}`);
+      }
+      if (JSON.stringify(normalizeEditableValue(persisted.props)) !== JSON.stringify(normalizeEditableValue(submitted.props))) {
+        throw new Error(`The persisted section did not match the saved value: ${submitted.type}`);
+      }
     }
 
     return serializePage({
@@ -198,6 +251,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const page = await savePageRecord(body, "create");
+    invalidateCmsRoute(page.slug);
     return NextResponse.json({ success: true, page }, { status: 201 });
   } catch (error) {
     logger.error("Page creation failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -218,11 +272,26 @@ export async function PUT(request: NextRequest) {
 
     const existing = await prisma.page.findFirst({ where: target.id ? { id: target.id, deletedAt: null } : { slug: target.slug, deletedAt: null } });
 
+    const submittedVersion = typeof (body as { version?: unknown }).version === "number" ? Number((body as { version?: number }).version) : undefined;
+    if (submittedVersion !== undefined && existing && submittedVersion !== existing.version) {
+      return NextResponse.json({ success: false, message: "This page changed in another tab. Refresh and try again.", code: "VERSION_CONFLICT", currentVersion: existing.version }, { status: 409 });
+    }
+
     if (!existing && !target.slug) {
       return NextResponse.json({ success: false, message: "Page not found." }, { status: 404 });
     }
 
     const page = await savePageRecord(body, "update");
+    await prisma.auditLog.create({
+      data: {
+        entityType: "Page",
+        entityId: page.id,
+        action: "UPDATE",
+        metadata: { slug: page.slug, blockCount: page.blocks.length },
+        pageId: page.id,
+      },
+    });
+    invalidateCmsRoute(page.slug);
     return NextResponse.json({ success: true, page });
   } catch (error) {
     logger.error("Page update failed", { error: error instanceof Error ? error.message : "Unknown error" });

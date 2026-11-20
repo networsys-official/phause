@@ -4,6 +4,7 @@ export type CmsBlockInput = {
   type: string;
   order?: number;
   props?: Record<string, unknown>;
+  id?: string; // Added id field for block ID support
 };
 
 export type CmsPageInput = {
@@ -88,6 +89,7 @@ export function normalizePageInput(input: Partial<CmsPageInput> = {}): CmsPageIn
     type: normalizeBlockType(block?.type ?? "customSection"),
     order: typeof block?.order === "number" ? block.order : index,
     props: block?.props && typeof block.props === "object" ? block.props : {},
+    id: block?.id, // Preserve block ID if it exists
   }));
 
   return {
@@ -95,7 +97,14 @@ export function normalizePageInput(input: Partial<CmsPageInput> = {}): CmsPageIn
     title,
     status,
     blocks,
-    seo: input.seo ?? {},
+    seo: input.seo ? {
+    ...input.seo,
+    keywords: Array.isArray(input.seo.keywords)
+      ? input.seo.keywords
+      : typeof (input.seo as unknown as { keywords?: unknown }).keywords === "string"
+        ? String((input.seo as unknown as { keywords: string }).keywords).split(",").map((keyword: string) => keyword.trim()).filter(Boolean)
+        : [],
+  } : {},
   };
 }
 

@@ -124,7 +124,7 @@ export function mapApiPlanToPlan(apiPlan: SubscriptionPlanResponse): Plan {
         priceYearly: price,
         currency: apiPlan.currency.toUpperCase(),
         cta: getPlanCTA(apiPlan.name),
-        popular: apiPlan.name.toLowerCase() === "professional",
+        popular: (apiPlan as unknown as { popular?: boolean }).popular === true || (apiPlan as unknown as { isPopular?: boolean }).isPopular === true || apiPlan.name.toLowerCase() === "professional",
         accent: getPlanAccent(apiPlan.name),
         billingCycle: apiPlan.billingCycle,
         trialDays: apiPlan.trialDays,
@@ -271,6 +271,7 @@ export function formatPrice(plan: Plan, cycle: "monthly" | "yearly" = "monthly")
     return new Intl.NumberFormat("en", {
         style: "currency",
         currency: plan.currency || "USD",
+        minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     }).format(price);
 }

@@ -36,7 +36,6 @@ const iconMap: Record<string, typeof LayoutDashboard> = {
   "/studio/footer": ShieldCheck,
   "/studio/seo": ArrowUpRight,
   "/studio/forms": FileText,
-  "/studio/leads": Users,
   "/studio/settings": Settings,
   "/studio/profile": Users,
   "/studio/users": Users,
@@ -83,15 +82,13 @@ export function CmsShell({
 
     async function loadCounts() {
       try {
-        const [blogResponse, leadsResponse, formsResponse] = await Promise.all([
+        const [blogResponse, formsResponse] = await Promise.all([
           fetch("/api/cms/blog"),
-          fetch("/api/cms/leads"),
           fetch("/api/cms/forms"),
         ]);
 
-        const [blogPayload, leadsPayload, formsPayload] = await Promise.all([
+        const [blogPayload, formsPayload] = await Promise.all([
           blogResponse.ok ? blogResponse.json() : Promise.resolve({ items: [] }),
-          leadsResponse.ok ? leadsResponse.json() : Promise.resolve({ leads: [] }),
           formsResponse.ok ? formsResponse.json() : Promise.resolve({ forms: [] }),
         ]);
 
@@ -99,14 +96,12 @@ export function CmsShell({
 
         setSidebarCounts(buildSidebarStatusCounts({
           blog: Array.isArray(blogPayload?.items) ? blogPayload.items : [],
-          leads: Array.isArray(leadsPayload?.leads) ? leadsPayload.leads : [],
           forms: Array.isArray(formsPayload?.forms) ? formsPayload.forms : [],
         }));
       } catch {
         if (isMounted) {
           setSidebarCounts({
             "/studio/blog": 0,
-            "/studio/leads": 0,
             "/studio/forms": 0,
           });
         }

@@ -1,6 +1,5 @@
 import { prisma } from "@/infrastructure/database/prisma";
 import { SettingsEditor } from "@/components/cms/content-editors";
-import { ensureDefaultCmsContent } from "@/features/cms/content-service";
 import { CmsShell } from "@/components/cms/admin-shell";
 
 const requiredSettings = [
@@ -16,8 +15,6 @@ const requiredSettings = [
 ] as const;
 
 export default async function CmsSettingsPage() {
-  await ensureDefaultCmsContent();
-
   const existingSettings = await prisma.setting.findMany({
     where: { deletedAt: null },
     orderBy: { key: "asc" },

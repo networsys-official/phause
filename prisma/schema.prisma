@@ -693,6 +693,11 @@ model SubscriptionTestimonial {
   @@index([active, sortOrder])
 }
 
+model ContentPatch {
+  id        String   @id
+  appliedAt DateTime @default(now())
+}
+
 enum Role {
   SUPER_ADMIN
   ADMIN

@@ -21,6 +21,7 @@ import { usePlanStore } from "@/store/plan.store";
 import { ROUTES } from "@/lib/routes";
 import { getBlockProp } from "@/features/cms/page-builder";
 import type { SubscriptionPlanResponse } from "@/types/plan";
+import type { AdminPlan } from "@/features/subscription/admin-plan-repository";
 
 import SubscriptionModal from "./SubscriptionModal"
 import { SubscriptionCmsPage } from "@/components/subscription/subscription-cms-page"
@@ -1069,5 +1070,30 @@ function FinalCTA({ cta }: { cta?: Record<string, unknown> }) {
 
 /* ══════════════════ PAGE ══════════════════ */
 export default function SubscriptionPage() {
-    return <SubscriptionCmsPage />;
+    const [adminPlans, setAdminPlans] = useState<AdminPlan[]>([]);
+    const [adminPlansLoading, setAdminPlansLoading] = useState(true);
+    const [adminPlansError, setAdminPlansError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        void fetch("/api/plans", { cache: "no-store", signal: controller.signal })
+            .then((response) => {
+                if (!response.ok) throw new Error("Unable to load subscription plans.");
+                return response.json();
+            })
+            .then((plans: unknown) => {
+                setAdminPlans(Array.isArray(plans) ? plans as AdminPlan[] : []);
+                setAdminPlansLoading(false);
+            })
+            .catch((error) => {
+                if (!controller.signal.aborted) {
+                    setAdminPlansLoading(false);
+                    setAdminPlansError("Unable to load subscription plans.");
+                    console.warn("[subscription] admin plans unavailable", error instanceof Error ? error.message : String(error));
+                }
+            });
+        return () => controller.abort();
+    }, []);
+
+    return <SubscriptionCmsPage adminPlans={adminPlans} adminPlansLoading={adminPlansLoading} adminPlansError={adminPlansError} />;
 }
