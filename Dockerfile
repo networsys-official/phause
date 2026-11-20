@@ -1,4 +1,5 @@
 FROM node:20-bookworm-slim AS dependencies
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -9,10 +10,12 @@ COPY . .
 ARG NEXT_PUBLIC_SITE_URL=https://phause.com
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build?schema=public
+ENV AUTH_SECRET=build-time-placeholder
 RUN npx prisma generate
 RUN npx next build
 
 FROM node:20-bookworm-slim AS runner
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
