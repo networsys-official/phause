@@ -1,15 +1,37 @@
 -- Reconcile the Prisma schema with the committed migration history.
 
-CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER');
-CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'DISABLED', 'LOCKED');
+DO $$
+BEGIN
+  CREATE TYPE "Role" AS ENUM ('SUPER_ADMIN', 'ADMIN', 'EDITOR', 'AUTHOR', 'VIEWER');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
-ALTER TYPE "PageBlockType" ADD VALUE 'CTA_BUTTON';
-ALTER TYPE "PageBlockType" ADD VALUE 'CONTACT';
-ALTER TYPE "PageBlockType" ADD VALUE 'FORM';
+DO $$
+BEGIN
+  CREATE TYPE "UserStatus" AS ENUM ('ACTIVE', 'DISABLED', 'LOCKED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TYPE "PageBlockType" ADD VALUE 'CTA_BUTTON';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TYPE "PageBlockType" ADD VALUE 'CONTACT';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER TYPE "PageBlockType" ADD VALUE 'FORM';
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 ALTER TABLE "Feature" ADD COLUMN IF NOT EXISTS "image" TEXT;
 
-ALTER TABLE "Footer" DROP COLUMN IF EXISTS "content";
 ALTER TABLE "Footer" ADD COLUMN IF NOT EXISTS "copyright" TEXT;
 ALTER TABLE "Footer" ADD COLUMN IF NOT EXISTS "description" TEXT;
 ALTER TABLE "Footer" ADD COLUMN IF NOT EXISTS "rowVersion" INTEGER NOT NULL DEFAULT 0;
@@ -39,19 +61,12 @@ ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "imageAlt" TEXT;
 ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "ogImageId" TEXT;
 ALTER TABLE "Post" ADD COLUMN IF NOT EXISTS "thumbnailImageId" TEXT;
 
-ALTER TABLE "SubscriptionPlan" DROP COLUMN IF EXISTS "createdAt";
-ALTER TABLE "SubscriptionPlan" DROP COLUMN IF EXISTS "featured";
-ALTER TABLE "SubscriptionPlan" DROP COLUMN IF EXISTS "hoverColor";
-ALTER TABLE "SubscriptionPlan" DROP COLUMN IF EXISTS "image";
-ALTER TABLE "SubscriptionPlan" DROP COLUMN IF EXISTS "updatedAt";
 ALTER TABLE "SubscriptionPlan" ALTER COLUMN "slug" DROP NOT NULL;
 ALTER TABLE "SubscriptionPlan" ALTER COLUMN "description" SET NOT NULL;
 ALTER TABLE "SubscriptionPlan" ALTER COLUMN "buttonText" DROP DEFAULT;
 ALTER TABLE "SubscriptionPlan" ALTER COLUMN "buttonUrl" DROP DEFAULT;
 ALTER TABLE "SubscriptionPlan" ALTER COLUMN "icon" SET NOT NULL;
 ALTER TABLE "SubscriptionPlan" ALTER COLUMN "icon" SET DEFAULT 'shield';
-
-DROP TABLE IF EXISTS "SubscriptionPlanFeature";
 
 CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
