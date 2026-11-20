@@ -103,7 +103,7 @@ label[for] {
 .glass {
   background: rgba(13, 22, 32, 0.6);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(0, 216, 201, 0.12);
+  /* border: 1px solid rgba(0, 216, 201, 0.12); */
 }
 
 @theme inline {
