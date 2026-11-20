@@ -52,7 +52,7 @@ const regions = [
 ];
 
 const DASHBOARD_URL =
-  "https://phause.webandappdevelopmenttech.com/auth/sso";
+  "https://phause-sumit.vercel.app/auth/sso";
 
 const RESEND_DELAY = 60;
 
