@@ -13,26 +13,26 @@ export function buildSiteSeo(input: PageSeoInput) {
 
   return {
     slug,
-    title: input.title ?? "Phause | Phishing Simulation & Security Awareness",
+    title: input.title ?? "Phause | Strengthen. Aware. Defend.",
     description:
       input.description ??
-      "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
-    keywords: input.keywords ?? ["phishing simulation", "security awareness", "employee engagement", "phause"],
+      "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+    keywords: input.keywords ?? ["cybersecurity", "threat detection", "cloud protection", "phause"],
     canonical,
     robots: "index,follow",
     og: {
-      title: input.title ?? "Phause | Phishing Simulation & Security Awareness",
+      title: input.title ?? "Phause | Strengthen. Aware. Defend.",
       description:
         input.description ??
-        "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
       image: `${baseUrl}/logo.png`,
     },
     twitter: {
       card: "summary_large_image",
-      title: input.title ?? "Phause | Phishing Simulation & Security Awareness",
+      title: input.title ?? "Phause | Strengthen. Aware. Defend.",
       description:
         input.description ??
-        "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
       image: `${baseUrl}/logo.png`,
     },
   };

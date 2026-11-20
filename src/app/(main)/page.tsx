@@ -899,9 +899,9 @@ export default function Home() {
 
   const defaults = {
     hero: {
-      eyebrow: "Phishing awareness for every team",
-      title: "Help your people recognise phishing before it becomes a problem",
-      description: "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+      eyebrow: "Strengthen. Aware. Defend.",
+      title: "Strengthen. Aware.Defend.",
+      description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
       ctaPrimary: "Get Protected Now",
       ctaSecondary: "Explore Platform",
       stats: [

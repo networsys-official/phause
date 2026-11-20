@@ -9,16 +9,16 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://phause.com"),
-  title: "Phause | Phishing Simulation & Security Awareness",
+  title: "Phause | Strengthen. Aware. Defend.",
   description:
-    "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+    "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
   keywords: [
     "phishing simulation", "security awareness training", "phishing awareness",
     "employee security", "phause", "phishing campaign reporting",
   ],
   openGraph: {
-    title: "Phause | Phishing Simulation & Security Awareness",
-    description: "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+    title: "Phause | Strengthen. Aware. Defend.",
+    description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
     url: "https://phause.com",
     siteName: "Phause",
     images: ["/logo.png"],

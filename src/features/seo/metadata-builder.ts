@@ -14,8 +14,8 @@ export type SeoMetadataInput = {
 };
 
 export function buildMetadata(input: SeoMetadataInput): Metadata {
-  const title = input.title ?? "Phause | Phishing Simulation & Security Awareness";
-  const description = input.description ?? "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.";
+  const title = input.title ?? "Phause | Strengthen. Aware. Defend.";
+  const description = input.description ?? "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.";
   const canonical = input.canonical ?? input.baseUrl ?? "https://phause.com";
   const ogImage = input.ogImage ?? "/logo.png";
 

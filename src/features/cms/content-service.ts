@@ -71,8 +71,8 @@ const defaultNavigation = {
 const defaultFooter = {
   title: "Phause",
   description:
-    "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
-  copyright: "© 2026 Phause. All rights reserved.",
+    "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+  copyright: "Strengthen. Aware. Defend.",
   links: [
     { label: "Home", href: "/", position: 0 },
     { label: "About Us", href: "/about", position: 1 },
@@ -195,10 +195,10 @@ const defaultPages = [
     title: "Home",
     status: "PUBLISHED",
     seo: {
-      title: "Phause | Phishing Simulation & Security Awareness",
+      title: "Phause | Strengthen. Aware. Defend.",
       description:
-        "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
-      keywords: ["phishing simulation", "security awareness", "employee engagement", "phause"],
+        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+      keywords: ["cybersecurity", "threat detection", "cloud protection", "phause"],
       canonical: "https://phause.com/",
     },
     blocks: [
@@ -206,10 +206,10 @@ const defaultPages = [
         type: "hero",
         order: 0,
         props: {
-          eyebrow: "Phishing awareness for every team",
-          title: "Help your people recognise phishing before it becomes a problem",
+          eyebrow: "Strengthen. Aware. Defend.",
+          title: "Strengthen. Aware.Defend.",
           description:
-            "Run phishing simulations, understand employee engagement and build a stronger security-awareness programme with Phause.",
+            "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
           ctaPrimary: "Get Protected Now",
           ctaSecondary: "Explore Platform",
           ctaPrimaryHref: "/subscription",
@@ -826,11 +826,6 @@ export async function ensureDefaultCmsContent() {
     await prisma.lead.deleteMany({
       where: { slug: { in: defaultLeads.map((lead) => lead.slug) } },
     });
-  }
-
-  if (await hasDefaultCmsContent()) {
-    logger.info("CMS bootstrap skipped because the default content is already seeded.");
-    return;
   }
 
   try {
