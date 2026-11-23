@@ -36,7 +36,7 @@ export function PageForm({
 }: {
   initial?: Partial<PageFormValue>;
   existingSlugs?: string[];
-  onSubmit: (value: PageFormValue, createAndEdit: boolean) => Promise<void>;
+  onSubmit?: (value: PageFormValue, createAndEdit: boolean) => Promise<void>;
 }) {
   const systemPage = Boolean(initial?.id && initial.slug && systemSlugs.has(initial.slug));
   const [slugEdited, setSlugEdited] = useState(Boolean(initial?.slug));
@@ -137,7 +137,33 @@ export function PageForm({
 
     setIsLoading(true);
     try {
-      await onSubmit(value, createAndEdit);
+      if (onSubmit) {
+        await onSubmit(value, createAndEdit);
+      } else {
+        const method = value.id ? "PUT" : "POST";
+        const response = await fetch("/api/cms/pages", {
+          method,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            id: value.id,
+            title: value.title,
+            slug: value.slug,
+            status: value.status,
+            showInHeader: value.showInHeader,
+            headerLabel: value.headerLabel || value.title,
+            headerPosition: value.headerPosition,
+            showInFooter: value.showInFooter,
+            footerGroup: value.footerGroup,
+            footerLabel: value.footerLabel || value.title,
+            footerPosition: value.footerPosition,
+            starter: value.starter,
+            seo: { title: value.seoTitle || value.title, description: value.seoDescription || null },
+            blocks: [],
+          }),
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.success) throw new Error(payload.message || "Page could not be saved.");
+      }
       setHasChanges(false);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Page could not be saved.");
