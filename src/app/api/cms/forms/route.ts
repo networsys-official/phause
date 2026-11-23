@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
@@ -15,6 +17,7 @@ export async function GET(request: NextRequest) {
   const rateLimit = checkRateLimit(`cms-forms:${key}`, 120, 60_000);
 
   if (!rateLimit.allowed) {
+    revalidateCmsState();
     return NextResponse.json({ success: false, message: "Rate limit exceeded." }, { status: 429 });
   }
 
@@ -27,6 +30,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -54,6 +60,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -90,6 +99,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
 
@@ -39,10 +41,14 @@ export async function GET(request: NextRequest) {
     where: publishedOnly ? { status: "PUBLISHED", deletedAt: null } : undefined,
     orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json({ success: true, items: services.map((item) => normalizeServiceRecord({ ...item, description: item.description ?? "" } as Record<string, unknown>)) });
+  revalidateCmsState();
+    return NextResponse.json({ success: true, items: services.map((item) => normalizeServiceRecord({ ...item, description: item.description ?? "" } as Record<string, unknown>)) });
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   try {
     const contentType = request.headers.get("content-type") ?? "";
     let payload: Record<string, unknown>;
@@ -86,6 +92,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   try {
     const contentType = request.headers.get("content-type") ?? "";
     let payload: Record<string, unknown>;
@@ -128,6 +137,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   try {
     const payload = await request.json();
     const id = String(payload.id ?? "").trim();

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { fallbackBlogPosts } from "@/lib/blog";
 import { prisma } from "@/infrastructure/database/prisma";
@@ -135,6 +137,7 @@ export async function GET() {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({
       success: true,
       items: posts.map((post) => ({
@@ -167,6 +170,9 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   try {
     const payload = await request.json();
     const nextPost = normalizePost(payload);
@@ -200,6 +206,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   try {
     const payload = await request.json();
     const nextPost = normalizePost(payload);
@@ -238,6 +247,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   try {
     const payload = await request.json();
     const id = String(payload.id ?? "").trim();
