@@ -1529,7 +1529,35 @@ export function PagesEditor({ pages }: { pages: PageRecord[] }) {
 }
 
 export function SeoEditor({ entries }: { entries: SeoEntry[] }) {
-  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">SEO</h2><div className="mt-4 space-y-2">{entries.map((entry) => <div key={entry.slug} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3"><div className="font-semibold text-white">/{entry.slug}</div><div className="text-sm text-slate-300">{entry.title ?? "—"}</div></div>)}</div></div>;
+  const [items, setItems] = useState(entries);
+  const [message, setMessage] = useState("");
+  const save = async (entry: SeoEntry) => {
+    try {
+      const saved = await requestJson<{ success: boolean }>("/api/cms/seo", "PUT", entry);
+      if (!saved.success) throw new Error("SEO save failed.");
+      setMessage("SEO saved.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "SEO save failed.");
+    }
+  };
+
+  return (
+    <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+      <h2 className="text-xl font-bold text-white">SEO</h2>
+      <p className="mt-1 text-sm text-slate-400">Edit search titles and descriptions for public pages.</p>
+      <div className="mt-4 space-y-4">
+        {items.map((entry, index) => (
+          <div key={entry.slug} className="grid gap-3 rounded-xl border border-white/10 bg-slate-950 px-4 py-4">
+            <div className="font-semibold text-cyan-300">/{entry.slug}</div>
+            <label className="block text-sm text-slate-300">Page title<input value={entry.title ?? ""} maxLength={60} onChange={(event) => setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item))} className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" /><span className="mt-1 block text-xs text-slate-400">{(entry.title ?? "").length}/60 characters</span></label>
+            <label className="block text-sm text-slate-300">Description<textarea value={entry.description ?? ""} maxLength={160} rows={3} onChange={(event) => setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, description: event.target.value } : item))} className="mt-1 w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" /><span className="mt-1 block text-xs text-slate-400">{(entry.description ?? "").length}/160 characters</span></label>
+            <button type="button" onClick={() => void save(entry)} className="w-fit rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Save SEO</button>
+          </div>
+        ))}
+      </div>
+      {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
+    </div>
+  );
 }
 
 export function MediaEditor({ media }: { media: MediaRecord[] }) {

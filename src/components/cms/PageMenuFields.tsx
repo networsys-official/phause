@@ -23,7 +23,7 @@ export function PageMenuFields({
 }) {
   return (
     <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-      <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+      <h2 className="text-xl font-bold text-white">Where should this page appear?</h2>
       <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
