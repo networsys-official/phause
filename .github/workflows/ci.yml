@@ -11,6 +11,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/phause
       NEXT_PUBLIC_SITE_URL: https://phause.com
+      NEXT_PUBLIC_PLANS_API_URL: https://phishingsimulation.webandappdevelopmenttech.com/api/plans
 
     services:
       postgres:
@@ -92,4 +93,4 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            "cd '$VPS_DEPLOY_PATH' && git fetch origin main && git checkout -f -B main origin/main && set -e; if [ ! -f .env.production ]; then echo 'ERROR: .env.production is missing on the server. Add it before deploying.' >&2; exit 1; fi; if ! grep -Eq '^ADMIN_PLANS_API_URL=[^[:space:]#].*$' .env.production; then echo 'ERROR: ADMIN_PLANS_API_URL is missing or empty in .env.production. Add it on the server.' >&2; exit 1; fi; docker compose --env-file .env.production --profile migrate run --build --rm migrator sh -lc 'npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts' && docker compose --env-file .env.production up -d --build --remove-orphans"
+            "cd '$VPS_DEPLOY_PATH' && git fetch origin main && git checkout -f -B main origin/main && set -e; if [ ! -f .env.production ]; then echo 'ERROR: .env.production is missing on the server. Add it before deploying.' >&2; exit 1; fi; if ! grep -Eq '^NEXT_PUBLIC_PLANS_API_URL=https://[^[:space:]#]+/api/plans/?$' .env.production; then echo 'ERROR: NEXT_PUBLIC_PLANS_API_URL must contain the full HTTPS /api/plans endpoint in .env.production.' >&2; exit 1; fi; docker compose --env-file .env.production --profile migrate run --build --rm migrator sh -lc 'npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts' && docker compose --env-file .env.production up -d --build --remove-orphans"

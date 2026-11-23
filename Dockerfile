@@ -8,7 +8,9 @@ FROM dependencies AS builder
 WORKDIR /app
 COPY . .
 ARG NEXT_PUBLIC_SITE_URL=https://phause.com
+ARG NEXT_PUBLIC_PLANS_API_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_PLANS_API_URL=$NEXT_PUBLIC_PLANS_API_URL
 ENV DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build?schema=public
 ENV AUTH_SECRET=build-time-placeholder
 RUN npx prisma generate
@@ -19,8 +21,6 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && r
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ARG ADMIN_PLANS_API_URL
-ENV ADMIN_PLANS_API_URL=$ADMIN_PLANS_API_URL
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 RUN groupadd --system --gid 1001 nodejs && useradd --system --uid 1001 --gid nodejs nextjs

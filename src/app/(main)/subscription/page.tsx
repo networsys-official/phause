@@ -21,7 +21,8 @@ import { usePlanStore } from "@/store/plan.store";
 import { ROUTES } from "@/lib/routes";
 import { getBlockProp } from "@/features/cms/page-builder";
 import type { SubscriptionPlanResponse } from "@/types/plan";
-import type { AdminPlan } from "@/features/subscription/admin-plan-repository";
+import type { AdminPlan } from "@/features/subscription/admin-plan-schema";
+import { loadSubscriptionPlans } from "@/features/subscription/public-plans";
 
 import SubscriptionModal from "./SubscriptionModal"
 import { SubscriptionCmsPage } from "@/components/subscription/subscription-cms-page"
@@ -1076,14 +1077,9 @@ export default function SubscriptionPage() {
 
     useEffect(() => {
         const controller = new AbortController();
-        void fetch("/api/plans", { cache: "no-store", signal: controller.signal })
-            .then(async (response) => {
-                const payload = await response.json() as { success?: boolean; plans?: unknown[]; code?: string };
-                if (!response.ok) throw new Error(payload.code === "CONFIG_ERROR" ? "Plans coming soon" : "Unable to load subscription plans.");
-                return payload;
-            })
-            .then((payload) => {
-                setAdminPlans(Array.isArray(payload.plans) ? payload.plans as AdminPlan[] : []);
+        void loadSubscriptionPlans(controller.signal)
+            .then((plans) => {
+                setAdminPlans(plans);
                 setAdminPlansLoading(false);
                 setAdminPlansError(null);
             })
@@ -1091,12 +1087,7 @@ export default function SubscriptionPage() {
                 if (!controller.signal.aborted) {
                     setAdminPlansLoading(false);
                     const message = error instanceof Error ? error.message : "Unable to load subscription plans.";
-                    if (message === "Plans coming soon") {
-                        setAdminPlans([]);
-                        setAdminPlansError(null);
-                    } else {
-                        setAdminPlansError("Unable to load subscription plans.");
-                    }
+                    setAdminPlansError("Unable to load subscription plans.");
                     console.warn("[subscription] admin plans unavailable", message);
                 }
             });

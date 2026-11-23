@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight, Crown, Landmark, Rocket, Shield, ShieldCheck, Check, X } from "lucide-react";
@@ -56,16 +55,16 @@ export function SubscriptionPlanCard({ plan, cycle, index }: { plan: Plan; cycle
 }
 
 export function SubscriptionPlanSection({ plans, isLoading, error }: { plans: Plan[]; isLoading: boolean; error: string | null }) {
-  const [cycle, setCycle] = useState<"monthly" | "yearly">("monthly");
+  const cycle = "monthly";
   return (
     <section id="pricing" className="relative py-28 overflow-hidden">
       <div className="absolute left-1/2 top-24 w-[700px] h-[500px] rounded-full bg-phause-cyan/8 blur-[160px] -translate-x-1/2" />
-      <div className="max-w-[90rem] mx-auto px-6">
+      <div className="relative z-10 max-w-[90rem] mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-16"><span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold tracking-widest uppercase bg-phause-cyan/10 text-phause-cyan border border-phause-cyan/20 mb-4">Choose Your Shield</span><h2 className="text-3xl md:text-5xl font-extrabold mb-4">Plans that scale with <span className="text-gradient">your security</span></h2><p className="text-slate-400 text-lg">Choose the right protection for your team. Upgrade whenever your security requirements grow.</p></div>
         <div className="flex justify-center mb-14"><div className="glass rounded-full px-6 py-3 flex items-center gap-3"><span className="w-2 h-2 rounded-full bg-phause-cyan animate-pulse" /><span className="text-sm font-semibold text-slate-300">Monthly Subscription Plans</span></div></div>
         {error && <div className="max-w-xl mx-auto mb-8 p-5 rounded-2xl border border-red-500/20 bg-red-500/10 text-center"><p className="text-red-400 text-sm">Unable to load subscription plans.</p><button onClick={() => window.location.reload()} className="mt-3 text-sm font-semibold text-phause-cyan">Try Again</button></div>}
         {isLoading && <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">{Array.from({ length: 4 }).map((_, i) => <div key={i} className="glass rounded-3xl p-8 animate-pulse min-h-[520px]"><div className="w-12 h-12 rounded-2xl bg-white/10 mb-6" /><div className="h-5 w-32 bg-white/10 rounded mb-4" /><div className="h-3 w-full bg-white/10 rounded mb-2" /><div className="h-3 w-2/3 bg-white/10 rounded mb-10" /><div className="h-12 w-40 bg-white/10 rounded mb-8" /></div>)}</div>}
-        {!isLoading && !error && plans.length > 0 && <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6 items-stretch">{plans.map((plan, index) => <SubscriptionPlanCard key={plan.id} plan={plan} cycle={cycle} index={index} />)}</motion.div>}
+        {!isLoading && !error && plans.length > 0 && <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch">{plans.map((plan, index) => <SubscriptionPlanCard key={plan.id} plan={plan} cycle={cycle} index={index} />)}</motion.div>}
         {!isLoading && !error && plans.length === 0 && <div className="glass rounded-3xl py-20 text-center"><Shield className="w-12 h-12 text-phause-cyan mx-auto mb-4" /><h3 className="text-xl font-bold mb-2">Plans coming soon</h3><p className="text-slate-400 text-sm">Please check back later.</p></div>}
       </div>
     </section>
