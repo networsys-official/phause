@@ -9,7 +9,6 @@ import Logo from "../../../public/logo/phause-logo.png";
 import { FacebookIcon } from "@/components/icons/lucide-facebook";
 import { InstagramIcon } from "@/components/icons/lucide-instagram";
 import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
-import { FOOTER_LEGAL_LINKS, FOOTER_LINKS, FOOTER_SERVICES } from "@/lib/routes";
 import { FALLBACK_FOOTER_LINKS, groupFooterLinks, type FooterCmsLink } from "@/features/cms/footer-groups";
 
 const SOCIALS = [
