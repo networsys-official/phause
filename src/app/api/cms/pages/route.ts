@@ -86,7 +86,7 @@ function serializePage(page: {
   status: string;
   version: number;
   seo?: { id: string; title?: string | null; description?: string | null; keywords?: string | null; canonical?: string | null } | null;
-  blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>;
+  blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown>; version?: number }>;
 }) {
   return {
     id: page.id,
@@ -100,6 +100,7 @@ function serializePage(page: {
       type: block.type,
       order: block.order,
       props: block.props,
+      version: block.version ?? 1,
     })),
   };
 }
@@ -390,7 +391,7 @@ export async function PUT(request: NextRequest) {
 const patchPageBlockSchema = z.object({
   pageId: z.string().min(1),
   blockId: z.string().min(1),
-  fieldPath: z.string().regex(/^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*)*(?:\.\d+)*$/),
+  fieldPath: z.string().regex(/^[A-Za-z][A-Za-z0-9]*(?:\.(?:[A-Za-z][A-ZaZ0-9]*|\d+))*$/),
   value: z.union([z.string().max(5000), z.number(), z.boolean(), z.null()]),
   version: z.number().int().positive(),
 });
@@ -398,16 +399,30 @@ const patchPageBlockSchema = z.object({
 function setJsonPath(target: Record<string, unknown>, fieldPath: string, value: unknown) {
   const parts = fieldPath.split(".");
   let cursor: unknown = target;
+
   for (let index = 0; index < parts.length - 1; index += 1) {
     const key = parts[index];
-    if (cursor && typeof cursor === "object") {
+    const nextKey = parts[index + 1];
+    const shouldBeArray = /^\d+$/.test(nextKey);
+
+    if (Array.isArray(cursor)) {
+      const arrayIndex = Number(key);
+      cursor[arrayIndex] = cursor[arrayIndex] && typeof cursor[arrayIndex] === "object"
+        ? cursor[arrayIndex]
+        : (shouldBeArray ? [] : {});
+      cursor = cursor[arrayIndex];
+    } else if (cursor && typeof cursor === "object") {
       const record = cursor as Record<string, unknown>;
-      record[key] = record[key] && typeof record[key] === "object" ? record[key] : {};
+      record[key] = record[key] && typeof record[key] === "object"
+        ? record[key]
+        : (/^\d+$/.test(nextKey) ? [] : {});
       cursor = record[key];
     }
   }
+
   const last = parts[parts.length - 1];
-  if (cursor && typeof cursor === "object") (cursor as Record<string, unknown>)[last] = value;
+  if (Array.isArray(cursor)) cursor[Number(last)] = value;
+  else if (cursor && typeof cursor === "object") (cursor as Record<string, unknown>)[last] = value;
 }
 
 export async function PATCH(request: NextRequest) {

@@ -5,6 +5,7 @@ export const cmsPageBlockResponseSchema = z.object({
   type: z.string(),
   props: z.record(z.string(), z.unknown()),
   order: z.number(),
+  version: z.number().optional().default(1),
 });
 
 export const cmsPageResponseSchema = z.object({
