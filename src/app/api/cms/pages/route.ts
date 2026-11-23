@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { auth } from "@/auth";
 import { z } from "zod";
 
@@ -8,7 +7,8 @@ import { normalizePageInput, normalizeSlug } from "@/features/cms/cms-service";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
-import { cmsSaveResponseSchema } from "@/features/cms/cms-page-contract";
+import { cmsPageCreateUpdateSchema, cmsSaveResponseSchema } from "@/features/cms/cms-page-contract";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 import { pageMenuInputSchema, syncPageMenuLinks, validatePageSlug, isSystemPageSlug } from "@/features/cms/page-menu-service";
 
 function canAccess(request: NextRequest) {
@@ -103,21 +103,6 @@ function serializePage(page: {
       version: block.version ?? 1,
     })),
   };
-}
-
-function invalidateCmsRoute(slug: string) {
-  try {
-    revalidateTag("cms-pages", "max");
-    revalidateTag("cms-seo", "max");
-    revalidateTag("cms-navigation", "max");
-    revalidateTag("cms-footer", "max");
-    revalidatePath(`/${slug === "home" ? "" : slug}`);
-    revalidatePath("/sitemap.xml");
-  } catch (error) {
-    logger.warn("CMS cache revalidation skipped outside Next runtime", {
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
-  }
 }
 
 export async function GET(request: NextRequest) {
@@ -280,16 +265,7 @@ async function requireWriteAccess(request: NextRequest) {
   return null;
 }
 
-const pageWriteSchema = z.object({
-  id: z.string().optional(),
-  slug: z.string().min(1).optional(),
-  title: z.string().trim().min(1, "Title is required."),
-  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]),
-  version: z.number().int().optional(),
-  seo: z.object({ title: z.string().nullable().optional(), description: z.string().nullable().optional(), keywords: z.union([z.array(z.string()), z.string()]).nullable().optional(), canonical: z.string().nullable().optional() }).optional(),
-  blocks: z.array(z.object({ id: z.string().optional(), type: z.string(), order: z.number().int().optional(), props: z.record(z.string(), z.unknown()).optional() })).optional().default([]),
-}).extend(pageMenuInputSchema.shape);
-
+const pageWriteSchema = cmsPageCreateUpdateSchema.extend({ status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]), seo: z.object({ title: z.string().nullable().optional(), description: z.string().nullable().optional(), keywords: z.union([z.array(z.string()), z.string()]).nullable().optional(), canonical: z.string().nullable().optional() }).optional(), }).extend({})
 export async function POST(request: NextRequest) {
   const accessError = await requireWriteAccess(request);
   if (accessError) return accessError;
@@ -306,13 +282,22 @@ export async function POST(request: NextRequest) {
     const duplicate = await prisma.page.findUnique({ where: { slug: normalizedSlug } });
     if (duplicate) return NextResponse.json({ success: false, message: `A page with slug "${normalizedSlug}" already exists.` }, { status: 409 });
 
-    const starterBlocks = parsed.blocks.length ? parsed.blocks : [
-      { type: "hero", order: 0, props: { title: parsed.title, eyebrow: "", description: "", ctaPrimary: "", ctaPrimaryHref: "" } },
-      { type: "richText", order: 1, props: { title: "", description: "" } },
-    ];
+    const starter = String((parsed as { starter?: string }).starter ?? "HERO_TEXT");
+    const starterBlocks = parsed.blocks.length ? parsed.blocks : starter === "BLANK"
+      ? [{ type: "hero", order: 0, props: { title: parsed.title, eyebrow: "", description: "", ctaPrimary: "", ctaPrimaryHref: "" } }]
+      : starter === "HERO_TEXT_CTA"
+        ? [
+            { type: "hero", order: 0, props: { title: parsed.title, eyebrow: "", description: "", ctaPrimary: "", ctaPrimaryHref: "" } },
+            { type: "richText", order: 1, props: { title: "", description: "" } },
+            { type: "cta", order: 2, props: { title: "", description: "", buttonText: "", buttonLink: "" } },
+          ]
+        : [
+            { type: "hero", order: 0, props: { title: parsed.title, eyebrow: "", description: "", ctaPrimary: "", ctaPrimaryHref: "" } },
+            { type: "richText", order: 1, props: { title: "", description: "" } },
+          ];
     const page = await savePageRecord({ ...parsed, slug: normalizedSlug, blocks: starterBlocks }, "create");
     await prisma.auditLog.create({ data: { entityType: "Page", entityId: page.id, action: "CREATE", metadata: { slug: page.slug }, pageId: page.id } });
-    invalidateCmsRoute(page.slug);
+    revalidateCmsState(page.slug);
     const response = cmsSaveResponseSchema.parse({ success: true, page });
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
@@ -379,7 +364,7 @@ export async function PUT(request: NextRequest) {
       },
     });
     const response = cmsSaveResponseSchema.parse({ success: true, page });
-    invalidateCmsRoute(page.slug);
+    revalidateCmsState(page.slug);
     return NextResponse.json(response);
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ success: false, message: error.issues[0]?.message ?? "Invalid page data." }, { status: 400 });
@@ -464,7 +449,7 @@ export async function PATCH(request: NextRequest) {
       return { page, block: updated };
     });
 
-    invalidateCmsRoute(saved.page.slug);
+    revalidateCmsState(saved.page.slug);
     const reread = await prisma.page.findFirst({
       where: { id: saved.page.id, deletedAt: null },
       include: { seo: true, blocks: { where: { deletedAt: null }, orderBy: { order: "asc" } } },
@@ -516,7 +501,7 @@ export async function DELETE(request: NextRequest) {
       return result;
     });
 
-    invalidateCmsRoute(page.slug);
+    revalidateCmsState(page.slug);
     return NextResponse.json({ success: true, page: deletedPage });
   } catch (error) {
     logger.error("Page delete failed", { error: error instanceof Error ? error.message : "Unknown error" });
