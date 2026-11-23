@@ -91,9 +91,11 @@ export function mapApiPlanToPlan(apiPlan: SubscriptionPlanResponse): Plan {
 
     const features = Object.entries(apiPlan.features || {}).map(([key, value]) => {
         const cmsFeatureText = key.startsWith("feature_") && typeof value === "string" ? value : null;
+        const label = cmsFeatureText
+            ?? (typeof value === "number" ? `${formatFeatureName(key)}: ${value.toLocaleString()}` : formatFeatureName(key));
         return {
-            label: cmsFeatureText ?? formatFeatureName(key),
-            included: cmsFeatureText ? true : value === true,
+            label,
+            included: cmsFeatureText !== null || (typeof value === "boolean" ? value : typeof value === "number" ? value > 0 : value.trim().length > 0),
         };
     });
 

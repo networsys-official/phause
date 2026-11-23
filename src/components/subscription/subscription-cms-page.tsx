@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { BadgeCheck, Building2, Globe, Headset, Landmark, Lock, Rocket, Shield, ShieldCheck, Sparkles, TrendingUp } from "lucide-react";
-import type { AdminPlan } from "@/features/subscription/admin-plan-repository";
+import type { AdminPlan } from "@/features/subscription/admin-plan-schema";
 import { SubscriptionPlanSection } from "@/components/subscription/subscription-plan-section";
 import { mapApiPlanToPlan } from "@/app/(main)/subscription/plans";
 
@@ -124,7 +124,6 @@ export function SubscriptionCmsPage({ adminPlans, adminPlansLoading = false, adm
 
   const hero = payload.hero;
   const trustItems = payload.trustItems ?? [];
-  const pricing = payload.pricing;
   const plans = payload.plans ?? [];
   const comparison = payload.comparison;
   const faq = payload.faq;
@@ -154,13 +153,13 @@ export function SubscriptionCmsPage({ adminPlans, adminPlansLoading = false, adm
         </div>
       </section>
     ) : null,
-    pricing: pricing?.visible ? (
+    pricing: (
       <SubscriptionPlanSection
         plans={adminPlans.map((plan) => mapApiPlanToPlan(plan as unknown as import("@/types/plan").SubscriptionPlanResponse))}
         isLoading={adminPlansLoading}
         error={adminPlansError}
       />
-    ) : null,
+    ),
     comparison: comparison?.visible ? (
       <section className="relative py-28">
         <div className="text-center max-w-3xl mx-auto mb-16 px-6"><h2 className="text-3xl md:text-5xl font-extrabold mb-4">{String(comparison.title ?? "")}</h2>{comparison.subtitle ? <p className="text-slate-400 text-lg">{String(comparison.subtitle)}</p> : null}</div>

@@ -1,44 +1,98 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { NextRequest } from "next/server";
 import { GET } from "@/app/api/plans/route";
+import { fetchPublicPlans, loadSubscriptionPlans } from "@/features/subscription/public-plans";
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  delete process.env.ADMIN_PLANS_API_URL;
+  delete process.env.NEXT_PUBLIC_PLANS_API_URL;
 });
 
-describe("/api/plans upstream states", () => {
-  it("returns 503 for a failing upstream with a request id", async () => {
-    process.env.ADMIN_PLANS_API_URL = "https://admin.invalid";
-    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("TLS certificate failed")));
+describe("public subscription plans API", () => {
+  it("fetches the full external endpoint directly and validates the array response", async () => {
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://phishingsimulation.webandappdevelopmenttech.com/api/plans";
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify([
+      {
+        id: "starter-id",
+        name: "Starter",
+        description: "For small teams.",
+        price: "29.00",
+        currency: "usd",
+        billingCycle: "MONTHLY",
+        maxCampaigns: 20,
+        maxUsers: 70,
+        features: { apiQuotaMonthly: 1000, premiumTemplates: true, phishing_campaigns: true },
+        isActive: true,
+        trialDays: 0,
+      },
+    ]), { status: 200, headers: { "content-type": "application/json" } }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    const response = await GET(new NextRequest("http://localhost/api/plans", { headers: { "x-request-id": "test-request-failure" } }));
-    const body = await response.json();
+    const plans = await fetchPublicPlans();
 
-    expect(response.status).toBe(503);
-    expect(body.requestId).toBe("test-request-failure");
-    expect(body.code).toBe("UPSTREAM_UNAVAILABLE");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://phishingsimulation.webandappdevelopmenttech.com/api/plans",
+      expect.objectContaining({ cache: "no-store" }),
+    );
+    expect(plans).toHaveLength(1);
+    expect(plans[0]).toMatchObject({
+      name: "Starter",
+      price: 29,
+      billingCycle: "MONTHLY",
+      features: { apiQuotaMonthly: 1000 },
+    });
   });
 
-  it("returns 200 with an empty list for a valid empty upstream", async () => {
-    process.env.ADMIN_PLANS_API_URL = "https://admin.invalid";
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]", { status: 200, headers: { "content-type": "application/json" } })));
+  it("returns an empty list for a valid empty API response", async () => {
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://plans.invalid/api/plans";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("[]", { status: 200 })));
 
-    const response = await GET(new NextRequest("http://localhost/api/plans", { headers: { "x-request-id": "test-request-empty" } }));
+    await expect(fetchPublicPlans()).resolves.toEqual([]);
+  });
+
+  it("serves plans through the same-origin fallback", async () => {
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://plans.invalid/api/plans";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{
+      id: "starter-id",
+      name: "Starter",
+      price: "29",
+      billingCycle: "MONTHLY",
+    }]), { status: 200 })));
+
+    const response = await GET();
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.plans).toEqual([]);
+    expect(body.plans).toHaveLength(1);
+    expect(body.plans[0].name).toBe("Starter");
   });
 
-  it("returns 500 with zod field issues for an invalid upstream row", async () => {
-    process.env.ADMIN_PLANS_API_URL = "https://admin.invalid";
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ id: 123, name: "", features: null }]), { status: 200, headers: { "content-type": "application/json" } })));
+  it("falls back to the app endpoint when the browser cannot read the external API", async () => {
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://plans.invalid/api/plans";
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        success: true,
+        plans: [{
+          id: "free-id",
+          name: "Free",
+          price: "0",
+          billingCycle: "MONTHLY",
+          features: {},
+        }],
+      }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
 
-    const response = await GET(new NextRequest("http://localhost/api/plans", { headers: { "x-request-id": "test-request-invalid" } }));
-    const body = await response.json();
+    const plans = await loadSubscriptionPlans();
 
-    expect(response.status).toBe(500);
-    expect(body.code).toBe("INVALID_UPSTREAM");
+    expect(fetchMock).toHaveBeenNthCalledWith(1, "https://plans.invalid/api/plans", expect.any(Object));
+    expect(fetchMock).toHaveBeenNthCalledWith(2, "/api/plans", expect.any(Object));
+    expect(plans.map((plan) => plan.name)).toEqual(["Free"]);
+  });
+
+  it("rejects an invalid API response", async () => {
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://plans.invalid/api/plans";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{ id: 123, name: "", features: null }]), { status: 200 })));
+
+    await expect(fetchPublicPlans()).rejects.toThrow("plans response");
   });
 });

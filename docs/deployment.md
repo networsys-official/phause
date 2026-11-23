@@ -22,6 +22,8 @@ Pushes to `main` run the existing lint, test, and build checks. After those pass
    nano .env.production
    ```
 
+   Set `NEXT_PUBLIC_PLANS_API_URL` to the full HTTPS plans endpoint. The subscription page tries this endpoint directly, so it appears in DevTools Network; if the API rejects browser cross-origin requests, the page retries through the app's same-origin `/api/plans` route. This public URL is bundled during the Docker build, so changing it requires rebuilding the app image.
+
 4. Add the public half of a dedicated SSH key to the deployment user's `~/.ssh/authorized_keys`. The private half is added to GitHub Actions secrets. The user must be able to run Docker commands without an interactive sudo prompt.
 5. Copy the VPS host key entry from a trusted source into the `VPS_KNOWN_HOSTS` GitHub secret. Do not disable SSH host-key checking.
 

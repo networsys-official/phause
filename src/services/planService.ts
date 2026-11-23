@@ -9,6 +9,15 @@ type PlanResponse =
     | SubscriptionPlanResponse
     | { data: SubscriptionPlanResponse };
 
+function getPlansEndpoint(): string {
+    const endpoint = process.env.NEXT_PUBLIC_PLANS_API_URL?.trim();
+    if (!endpoint) {
+        throw new Error("NEXT_PUBLIC_PLANS_API_URL is not configured.");
+    }
+
+    return endpoint;
+}
+
 async function get<T>(url: string): Promise<T> {
     const response = await fetch(url, { cache: "no-store" });
     let result: unknown;
@@ -41,7 +50,7 @@ export const planService = {
      * Get all subscription plans
      */
      getPlans: async (): Promise<SubscriptionPlanResponse[]> => {
-         const result = await get<PlanListResponse>("/api/plans");
+         const result = await get<PlanListResponse>(getPlansEndpoint());
 
          if (Array.isArray(result)) return result;
          if ("data" in result && Array.isArray(result.data)) return result.data;
@@ -57,7 +66,7 @@ export const planService = {
     getPlanById: async (
         planId: string
     ): Promise<SubscriptionPlanResponse> => {
-        const result = await get<PlanResponse>(`/api/plans/${planId}`);
+        const result = await get<PlanResponse>(`${getPlansEndpoint()}/${encodeURIComponent(planId)}`);
         return "data" in result ? result.data : result;
     },
 };

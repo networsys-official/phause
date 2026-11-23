@@ -1,8 +1,9 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { SubscriptionPlanSection } from "@/components/subscription/subscription-plan-section";
+import { SubscriptionCmsPage } from "@/components/subscription/subscription-cms-page";
 import { mapApiPlanToPlan } from "@/app/(main)/subscription/plans";
 
 const fixture = {
@@ -38,7 +39,14 @@ vi.mock("next/navigation", () => ({
 
 describe("subscription admin plan cards", () => {
   it("renders the original card fields and states", () => {
-    render(React.createElement(SubscriptionPlanSection, { plans: [mapApiPlanToPlan(fixture as unknown as import("@/types/plan").SubscriptionPlanResponse)], isLoading: false, error: null }));
+    render(React.createElement(SubscriptionPlanSection, {
+      plans: [mapApiPlanToPlan({
+        ...fixture,
+        features: { ...fixture.features, apiQuotaMonthly: 1000 },
+      } as unknown as import("@/types/plan").SubscriptionPlanResponse)],
+      isLoading: false,
+      error: null,
+    }));
 
     expect(screen.getByText("$29.00")).toBeTruthy();
     expect(screen.getByText("/ month")).toBeTruthy();
@@ -57,11 +65,26 @@ describe("subscription admin plan cards", () => {
     expect(enabled.className).not.toContain("line-through");
     const disabled = screen.getByText("Single Sign-On (SSO)");
     expect(disabled.className).toContain("line-through");
+    const quota = screen.getByText(/Quota Monthly: 1,000/);
+    expect(quota.className).not.toContain("line-through");
   });
 
   it("renders a clear empty state", () => {
     render(React.createElement(SubscriptionPlanSection, { plans: [], isLoading: false, error: null }));
     expect(screen.getByText("Plans coming soon")).toBeTruthy();
+  });
+
+  it("keeps plan cards visible when CMS pricing is marked hidden", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      success: true,
+      pricing: { visible: false },
+    }), { status: 200 })));
+
+    render(React.createElement(SubscriptionCmsPage, {
+      adminPlans: [fixture as unknown as import("@/features/subscription/admin-plan-schema").AdminPlan],
+    }));
+
+    await waitFor(() => expect(screen.getByText("$29.00")).toBeTruthy());
   });
 
   it("renders the friendly service error state for a failing upstream", () => {
