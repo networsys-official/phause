@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
     motion, AnimatePresence,
 } from "framer-motion";
@@ -11,8 +11,11 @@ import {
     Building2, Mail, Phone, MapPin, Eye, EyeOff, Loader2,
     BadgeCheck, Zap, Headset, RefreshCcw, Fingerprint,
 } from "lucide-react";
-import { PLANS, type Plan } from "@/app/(main)/subscription/plans";
+import { mapApiPlanToPlan, type Plan } from "@/app/(main)/subscription/plans";
 import { ROUTES } from "@/lib/routes";
+import { getToken } from "@/lib/auth";
+import { planService } from "@/services/planService";
+import { subscriptionService, type PaymentProvider } from "@/services/subscription.service";
 
 /* ══════════════════ ANIMATED BACKGROUNDS ══════════════════ */
 function GridBackground() {
@@ -317,12 +320,15 @@ function StepAccount({
 
 /* ══════════════════ STEP 2 : PAYMENT ══════════════════ */
 function StepPayment({
-    form, setForm, errors, onBack, onPay,
+    form, setForm, errors, provider, setProvider, checkoutError, onBack, onPay, paying,
 }: {
     form: Record<string, string>;
     setForm: (f: Record<string, string>) => void;
     errors: Record<string, string>;
-    onBack: () => void; onPay: () => void;
+    provider: PaymentProvider;
+    setProvider: (provider: PaymentProvider) => void;
+    checkoutError: string;
+    onBack: () => void; onPay: () => void; paying: boolean;
 }) {
     const [showCvv, setShowCvv] = useState(false);
     const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -350,6 +356,17 @@ function StepPayment({
                 <p className="text-sm text-slate-500 mb-7">
                     You will not be charged until your 14-day trial ends on day 15.
                 </p>
+
+                <div className="mb-6 grid gap-3 sm:grid-cols-3">
+                    {(["stripe", "razorpay", "paypal"] as PaymentProvider[]).map((item) => (
+                        <button key={item} type="button" onClick={() => setProvider(item)} className={`rounded-2xl border p-4 text-left transition-all ${provider === item ? "border-phause-cyan/50 bg-phause-cyan/[0.09]" : "border-white/[0.08] bg-white/[0.025] hover:border-phause-cyan/25"}`}>
+                            <span className="block text-sm font-bold capitalize text-slate-200">{item}</span>
+                            <span className="mt-1 block text-[11px] text-slate-500">{item === "stripe" ? "Pay securely using Stripe." : item === "razorpay" ? "Supported local payment methods." : "Continue securely with PayPal."}</span>
+                        </button>
+                    ))}
+                </div>
+
+                {checkoutError ? <p className="mb-5 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-300">{checkoutError}</p> : null}
 
                 <div className="space-y-5">
                     <Field
@@ -421,7 +438,7 @@ function StepPayment({
                     whileTap={{ scale: 0.97 }}
                     className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold shadow-[0_0_35px_rgba(0,216,201,0.4)] flex items-center justify-center gap-2"
                 >
-                    <Lock className="w-4 h-4" /> Start Free Trial
+                    <Lock className="w-4 h-4" /> {paying ? "Connecting…" : `Continue to ${provider}`}
                 </motion.button>
             </div>
         </motion.div>
@@ -561,13 +578,15 @@ function OrderSummary({ plan, cycle }: { plan: Plan; cycle: "monthly" | "yearly"
 
 /* ══════════════════ CHECKOUT PAGE ══════════════════ */
 function CheckoutInner() {
+    const router = useRouter();
     const searchParams = useSearchParams();
-    const selectedPlan = PLANS.find((item) => item.id === searchParams.get("plan")) ?? PLANS[2];
+    const planId = searchParams.get("plan");
     const selectedCycle = searchParams.get("cycle");
-    const [plan] = useState<Plan>(selectedPlan);
-    const [cycle, setCycle] = useState<"monthly" | "yearly">(
-        selectedCycle === "monthly" || selectedCycle === "yearly" ? selectedCycle : "yearly",
-    );
+
+    const [planLoadResult, setPlanLoadResult] = useState<{ planId: string; plan: Plan | null; error: string } | null>(null);
+    const [provider, setProvider] = useState<PaymentProvider>("stripe");
+    const [checkoutError, setCheckoutError] = useState("");
+    const [cycle, setCycle] = useState<"monthly" | "yearly">(selectedCycle === "monthly" || selectedCycle === "yearly" ? selectedCycle : "yearly");
     const [step, setStep] = useState(0);
     const [paying, setPaying] = useState(false);
     const [form, setForm] = useState<Record<string, string>>({
@@ -576,89 +595,125 @@ function CheckoutInner() {
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
+    const currentPlanLoad = planId && planLoadResult?.planId === planId ? planLoadResult : null;
+    const plan = currentPlanLoad?.plan ?? null;
+    const loadingPlan = Boolean(planId) && currentPlanLoad === null;
+    const planError = planId ? currentPlanLoad?.error ?? "" : "No subscription plan was selected. Please select a plan first.";
+
+    useEffect(() => {
+        if (!planId) return;
+        let active = true;
+
+        const loadSelectedPlan = async () => {
+            try {
+                const plans = await planService.getPlans();
+                if (!active) return;
+                const selectedPlan = plans.find((item) => item.id === planId && item.isActive);
+                setPlanLoadResult({
+                    planId,
+                    plan: selectedPlan ? mapApiPlanToPlan(selectedPlan) : null,
+                    error: selectedPlan ? "" : "This plan is no longer available. Please return to the subscription page and choose another plan.",
+                });
+            } catch (error) {
+                if (!active) return;
+                setPlanLoadResult({ planId, plan: null, error: error instanceof Error ? error.message : "Unable to load the selected subscription plan." });
+            }
+        };
+
+        void loadSelectedPlan();
+        return () => { active = false; };
+    }, [planId]);
+
     const validateStep1 = () => {
-        const e: Record<string, string> = {};
-        if (!form.firstName.trim()) e.firstName = "First name is required";
-        if (!form.lastName.trim()) e.lastName = "Last name is required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid work email";
-        if (!form.company.trim()) e.company = "Company is required";
-        if (!form.country.trim()) e.country = "Country is required";
-        setErrors(e);
-        return Object.keys(e).length === 0;
+        const nextErrors: Record<string, string> = {};
+        if (!form.firstName.trim()) nextErrors.firstName = "First name is required";
+        if (!form.lastName.trim()) nextErrors.lastName = "Last name is required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) nextErrors.email = "Enter a valid work email";
+        if (!form.company.trim()) nextErrors.company = "Company is required";
+        if (!form.country.trim()) nextErrors.country = "Country is required";
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
     };
 
     const validateStep2 = () => {
-        const e: Record<string, string> = {};
-        if (!form.cardName.trim()) e.cardName = "Name on card is required";
-        if (form.cardNumber.replace(/\s/g, "").length !== 16) e.cardNumber = "Enter a valid 16-digit card number";
-        if (!/^\d{2}\/\d{2}$/.test(form.expiry)) e.expiry = "Use MM/YY format";
-        if (form.cvv.length < 3) e.cvv = "Invalid CVV";
-        if (!form.zip.trim()) e.zip = "ZIP is required";
-        setErrors(e);
-        return Object.keys(e).length === 0;
+        const nextErrors: Record<string, string> = {};
+        if (!form.cardName.trim()) nextErrors.cardName = "Name on card is required";
+        if (form.cardNumber.replace(/\s/g, "").length !== 16) nextErrors.cardNumber = "Enter a valid 16-digit card number";
+        if (!/^\d{2}\/\d{2}$/.test(form.expiry)) nextErrors.expiry = "Use MM/YY format";
+        if (form.cvv.length < 3) nextErrors.cvv = "Invalid CVV";
+        if (!form.zip.trim()) nextErrors.zip = "ZIP is required";
+        setErrors(nextErrors);
+        return Object.keys(nextErrors).length === 0;
     };
 
-    const handlePay = () => {
+    const handlePay = async () => {
         if (!validateStep2()) return;
+        if (!plan) {
+            setCheckoutError("Please select a valid subscription plan.");
+            return;
+        }
+
+        const token = getToken();
+        if (!token) {
+            setCheckoutError("Your session could not be verified. Please sign in again before continuing to checkout.");
+            return;
+        }
+
         setPaying(true);
-        setTimeout(() => {
+        setCheckoutError("");
+
+        try {
+            const result = await subscriptionService.createCheckout({ planId: plan.id, provider });
+            const checkoutUrl = result.checkoutUrl;
+            try {
+                const url = new URL(checkoutUrl);
+                if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error();
+            } catch {
+                throw new Error("The checkout service did not return a valid payment URL. Please contact support.");
+            }
+            window.location.assign(checkoutUrl);
+        } catch (error) {
+            setCheckoutError(error instanceof Error ? error.message : "Unable to start checkout. Please try again.");
             setPaying(false);
-            setStep(3);
-        }, 1800);
+        }
     };
+
+    if (loadingPlan) {
+        return <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-phause-dark px-6 text-white"><GridBackground /><div className="glass relative z-10 flex items-center gap-3 rounded-2xl px-6 py-5"><Loader2 className="h-5 w-5 animate-spin text-phause-cyan" /><span className="text-sm text-slate-300">Loading your selected plan...</span></div></main>;
+    }
+
+    if (!plan) {
+        return (
+            <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-phause-dark px-6 py-20 text-white">
+                <GridBackground />
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="glass relative z-10 w-full max-w-lg rounded-3xl p-8 text-center">
+                    <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-red-400/20 bg-red-400/10"><X className="h-8 w-8 text-red-400" /></div>
+                    <h1 className="text-2xl font-black">Plan unavailable</h1>
+                    <p className="mt-3 text-sm leading-6 text-slate-400">{planError || "We could not find the selected subscription plan."}</p>
+                    <button type="button" onClick={() => router.push(ROUTES.subscription)} className="mt-7 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-phause-cyan to-phause-teal px-6 py-3 font-bold text-phause-dark"><ArrowLeft className="h-4 w-4" />Back to plans</button>
+                </motion.div>
+            </main>
+        );
+    }
 
     return (
         <div className="relative min-h-screen pt-28 pb-20">
-            <GridBackground />
-            <ParticleField />
+            <GridBackground /><ParticleField />
             <div className="relative z-10 max-w-6xl mx-auto px-6">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-12"
-                >
-                    <motion.a
-                        href={ROUTES.subscription}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="inline-flex items-center gap-1.5 text-sm text-phause-cyan hover:underline mb-5"
-                    >
-                        <ArrowLeft className="w-4 h-4" /> Back to plans
-                    </motion.a>
-                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-sm text-phause-cyan mb-6">
-                        <Sparkles className="w-4 h-4" /> Secure Checkout
-                    </div>
-                    <h1 className="text-4xl md:text-6xl font-black mb-4">
-                        Almost <span className="text-gradient">protected</span>
-                    </h1>
-                    <p className="text-slate-400 max-w-xl mx-auto">
-                        Four quick steps between you and the strongest defense grid in the industry.
-                    </p>
+                <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
+                    <motion.a href={ROUTES.subscription} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} className="inline-flex items-center gap-1.5 text-sm text-phause-cyan hover:underline mb-5"><ArrowLeft className="w-4 h-4" /> Back to plans</motion.a>
+                    <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass text-sm text-phause-cyan mb-6"><Sparkles className="w-4 h-4" /> Secure Checkout</div>
+                    <h1 className="text-4xl md:text-6xl font-black mb-4">Almost <span className="text-gradient">protected</span></h1>
+                    <p className="text-slate-400 max-w-xl mx-auto">Four quick steps between you and the strongest defense grid in the industry.</p>
                 </motion.div>
 
                 <div className="grid lg:grid-cols-[1fr_360px] gap-10 items-start">
                     <div>
                         {step < 3 && <Stepper step={step} onJump={setStep} />}
                         <AnimatePresence mode="wait">
-                            {step === 0 && (
-                                <StepPlan plan={plan} cycle={cycle} onCycleChange={setCycle} onNext={() => setStep(1)} />
-                            )}
-                            {step === 1 && (
-                                <StepAccount
-                                    form={form} setForm={setForm} errors={errors}
-                                    onNext={() => { if (validateStep1()) setStep(2); }}
-                                    onBack={() => setStep(0)}
-                                />
-                            )}
-                            {step === 2 && (
-                                <StepPayment
-                                    form={form} setForm={setForm} errors={errors}
-                                    onBack={() => setStep(1)}
-                                    onPay={handlePay}
-                                />
-                            )}
+                            {step === 0 && <StepPlan plan={plan} cycle={cycle} onCycleChange={setCycle} onNext={() => setStep(1)} />}
+                            {step === 1 && <StepAccount form={form} setForm={setForm} errors={errors} onNext={() => { if (validateStep1()) setStep(2); }} onBack={() => setStep(0)} />}
+                            {step === 2 && <StepPayment form={form} setForm={setForm} errors={errors} provider={provider} setProvider={setProvider} checkoutError={checkoutError} onBack={() => setStep(1)} onPay={handlePay} paying={paying} />}
                             {step === 3 && <StepSuccess plan={plan} form={form} />}
                         </AnimatePresence>
                     </div>
@@ -666,31 +721,7 @@ function CheckoutInner() {
                 </div>
             </div>
 
-            {/* Paying overlay */}
-            <AnimatePresence>
-                {paying && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-50 bg-phause-dark/80 backdrop-blur-md flex items-center justify-center"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="glass rounded-3xl p-10 text-center"
-                        >
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                className="w-14 h-14 mx-auto mb-5 rounded-full border-4 border-phause-cyan/20 border-t-phause-cyan"
-                            />
-                            <p className="font-bold text-lg">Securing your trial…</p>
-                            <p className="text-sm text-slate-500 mt-1">Provisioning your Sentinel grid</p>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <AnimatePresence>{paying && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-phause-dark/80 backdrop-blur-md flex items-center justify-center"><motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass rounded-3xl p-10 text-center"><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="w-14 h-14 mx-auto mb-5 rounded-full border-4 border-phause-cyan/20 border-t-phause-cyan" /><p className="font-bold text-lg">Securing your trial…</p><p className="text-sm text-slate-500 mt-1">Connecting to {provider}</p></motion.div></motion.div>}</AnimatePresence>
         </div>
     );
 }

@@ -79,6 +79,8 @@ model Page {
   AuditLog    AuditLog[]    @relation("PageAuditLog")
   seo         Seo?          @relation(fields: [seoId], references: [id])
   blocks      PageBlock[]
+  navigationItems NavigationItem[]
+  footerLinks     FooterLink[]
 
   @@index([status, publishedAt])
   @@index([createdAt])
@@ -265,6 +267,7 @@ model NavigationItem {
   label        String
   href         String
   parentId     String?
+  pageId       String?
   position     Int           @default(0)
   status       ContentStatus @default(DRAFT)
   createdAt    DateTime      @default(now())
@@ -273,8 +276,10 @@ model NavigationItem {
   version      Int           @default(0)
   rowVersion   Int           @default(0)
   navigation   Navigation    @relation(fields: [navigationId], references: [id])
+  page         Page?         @relation(fields: [pageId], references: [id], onDelete: SetNull)
 
   @@index([navigationId, position])
+  @@index([pageId])
 }
 
 model Footer {
@@ -299,6 +304,7 @@ model FooterLink {
   footerId   String
   label      String
   href       String
+  pageId     String?
   position   Int           @default(0)
   type       String        @default("LINK")
   status     ContentStatus @default(DRAFT)
@@ -308,8 +314,10 @@ model FooterLink {
   version    Int           @default(0)
   rowVersion Int           @default(0)
   footer     Footer        @relation(fields: [footerId], references: [id])
+  page       Page?         @relation(fields: [pageId], references: [id], onDelete: SetNull)
 
   @@index([footerId, position])
+  @@index([pageId])
 }
 
 model Setting {

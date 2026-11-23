@@ -2,7 +2,8 @@ import type { SubscriptionPlanResponse } from "@/types/plan";
 
 type PlanListResponse =
     | SubscriptionPlanResponse[]
-    | { data: SubscriptionPlanResponse[] };
+    | { data: SubscriptionPlanResponse[] }
+    | { success: boolean; plans: SubscriptionPlanResponse[] };
 
 type PlanResponse =
     | SubscriptionPlanResponse
@@ -42,9 +43,12 @@ export const planService = {
      getPlans: async (): Promise<SubscriptionPlanResponse[]> => {
          const result = await get<PlanListResponse>("/api/plans");
 
-         return Array.isArray(result)
-             ? result
-             : result.data;
+         if (Array.isArray(result)) return result;
+         if ("data" in result && Array.isArray(result.data)) return result.data;
+         if ("plans" in result && Array.isArray((result as { plans?: unknown }).plans)) {
+             return (result as { plans: SubscriptionPlanResponse[] }).plans;
+         }
+         return [];
     },
 
     /**

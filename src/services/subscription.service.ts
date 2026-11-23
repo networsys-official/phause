@@ -1,3 +1,5 @@
+import { getToken } from "@/lib/auth";
+
 export type PaymentProvider = "stripe" | "razorpay" | "paypal";
 
 export interface CreateCheckoutRequest {
@@ -10,10 +12,12 @@ export interface CreateCheckoutResponse {
 }
 
 async function post<T>(url: string, body: unknown): Promise<T> {
+    const token = getToken();
     const response = await fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "same-origin",
         body: JSON.stringify(body),
@@ -51,7 +55,7 @@ async function post<T>(url: string, body: unknown): Promise<T> {
  * in the API details shared so far, so this supports
  * several common response property names.
  */
-function extractCheckoutUrl(result: unknown): string {
+export function extractCheckoutUrl(result: unknown): string {
     if (typeof result !== "object" || result === null) {
         throw new Error("Invalid checkout response from server.");
     }

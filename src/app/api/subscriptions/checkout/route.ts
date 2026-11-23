@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 
-const CHECKOUT_API_URL =
-    "https://phishingsimulation.webandappdevelopmenttech.com/api/subscriptions/checkout";
-
 const ALLOWED_PROVIDERS = ["stripe", "razorpay", "paypal"] as const;
-
 type PaymentProvider = (typeof ALLOWED_PROVIDERS)[number];
 
 interface CheckoutRequest {
@@ -31,27 +27,29 @@ export async function POST(request: Request) {
         );
     }
 
-    if (
-        !payload.provider ||
-        !ALLOWED_PROVIDERS.includes(payload.provider)
-    ) {
+    if (!payload.provider || !ALLOWED_PROVIDERS.includes(payload.provider)) {
         return NextResponse.json(
             { message: "Please select a valid payment provider." },
             { status: 400 },
         );
     }
 
+    const baseUrl = process.env.ADMIN_PLANS_API_URL?.trim().replace(/\/$/, "");
+    if (!baseUrl) {
+        return NextResponse.json(
+            { message: "The payment service is not configured. Please try again later." },
+            { status: 503 },
+        );
+    }
+
     try {
-        const backendResponse = await fetch(CHECKOUT_API_URL, {
+        const backendResponse = await fetch(`${baseUrl}/api/subscriptions/checkout`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 Authorization: authorization,
             },
-            body: JSON.stringify({
-                planId: payload.planId,
-                provider: payload.provider,
-            }),
+            body: JSON.stringify({ planId: payload.planId, provider: payload.provider }),
             cache: "no-store",
         });
 
@@ -59,30 +57,17 @@ export async function POST(request: Request) {
 
         if (!backendResponse.ok) {
             const message =
-                typeof result === "object" &&
-                result !== null &&
-                "message" in result &&
-                typeof result.message === "string"
+                typeof result === "object" && result !== null && "message" in result && typeof result.message === "string"
                     ? result.message
                     : "Unable to create the checkout session.";
 
-            return NextResponse.json(
-                { message },
-                { status: backendResponse.status },
-            );
+            return NextResponse.json({ message }, { status: backendResponse.status });
         }
 
-        return NextResponse.json(result, {
-            status: backendResponse.status,
-        });
-    } catch (error) {
-        console.error("Subscription checkout API error:", error);
-
+        return NextResponse.json(result, { status: backendResponse.status });
+    } catch {
         return NextResponse.json(
-            {
-                message:
-                    "The payment service is temporarily unavailable. Please try again.",
-            },
+            { message: "The payment service is temporarily unavailable. Please try again." },
             { status: 502 },
         );
     }
