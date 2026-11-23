@@ -144,22 +144,35 @@ export function PageForm({
         const response = await fetch("/api/cms/pages", {
           method,
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            id: value.id,
-            title: value.title,
-            slug: value.slug,
-            status: value.status,
-            showInHeader: value.showInHeader,
-            headerLabel: value.headerLabel || value.title,
-            headerPosition: value.headerPosition,
-            showInFooter: value.showInFooter,
-            footerGroup: value.footerGroup,
-            footerLabel: value.footerLabel || value.title,
-            footerPosition: value.footerPosition,
-            starter: value.starter,
-            seo: { title: value.seoTitle || value.title, description: value.seoDescription || null },
-            blocks: [],
-          }),
+          body: JSON.stringify(value.id
+            ? {
+                id: value.id,
+                title: value.title,
+                slug: value.slug,
+                status: value.status,
+                showInHeader: value.showInHeader,
+                headerLabel: value.headerLabel || value.title,
+                headerPosition: value.headerPosition,
+                showInFooter: value.showInFooter,
+                footerGroup: value.footerGroup,
+                footerLabel: value.footerLabel || value.title,
+                footerPosition: value.footerPosition,
+                seo: { title: value.seoTitle || value.title, description: value.seoDescription || null },
+              }
+            : {
+                title: value.title,
+                slug: value.slug,
+                status: value.status,
+                showInHeader: value.showInHeader,
+                headerLabel: value.headerLabel || value.title,
+                headerPosition: value.headerPosition,
+                showInFooter: value.showInFooter,
+                footerGroup: value.footerGroup,
+                footerLabel: value.footerLabel || value.title,
+                footerPosition: value.footerPosition,
+                starter: value.starter,
+                seo: { title: value.seoTitle || value.title, description: value.seoDescription || null },
+              }),
         });
         const payload = await response.json();
         if (!response.ok || !payload.success) throw new Error(payload.message || "Page could not be saved.");

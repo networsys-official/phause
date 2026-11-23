@@ -265,13 +265,13 @@ async function requireWriteAccess(request: NextRequest) {
   return null;
 }
 
-const pageWriteSchema = cmsPageCreateUpdateSchema.extend({ status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]), seo: z.object({ title: z.string().nullable().optional(), description: z.string().nullable().optional(), keywords: z.union([z.array(z.string()), z.string()]).nullable().optional(), canonical: z.string().nullable().optional() }).optional(), }).extend({})
+const pageUpdateSchema = cmsPageCreateUpdateSchema.omit({ starter: true }).extend({ starter: z.unknown().optional(), status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]), seo: z.object({ title: z.string().nullable().optional(), description: z.string().nullable().optional(), keywords: z.union([z.array(z.string()), z.string()]).nullable().optional(), canonical: z.string().nullable().optional() }).optional(), }).extend({})
 export async function POST(request: NextRequest) {
   const accessError = await requireWriteAccess(request);
   if (accessError) return accessError;
 
   try {
-    const parsed = pageWriteSchema.parse(await request.json());
+    const parsed = cmsPageCreateUpdateSchema.parse(await request.json());
     if (!parsed.slug) {
       return NextResponse.json({ success: false, message: "Page slug is required." }, { status: 400 });
     }
@@ -312,7 +312,7 @@ export async function PUT(request: NextRequest) {
   if (accessError) return accessError;
 
   try {
-    const parsed = pageWriteSchema.parse(await request.json());
+    const parsed = pageUpdateSchema.parse(await request.json());
 
     const target = parsed.id
       ? { id: parsed.id }

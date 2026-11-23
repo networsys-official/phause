@@ -231,4 +231,38 @@ describe("page menu visibility integration", () => {
     expect(homeItems).toHaveLength(1);
     expect(homeItems[0]).toEqual(expect.objectContaining({ href: "/", label: "Home" }));
   });
+
+  it("edits page-level title without changing existing block data", async () => {
+    const slug = `three-block-edit-${suffix}`;
+    slugs.push(slug);
+    const created = await cmsRequest(createPage, "POST", {
+      title: "Three block page",
+      slug,
+      status: "PUBLISHED",
+      blocks: [
+        { type: "hero", order: 0, props: { title: "Hero stays", subtitle: "Hero subtitle" } },
+        { type: "richText", order: 1, props: { title: "Text stays", description: "Text description" } },
+        { type: "cta", order: 2, props: { title: "CTA stays", buttonText: "Continue" } },
+      ],
+    });
+    expect(created.status).toBe(201);
+    const createdPage = await created.json() as { page: { id: string; version: number } };
+    const before = await prisma.pageBlock.findMany({ where: { pageId: createdPage.page.id, deletedAt: null }, orderBy: { order: "asc" } });
+    expect(before).toHaveLength(3);
+
+    const updated = await cmsRequest(updatePage, "PUT", {
+      id: createdPage.page.id,
+      slug,
+      title: "Renamed three block page",
+      status: "PUBLISHED",
+      version: createdPage.page.version,
+      starter: "BLANK",
+      blocks: [],
+    });
+    expect(updated.status).toBe(200);
+
+    const after = await prisma.pageBlock.findMany({ where: { pageId: createdPage.page.id, deletedAt: null }, orderBy: { order: "asc" } });
+    expect(after.map((block) => block.type)).toEqual(before.map((block) => block.type));
+    expect(after.map((block) => block.props)).toEqual(before.map((block) => block.props));
+  });
 });
