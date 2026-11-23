@@ -286,7 +286,7 @@ const pageWriteSchema = z.object({
   title: z.string().trim().min(1, "Title is required."),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]),
   version: z.number().int().optional(),
-  seo: z.object({ title: z.string().optional(), description: z.string().optional(), keywords: z.array(z.string()).optional(), canonical: z.string().optional() }).optional(),
+  seo: z.object({ title: z.string().nullable().optional(), description: z.string().nullable().optional(), keywords: z.union([z.array(z.string()), z.string()]).nullable().optional(), canonical: z.string().nullable().optional() }).optional(),
   blocks: z.array(z.object({ id: z.string().optional(), type: z.string(), order: z.number().int().optional(), props: z.record(z.string(), z.unknown()).optional() })).optional().default([]),
 }).extend(pageMenuInputSchema.shape);
 
