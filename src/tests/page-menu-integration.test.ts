@@ -224,4 +224,11 @@ describe("page menu visibility integration", () => {
     const reserved = await cmsRequest(createPage, "POST", { title: "Reserved", slug: "cms", status: "DRAFT", blocks: [] });
     expect(reserved.status).toBe(400);
   });
+
+  it("returns exactly one Home item at the root href", async () => {
+    const navigation = await (await getNavigation()).json() as { navigation: { items: Array<{ href: string; label: string }> } };
+    const homeItems = navigation.navigation.items.filter((item) => item.label === "Home" || item.href === "/");
+    expect(homeItems).toHaveLength(1);
+    expect(homeItems[0]).toEqual(expect.objectContaining({ href: "/", label: "Home" }));
+  });
 });

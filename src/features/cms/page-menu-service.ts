@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Prisma, ContentStatus } from "@prisma/client";
+import { slugToHref } from "@/features/cms/cms-service";
 
 export const footerGroupSchema = z.enum(["QUICK_LINKS", "SERVICES", "LEGAL"]);
 
@@ -61,9 +62,9 @@ export async function syncPageMenuLinks(
     const label = menu.headerLabel?.trim() || page.title;
     if (menu.showInHeader) {
       if (existing) {
-        await tx.navigationItem.update({ where: { id: existing.id }, data: { label, href: `/${page.slug}`, position: menu.headerPosition, status: page.status, deletedAt: null } });
+        await tx.navigationItem.update({ where: { id: existing.id }, data: { label, href: slugToHref(page.slug), position: menu.headerPosition, status: page.status, deletedAt: null } });
       } else {
-        await tx.navigationItem.create({ data: { navigationId: navigation.id, pageId: page.id, label, href: `/${page.slug}`, position: menu.headerPosition, status: page.status, version: 1 } });
+        await tx.navigationItem.create({ data: { navigationId: navigation.id, pageId: page.id, label, href: slugToHref(page.slug), position: menu.headerPosition, status: page.status, version: 1 } });
       }
     } else if (existing) {
       await tx.navigationItem.update({ where: { id: existing.id }, data: { deletedAt: new Date() } });
@@ -76,9 +77,9 @@ export async function syncPageMenuLinks(
     const label = menu.footerLabel?.trim() || page.title;
     if (menu.showInFooter) {
       if (existing) {
-        await tx.footerLink.update({ where: { id: existing.id }, data: { label, href: `/${page.slug}`, position: menu.footerPosition, type: menu.footerGroup, status: page.status, deletedAt: null } });
+        await tx.footerLink.update({ where: { id: existing.id }, data: { label, href: slugToHref(page.slug), position: menu.footerPosition, type: menu.footerGroup, status: page.status, deletedAt: null } });
       } else {
-        await tx.footerLink.create({ data: { footerId: footer.id, pageId: page.id, label, href: `/${page.slug}`, position: menu.footerPosition, type: menu.footerGroup, status: page.status, version: 1 } });
+        await tx.footerLink.create({ data: { footerId: footer.id, pageId: page.id, label, href: slugToHref(page.slug), position: menu.footerPosition, type: menu.footerGroup, status: page.status, version: 1 } });
       }
     } else if (existing) {
       await tx.footerLink.update({ where: { id: existing.id }, data: { deletedAt: new Date() } });

@@ -2,6 +2,7 @@ import { prisma } from "../../infrastructure/database/prisma";
 
 const PATCHES = [
   { id: "20261120-01-aware-spacing", old: "Strengthen. Aware.Defend.", new: "Strengthen. Aware. Defend." },
+  { id: "20261123-01-home-navigation-href", old: "/home", new: "/" },
 ] as const;
 
 function replaceJsonValue(value: unknown, patch: (typeof PATCHES)[number]): unknown {
@@ -32,6 +33,16 @@ export async function applyContentPatches() {
       await tx.footer.updateMany({ where: { description: patch.old }, data: { description: patch.new } });
       await tx.navigation.updateMany({ where: { label: patch.old }, data: { label: patch.new } });
       await tx.navigationItem.updateMany({ where: { label: patch.old }, data: { label: patch.new } });
+
+      if (patch.id === "20261123-01-home-navigation-href") {
+        const homePage = await tx.page.findFirst({ where: { slug: "home", deletedAt: null }, select: { id: true } });
+        if (homePage) {
+          await tx.navigationItem.updateMany({
+            where: { pageId: homePage.id, href: "/home", deletedAt: null },
+            data: { href: "/" },
+          });
+        }
+      }
 
       await tx.contentPatch.upsert({ where: { id: patch.id }, update: {}, create: { id: patch.id } });
     });

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 
 import { prisma } from "@/infrastructure/database/prisma";
-import { normalizeNavigationItems } from "@/features/cms/cms-service";
+import { normalizeNavigationItems, slugToHref } from "@/features/cms/cms-service";
 import { getNavigationConfig } from "@/features/cms/content-service";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
@@ -42,18 +43,23 @@ export async function PUT(request: NextRequest) {
 
       await Promise.all(
         items.map(async (item) => {
-          const existingItem = await tx.navigationItem.findFirst({
-            where: { navigationId: record.id, href: item.href },
-          });
+          let linkedPage = null;
+          if (item.pageId) linkedPage = await tx.page.findUnique({ where: { id: item.pageId } });
+          const href = linkedPage ? slugToHref(linkedPage.slug) : item.href;
+          const existingItem = item.pageId
+            ? await tx.navigationItem.findFirst({ where: { navigationId: record.id, pageId: item.pageId, deletedAt: null } })
+            : item.id
+              ? await tx.navigationItem.findFirst({ where: { id: item.id, navigationId: record.id, deletedAt: null } })
+              : await tx.navigationItem.findFirst({ where: { navigationId: record.id, href, deletedAt: null } });
 
           if (existingItem) {
             await tx.navigationItem.update({
               where: { id: existingItem.id },
-              data: { label: item.label, href: item.href, position: item.position, status: "PUBLISHED" },
+              data: { label: item.label, href, position: item.position, status: linkedPage ? linkedPage.status : "PUBLISHED", pageId: linkedPage?.id ?? null },
             });
           } else {
             await tx.navigationItem.create({
-              data: { navigationId: record.id, label: item.label, href: item.href, position: item.position, status: "PUBLISHED" },
+              data: { navigationId: record.id, label: item.label, href, position: item.position, status: linkedPage ? linkedPage.status : "PUBLISHED", pageId: linkedPage?.id ?? null },
             });
           }
         }),
@@ -65,6 +71,8 @@ export async function PUT(request: NextRequest) {
       });
     });
 
+    revalidateTag("cms-navigation", "max");
+    revalidateTag("cms-pages", "max");
     logger.info("Navigation update request received", { key: navKey, itemCount: items.length });
     return NextResponse.json({ success: true, navigation: { key: navKey, label: payload.label ?? "Main navigation", items } });
   } catch (error) {
