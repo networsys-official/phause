@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { auth } from "@/auth";
+import { z } from "zod";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { normalizePageInput, normalizeSlug } from "@/features/cms/cms-service";
@@ -7,6 +9,7 @@ import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
 import { checkRateLimit } from "@/shared/lib/rate-limit";
 import { cmsSaveResponseSchema } from "@/features/cms/cms-page-contract";
+import { pageMenuInputSchema, syncPageMenuLinks, validatePageSlug, isSystemPageSlug } from "@/features/cms/page-menu-service";
 
 function canAccess(request: NextRequest) {
   return hasCmsRequestAccess(request.headers);
@@ -105,8 +108,10 @@ function invalidateCmsRoute(slug: string) {
   try {
     revalidateTag("cms-pages", "max");
     revalidateTag("cms-seo", "max");
+    revalidateTag("cms-navigation", "max");
+    revalidateTag("cms-footer", "max");
     revalidatePath(`/${slug === "home" ? "" : slug}`);
-    revalidatePath("/", "layout");
+    revalidatePath("/sitemap.xml");
   } catch (error) {
     logger.warn("CMS cache revalidation skipped outside Next runtime", {
       error: error instanceof Error ? error.message : "Unknown error",
@@ -151,22 +156,30 @@ function normalizeBlockTypeFromDb(type: string) {
 
 async function savePageRecord(payload: Record<string, unknown>, mode: "create" | "update") {
   const normalized = normalizePageInput(payload);
+  const menu = pageMenuInputSchema.parse(payload);
 
   const result = await prisma.$transaction(async (tx) => {
-    const page = await tx.page.upsert({
-      where: { slug: normalized.slug },
-      update: {
-        title: normalized.title,
-        status: normalized.status,
-        version: { increment: 1 },
-      },
-      create: {
-        slug: normalized.slug,
-        title: normalized.title,
-        status: normalized.status,
-        version: 1,
-      },
-    });
+    const submittedId = typeof payload.id === "string" ? payload.id : "";
+    const page = mode === "update" && submittedId
+      ? await tx.page.update({
+          where: { id: submittedId },
+          data: {
+            slug: normalized.slug,
+            title: normalized.title,
+            status: normalized.status,
+            publishedAt: normalized.status === "PUBLISHED" ? new Date() : null,
+            version: { increment: 1 },
+          },
+        })
+      : await tx.page.create({
+          data: {
+            slug: normalized.slug,
+            title: normalized.title,
+            status: normalized.status,
+            publishedAt: normalized.status === "PUBLISHED" ? new Date() : null,
+            version: 1,
+          },
+        });
 
     const seo = await tx.seo.upsert({
       where: { slug: normalized.slug },
@@ -220,6 +233,8 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
       throw new Error("Saved page could not be loaded.");
     }
 
+    await syncPageMenuLinks(tx, savedPage, menu);
+
     for (const submitted of normalized.blocks) {
       const persisted = savedPage.blocks.find((block) =>
         submitted.id && block.id === submitted.id
@@ -253,43 +268,103 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
   return result;
 }
 
-export async function POST(request: NextRequest) {
-  if (!canAccess(request)) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+async function requireWriteAccess(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user) return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  const role = String(session.user.role ?? "VIEWER");
+  if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {
+    return NextResponse.json({ success: false, message: "You do not have permission to change pages." }, { status: 403 });
   }
+  if (!canAccess(request)) return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+  return null;
+}
+
+const pageWriteSchema = z.object({
+  id: z.string().optional(),
+  slug: z.string().min(1).optional(),
+  title: z.string().trim().min(1, "Title is required."),
+  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]),
+  version: z.number().int().optional(),
+  seo: z.object({ title: z.string().optional(), description: z.string().optional(), keywords: z.array(z.string()).optional(), canonical: z.string().optional() }).optional(),
+  blocks: z.array(z.object({ id: z.string().optional(), type: z.string(), order: z.number().int().optional(), props: z.record(z.string(), z.unknown()).optional() })).optional().default([]),
+}).extend(pageMenuInputSchema.shape);
+
+export async function POST(request: NextRequest) {
+  const accessError = await requireWriteAccess(request);
+  if (accessError) return accessError;
 
   try {
-    const body = await request.json();
-    const page = await savePageRecord(body, "create");
+    const parsed = pageWriteSchema.parse(await request.json());
+    if (!parsed.slug) {
+      return NextResponse.json({ success: false, message: "Page slug is required." }, { status: 400 });
+    }
+    const normalizedSlug = normalizeSlug(parsed.slug);
+    const slugError = validatePageSlug(normalizedSlug);
+    if (slugError) return NextResponse.json({ success: false, message: slugError }, { status: 400 });
+
+    const duplicate = await prisma.page.findUnique({ where: { slug: normalizedSlug } });
+    if (duplicate) return NextResponse.json({ success: false, message: `A page with slug "${normalizedSlug}" already exists.` }, { status: 409 });
+
+    const starterBlocks = parsed.blocks.length ? parsed.blocks : [
+      { type: "hero", order: 0, props: { title: parsed.title, eyebrow: "", description: "", ctaPrimary: "", ctaPrimaryHref: "" } },
+      { type: "richText", order: 1, props: { title: "", description: "" } },
+    ];
+    const page = await savePageRecord({ ...parsed, slug: normalizedSlug, blocks: starterBlocks }, "create");
+    await prisma.auditLog.create({ data: { entityType: "Page", entityId: page.id, action: "CREATE", metadata: { slug: page.slug }, pageId: page.id } });
     invalidateCmsRoute(page.slug);
     const response = cmsSaveResponseSchema.parse({ success: true, page });
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
+    if (error instanceof z.ZodError) return NextResponse.json({ success: false, message: error.issues[0]?.message ?? "Invalid page data." }, { status: 400 });
     logger.error("Page creation failed", { error: error instanceof Error ? error.message : "Unknown error" });
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Page creation failed." }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
-  if (!canAccess(request)) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
-  }
+  const accessError = await requireWriteAccess(request);
+  if (accessError) return accessError;
 
   try {
-    const body = await request.json();
-    const target = (body as { id?: string; slug?: string })?.id
-      ? { id: String((body as { id?: string }).id) }
-      : { slug: normalizeSlug(String((body as { slug?: string }).slug ?? (body as { title?: string }).title ?? "page")) };
+    const parsed = pageWriteSchema.parse(await request.json());
 
-    const existing = await prisma.page.findFirst({ where: target.id ? { id: target.id, deletedAt: null } : { slug: target.slug, deletedAt: null } });
+    const target = parsed.id
+      ? { id: parsed.id }
+      : parsed.slug
+        ? { slug: normalizeSlug(parsed.slug) }
+        : null;
 
-    const submittedVersion = typeof (body as { version?: unknown }).version === "number" ? Number((body as { version?: number }).version) : undefined;
-    if (submittedVersion !== undefined && existing && submittedVersion !== existing.version) {
-      return NextResponse.json({ success: false, message: "This page changed in another tab. Refresh and try again.", code: "VERSION_CONFLICT", currentVersion: existing.version }, { status: 409 });
+    if (!target) {
+      return NextResponse.json({ success: false, message: "Page id or slug is required." }, { status: 400 });
     }
 
-    if (!existing && !target.slug) {
+    const existing = await prisma.page.findFirst({
+      where: "id" in target ? { id: target.id, deletedAt: null } : { slug: target.slug, deletedAt: null },
+    });
+    if (!existing) {
       return NextResponse.json({ success: false, message: "Page not found." }, { status: 404 });
+    }
+
+    const normalizedSlug = parsed.slug ? normalizeSlug(parsed.slug) : existing.slug;
+    const body = { ...parsed, slug: normalizedSlug };
+    const slugChanged = normalizedSlug !== existing.slug;
+
+    if (slugChanged && isSystemPageSlug(existing.slug)) {
+      return NextResponse.json({ success: false, message: "The address of a system page is fixed." }, { status: 400 });
+    }
+    if (slugChanged) {
+      const slugError = validatePageSlug(normalizedSlug);
+      if (slugError) return NextResponse.json({ success: false, message: slugError }, { status: 400 });
+    }
+
+    const slugOwner = await prisma.page.findUnique({ where: { slug: normalizedSlug } });
+    if (slugOwner && slugOwner.id !== existing.id) {
+      return NextResponse.json({ success: false, message: `A page with slug "${normalizedSlug}" already exists.` }, { status: 409 });
+    }
+
+    const submittedVersion = typeof (body as { version?: unknown }).version === "number" ? Number((body as { version?: number }).version) : undefined;
+    if (submittedVersion !== undefined && submittedVersion !== existing.version) {
+      return NextResponse.json({ success: false, message: "This page changed in another tab. Refresh and try again.", code: "VERSION_CONFLICT", currentVersion: existing.version }, { status: 409 });
     }
 
     const page = await savePageRecord(body, "update");
@@ -306,15 +381,15 @@ export async function PUT(request: NextRequest) {
     invalidateCmsRoute(page.slug);
     return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof z.ZodError) return NextResponse.json({ success: false, message: error.issues[0]?.message ?? "Invalid page data." }, { status: 400 });
     logger.error("Page update failed", { error: error instanceof Error ? error.message : "Unknown error" });
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Page update failed." }, { status: 500 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  if (!canAccess(request)) {
-    return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
-  }
+  const accessError = await requireWriteAccess(request);
+  if (accessError) return accessError;
 
   try {
     const body = await request.json().catch(() => ({}));
@@ -329,11 +404,27 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Page not found." }, { status: 404 });
     }
 
-    const deletedPage = await prisma.page.update({
-      where: { id: page.id },
-      data: { deletedAt: new Date(), status: "ARCHIVED", updatedAt: new Date() },
+    if (isSystemPageSlug(page.slug)) {
+      return NextResponse.json({ success: false, message: "System pages cannot be deleted." }, { status: 403 });
+    }
+
+    const deletedAt = new Date();
+    const deletedPage = await prisma.$transaction(async (tx) => {
+      await tx.navigationItem.updateMany({ where: { pageId: page.id, deletedAt: null }, data: { deletedAt } });
+      await tx.footerLink.updateMany({ where: { pageId: page.id, deletedAt: null }, data: { deletedAt } });
+      const result = await tx.page.update({
+        where: { id: page.id },
+        data: { deletedAt, status: "ARCHIVED", updatedAt: deletedAt },
+      });
+      await tx.auditLog.create({ data: { entityType: "Page", entityId: page.id, action: "DELETE", metadata: { slug: page.slug }, pageId: page.id } });
+      return result;
     });
 
+    invalidateCmsRoute(page.slug);
+    revalidatePath(`/${page.slug}`);
+    revalidateTag("cms-navigation", "max");
+    revalidateTag("cms-footer", "max");
+    revalidatePath("/sitemap.xml");
     return NextResponse.json({ success: true, page: deletedPage });
   } catch (error) {
     logger.error("Page delete failed", { error: error instanceof Error ? error.message : "Unknown error" });
