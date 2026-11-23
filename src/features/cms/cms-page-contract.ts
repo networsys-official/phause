@@ -1,5 +1,30 @@
 import { z } from "zod";
 
+export const pageFooterGroupSchema = z.enum(["QUICK_LINKS", "SERVICES", "LEGAL"]);
+export const pageStatusSchema = z.enum(["DRAFT", "PUBLISHED"]);
+export const pageStarterSchema = z.enum(["BLANK", "HERO_TEXT", "HERO_TEXT_CTA"]);
+
+export const cmsPageCreateUpdateSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().trim().min(1, "Title is required.").max(120, "Title must be 120 characters or fewer."),
+  slug: z.string().trim().min(1, "Address is required.").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers, and hyphens only."),
+  status: pageStatusSchema,
+  version: z.number().int().optional(),
+  showInHeader: z.boolean().optional().default(false),
+  headerLabel: z.string().trim().max(120).optional().nullable(),
+  headerPosition: z.number().int().min(0).optional().default(0),
+  showInFooter: z.boolean().optional().default(false),
+  footerGroup: pageFooterGroupSchema.optional().default("QUICK_LINKS"),
+  footerLabel: z.string().trim().max(120).optional().nullable(),
+  footerPosition: z.number().int().min(0).optional().default(0),
+  starter: pageStarterSchema.optional().default("HERO_TEXT"),
+  seo: z.object({
+    title: z.string().trim().max(60, "Page title should be 60 characters or fewer.").nullable().optional(),
+    description: z.string().trim().max(160, "Description should be 160 characters or fewer.").nullable().optional(),
+  }).optional(),
+  blocks: z.array(z.object({ id: z.string().optional(), type: z.string(), order: z.number().int().optional(), props: z.record(z.string(), z.unknown()).optional() })).optional().default([]),
+});
+
 export const cmsPageBlockResponseSchema = z.object({
   id: z.string(),
   type: z.string(),
