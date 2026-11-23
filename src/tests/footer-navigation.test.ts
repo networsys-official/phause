@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { groupFooterLinks } from "@/features/cms/footer-groups";
+
 import {
   FOOTER_LEGAL_LINKS,
   FOOTER_QUICK_LINKS,
@@ -58,5 +60,17 @@ describe("footer navigation cleanup", () => {
 
     expect(duplicateHeaderLinks.length).toBeGreaterThan(0);
     expect(() => validateFooterNavigation()).not.toThrow();
+  });
+
+  it("renders published page links in CMS groups and excludes drafts", () => {
+    const groups = groupFooterLinks([
+      { label: "Threat Detection", href: "/services#threat-detection", position: 1, type: "SERVICES", status: "PUBLISHED" },
+      { label: "New Published Page", href: "/new-published-page", position: 2, type: "SERVICES", status: "PUBLISHED" },
+      { label: "Hidden Draft", href: "/hidden-draft", position: 3, type: "SERVICES", status: "DRAFT" },
+    ].filter((link) => link.status === "PUBLISHED"));
+
+    const services = groups.find((group) => group.type === "SERVICES");
+    expect(services?.items.map((link) => link.label)).toEqual(["Threat Detection", "New Published Page"]);
+    expect(services?.items.some((link) => link.label === "Hidden Draft")).toBe(false);
   });
 });
