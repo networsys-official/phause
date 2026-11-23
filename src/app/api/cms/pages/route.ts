@@ -387,6 +387,87 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+const patchPageBlockSchema = z.object({
+  pageId: z.string().min(1),
+  blockId: z.string().min(1),
+  fieldPath: z.string().regex(/^[A-Za-z][A-Za-z0-9]*(?:\.[A-Za-z][A-Za-z0-9]*)*(?:\.\d+)*$/),
+  value: z.union([z.string().max(5000), z.number(), z.boolean(), z.null()]),
+  version: z.number().int().positive(),
+});
+
+function setJsonPath(target: Record<string, unknown>, fieldPath: string, value: unknown) {
+  const parts = fieldPath.split(".");
+  let cursor: unknown = target;
+  for (let index = 0; index < parts.length - 1; index += 1) {
+    const key = parts[index];
+    if (cursor && typeof cursor === "object") {
+      const record = cursor as Record<string, unknown>;
+      record[key] = record[key] && typeof record[key] === "object" ? record[key] : {};
+      cursor = record[key];
+    }
+  }
+  const last = parts[parts.length - 1];
+  if (cursor && typeof cursor === "object") (cursor as Record<string, unknown>)[last] = value;
+}
+
+export async function PATCH(request: NextRequest) {
+  const accessError = await requireWriteAccess(request);
+  if (accessError) return accessError;
+
+  try {
+    const parsed = patchPageBlockSchema.parse(await request.json());
+    const lowerPath = parsed.fieldPath.toLowerCase();
+    if (typeof parsed.value === "string" && (lowerPath.includes("href") || lowerPath.includes("url") || lowerPath.includes("link") || lowerPath.includes("image"))) {
+      if (parsed.value && !parsed.value.startsWith("/") && !parsed.value.startsWith("#") && !parsed.value.startsWith("mailto:") && !parsed.value.startsWith("tel:") && !/^https?:\/\/[^\s]+$/i.test(parsed.value)) {
+        return NextResponse.json({ success: false, message: "Invalid link or URL." }, { status: 400 });
+      }
+    }
+
+    const saved = await prisma.$transaction(async (tx) => {
+      const page = await tx.page.findFirst({ where: { id: parsed.pageId, deletedAt: null } });
+      if (!page) throw new Error("Page not found.");
+
+      const block = await tx.pageBlock.findFirst({ where: { id: parsed.blockId, pageId: parsed.pageId, deletedAt: null } });
+      if (!block) throw new Error("Page section not found.");
+      if (block.version !== parsed.version) {
+        const conflict = new Error("VERSION_CONFLICT");
+        Object.assign(conflict, { status: 409, currentVersion: block.version });
+        throw conflict;
+      }
+
+      const props = JSON.parse(JSON.stringify(block.props ?? {})) as Record<string, unknown>;
+      setJsonPath(props, parsed.fieldPath, parsed.value);
+      const updated = await tx.pageBlock.update({
+        where: { id: block.id },
+        data: { props: props as never, version: { increment: 1 } },
+      });
+
+      await tx.auditLog.create({
+        data: { entityType: "PageBlock", entityId: block.id, action: "UPDATE", metadata: { pageId: page.id, blockId: block.id, fieldPath: parsed.fieldPath }, pageId: page.id },
+      });
+
+      return { page, block: updated };
+    });
+
+    invalidateCmsRoute(saved.page.slug);
+    const reread = await prisma.page.findFirst({
+      where: { id: saved.page.id, deletedAt: null },
+      include: { seo: true, blocks: { where: { deletedAt: null }, orderBy: { order: "asc" } } },
+    });
+    if (!reread) throw new Error("Persisted page could not be loaded.");
+
+    return NextResponse.json({ success: true, page: serializePage({ ...reread, blocks: reread.blocks.map((block) => ({ ...block, props: (block.props ?? {}) as Record<string, unknown> })) }) });
+  } catch (error) {
+    if (error instanceof z.ZodError) return NextResponse.json({ success: false, message: error.issues[0]?.message ?? "Invalid field update." }, { status: 400 });
+    if (error instanceof Error && error.message === "VERSION_CONFLICT") {
+      return NextResponse.json({ success: false, message: "This section changed in another tab. Reload latest.", code: "VERSION_CONFLICT" }, { status: 409 });
+    }
+    const message = error instanceof Error ? error.message : "Field update failed.";
+    const status = message === "Page not found." || message === "Page section not found." ? 404 : 500;
+    return NextResponse.json({ success: false, message }, { status });
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const accessError = await requireWriteAccess(request);
   if (accessError) return accessError;
@@ -421,10 +502,6 @@ export async function DELETE(request: NextRequest) {
     });
 
     invalidateCmsRoute(page.slug);
-    revalidatePath(`/${page.slug}`);
-    revalidateTag("cms-navigation", "max");
-    revalidateTag("cms-footer", "max");
-    revalidatePath("/sitemap.xml");
     return NextResponse.json({ success: true, page: deletedPage });
   } catch (error) {
     logger.error("Page delete failed", { error: error instanceof Error ? error.message : "Unknown error" });

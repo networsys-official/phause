@@ -19,6 +19,15 @@ type PageRecord = {
   slug: string;
   title: string;
   status: string;
+  showInHeader?: boolean;
+  headerLabel?: string;
+  headerPosition?: number;
+  showInFooter?: boolean;
+  footerGroup?: string;
+  footerLabel?: string;
+  footerPosition?: number;
+  pageId?: string;
+  pageTitle?: string;
   seo?: {
     title?: string | null;
     description?: string | null;
@@ -28,7 +37,7 @@ type PageRecord = {
   blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>;
 };
 
-type NavigationItem = { label: string; href: string; position: number };
+type NavigationItem = { id?: string; pageId?: string | null; pageTitle?: string | null; type?: string; label: string; href: string; position: number };
 
 type FooterRecord = {
   title: string;
@@ -163,7 +172,7 @@ export function normalizeEditableSectionItems(sectionType: string, items: unknow
   });
 }
 
-export function PageSectionEditor({ page, blocks, media }: { page: { id: string; slug: string; title: string; status: string; version?: number }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>; media: Array<{ id: string; title: string; url: string; mimeType: string }> }) {
+export function PageSectionEditor({ page, blocks, media }: { page: { id: string; slug: string; title: string; status: string; version?: number; showInHeader?: boolean; headerLabel?: string; headerPosition?: number; showInFooter?: boolean; footerGroup?: string; footerLabel?: string; footerPosition?: number }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>; media: Array<{ id: string; title: string; url: string; mimeType: string }> }) {
   const router = useRouter();
   const initialSectionsRef = useRef(blocks.map((block) => normalizeBlockRecord(block)));
   const [sections, setSections] = useState(() => blocks.map((block) => normalizeBlockRecord(block)));
@@ -176,6 +185,15 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
   const [pageVersion, setPageVersion] = useState(page.version ?? 1);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [conflictReloadAvailable, setConflictReloadAvailable] = useState(false);
+  const [draft, setDraft] = useState({
+    showInHeader: page.showInHeader ?? false,
+    headerLabel: page.headerLabel ?? page.title,
+    headerPosition: page.headerPosition ?? 0,
+    showInFooter: page.showInFooter ?? false,
+    footerGroup: page.footerGroup === "QUICK_LINKS" || page.footerGroup === "SERVICES" || page.footerGroup === "LEGAL" ? page.footerGroup : "QUICK_LINKS",
+    footerLabel: page.footerLabel ?? page.title,
+    footerPosition: page.footerPosition ?? 0,
+  });
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -420,10 +438,13 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
         slug: page.slug,
         title: page.title,
         status: page.status,
-        seo: {
-          title: page.title,
-          description: "Managed via CMS",
-        },
+        showInHeader: draft.showInHeader,
+        headerLabel: draft.headerLabel || page.title,
+        headerPosition: draft.headerPosition,
+        showInFooter: draft.showInFooter,
+        footerGroup: draft.footerGroup,
+        footerLabel: draft.footerLabel || page.title,
+        footerPosition: draft.footerPosition,
         blocks: sections
           .map((section, index) => ({
             id: section.id,
@@ -457,15 +478,12 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
       setToast({ type: "success", message: "✅ Home page updated successfully" });
       router.refresh();
     } catch (error) {
+      const message = error instanceof Error ? error.message : "Page save failed.";
       setSaveState("error");
-      const detail = error instanceof Error ? error.message : "The page could not be saved.";
-      const conflict = /another tab|changed|VERSION_CONFLICT/i.test(detail);
-      setConflictReloadAvailable(conflict);
-      setToast({ type: "error", message: conflict ? "Someone else changed this page. Reload latest, or keep editing and retry." : detail });
-      setMessage(detail);
+      setToast({ type: "error", message });
+      setMessage(message);
     } finally {
       setIsLoading(false);
-      window.setTimeout(() => setSaveState("idle"), 1800);
     }
   };
 
@@ -475,7 +493,7 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
     router.refresh();
   };
 
-  const safeButtonClasses = "save-button inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-[0_0_25px_rgba(34,211,238,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-cyan-400 hover:shadow-[0_0_30px_rgba(34,211,238,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-50";
+  const safeButtonClasses = "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50";
 
   return (
     <div className="space-y-6">
@@ -569,7 +587,7 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block text-sm text-slate-300 md:col-span-1">
               <span className="mb-1 block font-medium text-white">Title</span>
-              <input value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
               {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
             </label>
 
@@ -590,8 +608,1393 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
 
             <label className="block text-sm text-slate-300 md:col-span-1">
               <span className="mb-1 block font-medium text-white">Button link</span>
-              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button link for section ${index + 1}`} />
-              {errors[section.id]?.buttonLink ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].buttonLink}</span> : null}
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {String(section.type ?? "").toLowerCase() === "contact" ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Contact details</div>
+                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
+                  </div>
+                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {serializeContactDetails(section.props.details).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
+                  ) : null}
+
+                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
+                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
+                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
+                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
+                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Position</span>
+              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
+              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
+            </label>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+        <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInHeader} onChange={(event) => { setDraft((current) => ({ ...current, showInHeader: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in top menu
+            </label>
+            {draft.showInHeader ? <div className="mt-3 grid gap-3"><input aria-label="Top menu label" value={draft.headerLabel} onChange={(event) => { setDraft((current) => ({ ...current, headerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Menu label" /><input aria-label="Top menu order" type="number" min={0} value={draft.headerPosition} onChange={(event) => { setDraft((current) => ({ ...current, headerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><p className="text-xs text-cyan-200">Preview: {draft.headerLabel || page.title}</p></div> : null}
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInFooter} onChange={(event) => { setDraft((current) => ({ ...current, showInFooter: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in footer
+            </label>
+            {draft.showInFooter ? <div className="mt-3 grid gap-3"><input aria-label="Footer label" value={draft.footerLabel} onChange={(event) => { setDraft((current) => ({ ...current, footerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Footer label" /><input aria-label="Footer order" type="number" min={0} value={draft.footerPosition} onChange={(event) => { setDraft((current) => ({ ...current, footerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></div> : null}
+          </div>
+        </div>
+        {page.status === "DRAFT" ? <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Draft pages are hidden from menus until published.</p> : null}
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Page sections</h2>
+            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={isLoading}
+            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
+            aria-busy={isLoading}
+            className={cn(
+              safeButtonClasses,
+              isLoading ? "cursor-wait" : "cursor-pointer",
+            )}
+          >
+            {isLoading || saveState === "saving" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : saveState === "success" ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Saved successfully</span>
+              </>
+            ) : saveState === "error" ? (
+              <>
+                <span aria-hidden="true">↻</span>
+                <span>Try again</span>
+              </>
+            ) : (
+              <span>Save all sections</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {sections.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
+          No sections available yet. Add a section to start editing content.
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
+              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
+              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
+              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={section.props.visibility !== false}
+                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
+                  aria-label={`Toggle visibility for section ${index + 1}`}
+                />
+                Visible
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Title</span>
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Subtitle</span>
+              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-2">
+              <span className="mb-1 block font-medium text-white">Description</span>
+              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button text</span>
+              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button link</span>
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {String(section.type ?? "").toLowerCase() === "contact" ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Contact details</div>
+                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
+                  </div>
+                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {serializeContactDetails(section.props.details).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
+                  ) : null}
+
+                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
+                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
+                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
+                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
+                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Position</span>
+              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
+              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
+            </label>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+        <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInHeader} onChange={(event) => { setDraft((current) => ({ ...current, showInHeader: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in top menu
+            </label>
+            {draft.showInHeader ? <div className="mt-3 grid gap-3"><input aria-label="Top menu label" value={draft.headerLabel} onChange={(event) => { setDraft((current) => ({ ...current, headerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Menu label" /><input aria-label="Top menu order" type="number" min={0} value={draft.headerPosition} onChange={(event) => { setDraft((current) => ({ ...current, headerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><p className="text-xs text-cyan-200">Preview: {draft.headerLabel || page.title}</p></div> : null}
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInFooter} onChange={(event) => { setDraft((current) => ({ ...current, showInFooter: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in footer
+            </label>
+            {draft.showInFooter ? <div className="mt-3 grid gap-3"><input aria-label="Footer label" value={draft.footerLabel} onChange={(event) => { setDraft((current) => ({ ...current, footerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Footer label" /><input aria-label="Footer order" type="number" min={0} value={draft.footerPosition} onChange={(event) => { setDraft((current) => ({ ...current, footerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></div> : null}
+          </div>
+        </div>
+        {page.status === "DRAFT" ? <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Draft pages are hidden from menus until published.</p> : null}
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Page sections</h2>
+            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={isLoading}
+            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
+            aria-busy={isLoading}
+            className={cn(
+              safeButtonClasses,
+              isLoading ? "cursor-wait" : "cursor-pointer",
+            )}
+          >
+            {isLoading || saveState === "saving" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : saveState === "success" ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Saved successfully</span>
+              </>
+            ) : saveState === "error" ? (
+              <>
+                <span aria-hidden="true">↻</span>
+                <span>Try again</span>
+              </>
+            ) : (
+              <span>Save all sections</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {sections.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
+          No sections available yet. Add a section to start editing content.
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
+              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
+              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
+              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={section.props.visibility !== false}
+                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
+                  aria-label={`Toggle visibility for section ${index + 1}`}
+                />
+                Visible
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Title</span>
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Subtitle</span>
+              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-2">
+              <span className="mb-1 block font-medium text-white">Description</span>
+              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button text</span>
+              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button link</span>
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {String(section.type ?? "").toLowerCase() === "contact" ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Contact details</div>
+                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
+                  </div>
+                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {serializeContactDetails(section.props.details).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
+                  ) : null}
+
+                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
+                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
+                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
+                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
+                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Position</span>
+              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
+              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
+            </label>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+        <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInHeader} onChange={(event) => { setDraft((current) => ({ ...current, showInHeader: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in top menu
+            </label>
+            {draft.showInHeader ? <div className="mt-3 grid gap-3"><input aria-label="Top menu label" value={draft.headerLabel} onChange={(event) => { setDraft((current) => ({ ...current, headerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Menu label" /><input aria-label="Top menu order" type="number" min={0} value={draft.headerPosition} onChange={(event) => { setDraft((current) => ({ ...current, headerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><p className="text-xs text-cyan-200">Preview: {draft.headerLabel || page.title}</p></div> : null}
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInFooter} onChange={(event) => { setDraft((current) => ({ ...current, showInFooter: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in footer
+            </label>
+            {draft.showInFooter ? <div className="mt-3 grid gap-3"><input aria-label="Footer label" value={draft.footerLabel} onChange={(event) => { setDraft((current) => ({ ...current, footerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Footer label" /><input aria-label="Footer order" type="number" min={0} value={draft.footerPosition} onChange={(event) => { setDraft((current) => ({ ...current, footerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></div> : null}
+          </div>
+        </div>
+        {page.status === "DRAFT" ? <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Draft pages are hidden from menus until published.</p> : null}
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Page sections</h2>
+            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={isLoading}
+            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
+            aria-busy={isLoading}
+            className={cn(
+              safeButtonClasses,
+              isLoading ? "cursor-wait" : "cursor-pointer",
+            )}
+          >
+            {isLoading || saveState === "saving" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : saveState === "success" ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Saved successfully</span>
+              </>
+            ) : saveState === "error" ? (
+              <>
+                <span aria-hidden="true">↻</span>
+                <span>Try again</span>
+              </>
+            ) : (
+              <span>Save all sections</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {sections.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
+          No sections available yet. Add a section to start editing content.
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
+              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
+              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
+              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={section.props.visibility !== false}
+                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
+                  aria-label={`Toggle visibility for section ${index + 1}`}
+                />
+                Visible
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Title</span>
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Subtitle</span>
+              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-2">
+              <span className="mb-1 block font-medium text-white">Description</span>
+              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button text</span>
+              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button link</span>
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {String(section.type ?? "").toLowerCase() === "contact" ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Contact details</div>
+                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
+                  </div>
+                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {serializeContactDetails(section.props.details).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
+                  ) : null}
+
+                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
+                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
+                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
+                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
+                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Position</span>
+              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
+              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
+            </label>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+        <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInHeader} onChange={(event) => { setDraft((current) => ({ ...current, showInHeader: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in top menu
+            </label>
+            {draft.showInHeader ? <div className="mt-3 grid gap-3"><input aria-label="Top menu label" value={draft.headerLabel} onChange={(event) => { setDraft((current) => ({ ...current, headerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Menu label" /><input aria-label="Top menu order" type="number" min={0} value={draft.headerPosition} onChange={(event) => { setDraft((current) => ({ ...current, headerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><p className="text-xs text-cyan-200">Preview: {draft.headerLabel || page.title}</p></div> : null}
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInFooter} onChange={(event) => { setDraft((current) => ({ ...current, showInFooter: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in footer
+            </label>
+            {draft.showInFooter ? <div className="mt-3 grid gap-3"><input aria-label="Footer label" value={draft.footerLabel} onChange={(event) => { setDraft((current) => ({ ...current, footerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Footer label" /><input aria-label="Footer order" type="number" min={0} value={draft.footerPosition} onChange={(event) => { setDraft((current) => ({ ...current, footerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></div> : null}
+          </div>
+        </div>
+        {page.status === "DRAFT" ? <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Draft pages are hidden from menus until published.</p> : null}
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Page sections</h2>
+            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={isLoading}
+            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
+            aria-busy={isLoading}
+            className={cn(
+              safeButtonClasses,
+              isLoading ? "cursor-wait" : "cursor-pointer",
+            )}
+          >
+            {isLoading || saveState === "saving" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : saveState === "success" ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Saved successfully</span>
+              </>
+            ) : saveState === "error" ? (
+              <>
+                <span aria-hidden="true">↻</span>
+                <span>Try again</span>
+              </>
+            ) : (
+              <span>Save all sections</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {sections.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
+          No sections available yet. Add a section to start editing content.
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
+              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
+              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
+              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={section.props.visibility !== false}
+                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
+                  aria-label={`Toggle visibility for section ${index + 1}`}
+                />
+                Visible
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Title</span>
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Subtitle</span>
+              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-2">
+              <span className="mb-1 block font-medium text-white">Description</span>
+              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button text</span>
+              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button link</span>
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {String(section.type ?? "").toLowerCase() === "contact" ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Contact details</div>
+                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
+                  </div>
+                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {serializeContactDetails(section.props.details).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
+                  ) : null}
+
+                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
+                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
+                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
+                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
+                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Position</span>
+              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
+              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
+            </label>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+        <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInHeader} onChange={(event) => { setDraft((current) => ({ ...current, showInHeader: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in top menu
+            </label>
+            {draft.showInHeader ? <div className="mt-3 grid gap-3"><input aria-label="Top menu label" value={draft.headerLabel} onChange={(event) => { setDraft((current) => ({ ...current, headerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Menu label" /><input aria-label="Top menu order" type="number" min={0} value={draft.headerPosition} onChange={(event) => { setDraft((current) => ({ ...current, headerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><p className="text-xs text-cyan-200">Preview: {draft.headerLabel || page.title}</p></div> : null}
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInFooter} onChange={(event) => { setDraft((current) => ({ ...current, showInFooter: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in footer
+            </label>
+            {draft.showInFooter ? <div className="mt-3 grid gap-3"><input aria-label="Footer label" value={draft.footerLabel} onChange={(event) => { setDraft((current) => ({ ...current, footerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Footer label" /><input aria-label="Footer order" type="number" min={0} value={draft.footerPosition} onChange={(event) => { setDraft((current) => ({ ...current, footerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></div> : null}
+          </div>
+        </div>
+        {page.status === "DRAFT" ? <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Draft pages are hidden from menus until published.</p> : null}
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Page sections</h2>
+            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={isLoading}
+            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
+            aria-busy={isLoading}
+            className={cn(
+              safeButtonClasses,
+              isLoading ? "cursor-wait" : "cursor-pointer",
+            )}
+          >
+            {isLoading || saveState === "saving" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : saveState === "success" ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Saved successfully</span>
+              </>
+            ) : saveState === "error" ? (
+              <>
+                <span aria-hidden="true">↻</span>
+                <span>Try again</span>
+              </>
+            ) : (
+              <span>Save all sections</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {sections.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
+          No sections available yet. Add a section to start editing content.
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
+              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
+              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
+              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={section.props.visibility !== false}
+                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
+                  aria-label={`Toggle visibility for section ${index + 1}`}
+                />
+                Visible
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Title</span>
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Subtitle</span>
+              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-2">
+              <span className="mb-1 block font-medium text-white">Description</span>
+              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button text</span>
+              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button link</span>
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Editable items</div>
+                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
+                  </div>
+                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
+                  ) : null}
+
+                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
+                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
+                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
+                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
+
+                    return (
+                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
+                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
+                        </div>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
+                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
+                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-1">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
+                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
+                            </label>
+                          ) : null}
+
+                          {!isFaq ? (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
+                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          ) : (
+                            <label className="block text-xs text-slate-300 md:col-span-2">
+                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
+                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                            </label>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+
+            {String(section.type ?? "").toLowerCase() === "contact" ? (
+              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold text-white">Contact details</div>
+                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
+                  </div>
+                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
+                </div>
+
+                <div className="space-y-3">
+                  {serializeContactDetails(section.props.details).length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
+                  ) : null}
+
+                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
+                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
+                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
+                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <label className="block text-xs text-slate-300">
+                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
+                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
+                      </label>
+
+                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Position</span>
+              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
+              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
+            </label>
+          </div>
+        </div>
+      ))}
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <h2 className="text-xl font-bold text-white">Menu visibility</h2>
+        <p className="mt-1 text-sm text-slate-400">Choose where this published page appears.</p>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInHeader} onChange={(event) => { setDraft((current) => ({ ...current, showInHeader: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in top menu
+            </label>
+            {draft.showInHeader ? <div className="mt-3 grid gap-3"><input aria-label="Top menu label" value={draft.headerLabel} onChange={(event) => { setDraft((current) => ({ ...current, headerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Menu label" /><input aria-label="Top menu order" type="number" min={0} value={draft.headerPosition} onChange={(event) => { setDraft((current) => ({ ...current, headerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /><p className="text-xs text-cyan-200">Preview: {draft.headerLabel || page.title}</p></div> : null}
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              <input type="checkbox" checked={draft.showInFooter} onChange={(event) => { setDraft((current) => ({ ...current, showInFooter: event.target.checked })); setHasUnsavedChanges(true); }} />
+              Show in footer
+            </label>
+            {draft.showInFooter ? <div className="mt-3 grid gap-3"><input aria-label="Footer label" value={draft.footerLabel} onChange={(event) => { setDraft((current) => ({ ...current, footerLabel: event.target.value })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" placeholder="Footer label" /><input aria-label="Footer order" type="number" min={0} value={draft.footerPosition} onChange={(event) => { setDraft((current) => ({ ...current, footerPosition: Number(event.target.value) })); setHasUnsavedChanges(true); }} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></div> : null}
+          </div>
+        </div>
+        {page.status === "DRAFT" ? <p className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">Draft pages are hidden from menus until published.</p> : null}
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">Page sections</h2>
+            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+          </div>
+          <button
+            type="button"
+            onClick={save}
+            disabled={isLoading}
+            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
+            aria-busy={isLoading}
+            className={cn(
+              safeButtonClasses,
+              isLoading ? "cursor-wait" : "cursor-pointer",
+            )}
+          >
+            {isLoading || saveState === "saving" ? (
+              <>
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
+                <span>Saving...</span>
+              </>
+            ) : saveState === "success" ? (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Saved successfully</span>
+              </>
+            ) : saveState === "error" ? (
+              <>
+                <span aria-hidden="true">↻</span>
+                <span>Try again</span>
+              </>
+            ) : (
+              <span>Save all sections</span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {sections.length === 0 ? (
+        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
+          No sections available yet. Add a section to start editing content.
+        </div>
+      ) : null}
+
+      {sections.map((section, index) => (
+        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <div>
+              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
+              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
+              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
+              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={section.props.visibility !== false}
+                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
+                  aria-label={`Toggle visibility for section ${index + 1}`}
+                />
+                Visible
+              </label>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Title</span>
+              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
+              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Subtitle</span>
+              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-2">
+              <span className="mb-1 block font-medium text-white">Description</span>
+              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button text</span>
+              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
+            </label>
+
+            <label className="block text-sm text-slate-300 md:col-span-1">
+              <span className="mb-1 block font-medium text-white">Button link</span>
+              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
             </label>
 
             {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
@@ -717,7 +2120,7 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           role="status"
           aria-live="polite"
           className={`fixed bottom-5 right-5 z-50 rounded-xl border px-4 py-3 text-sm shadow-lg ${
-            toast.type === "success"
+                       toast.type === "success"
               ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
               : toast.type === "info"
                 ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
@@ -735,531 +2138,140 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
   );
 }
 
-export function PagesEditor({ pages }: { pages: PageRecord[] }) {
-  const router = useRouter();
-  const [draft, setDraft] = useState({ id: "", title: "", slug: "", status: "DRAFT" as "DRAFT" | "PUBLISHED" });
+export function NavigationEditor({ navigation }: { navigation: { key: string; label: string; items: NavigationItem[] } }) {
+  const [items, setItems] = useState(navigation.items);
   const [message, setMessage] = useState("");
-
-  const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const save = async () => {
     try {
-      const method = draft.id ? "PUT" : "POST";
-      const payload = {
-        id: draft.id || undefined,
-        slug: normalizeSlug(draft.slug || draft.title),
-        title: draft.title,
-        status: draft.status,
-        blocks: [],
-        seo: {
-          title: draft.title,
-          description: "Edited via CMS",
-        },
-      };
-
-      await requestJson("/api/cms/pages", method, payload);
-      setMessage("Page saved successfully.");
-      setDraft({ id: "", title: "", slug: "", status: "DRAFT" });
-      router.refresh();
+      await requestJson("/api/navigation", "PUT", { key: navigation.key, label: navigation.label, items });
+      setMessage("Navigation saved.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Page save failed.");
+      setMessage(error instanceof Error ? error.message : "Navigation save failed.");
     }
   };
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Navigation</h2><div className="mt-4 space-y-3">{items.map((item, index) => <div key={item.id ?? `${item.href}-${index}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-950 p-3 md:grid-cols-[1fr_1fr_100px]"><input value={item.label} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, label: event.target.value } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation label" /><input value={item.href} readOnly={Boolean(item.pageId)} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, href: event.target.value } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation URL" /><input type="number" value={item.position} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, position: Number(event.target.value) } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation order" /></div>)}</div><button type="button" onClick={save} className="mt-5 rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">Save navigation</button>{message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}</div>;
+}
+
+export function FooterEditor({ footer }: { footer: FooterRecord }) {
+  const [title, setTitle] = useState(footer.title);
+  const [description, setDescription] = useState(footer.description);
+  const [copyright, setCopyright] = useState(footer.copyright ?? "");
+  const [links, setLinks] = useState(footer.links);
+  const [message, setMessage] = useState("");
+  const save = async () => {
+    try {
+      await requestJson("/api/footer", "PUT", { title, description, copyright, links });
+      setMessage("Footer saved.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Footer save failed.");
+    }
+  };
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Footer</h2><div className="mt-4 grid gap-3"><input value={title} onChange={(event) => setTitle(event.target.value)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" aria-label="Footer title" /><textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" aria-label="Footer description" /><input value={copyright} onChange={(event) => setCopyright(event.target.value)} className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white" aria-label="Footer copyright" /><div className="space-y-3">{links.map((link, index) => <div key={link.id ?? `${link.href}-${index}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-950 p-3 md:grid-cols-[1fr_1fr_100px]"><input value={link.label} onChange={(event) => setLinks((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, label: event.target.value } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Footer label" /><input value={link.href} readOnly={Boolean(link.pageId)} onChange={(event) => setLinks((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, href: event.target.value } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Footer URL" /><input type="number" value={link.position} onChange={(event) => setLinks((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, position: Number(event.target.value) } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Footer order" /></div>)}</div></div><button type="button" onClick={save} className="mt-5 rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">Save footer</button>{message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}</div>;
+}
+
+export function PagesEditor({ pages }: { pages: PageRecord[] }) {
+  const router = useRouter();
+  const [draft, setDraft] = useState({ id: "", title: "", slug: "", status: "DRAFT" as "DRAFT" | "PUBLISHED", showInHeader: false, headerLabel: "", headerPosition: 0, showInFooter: false, footerGroup: "QUICK_LINKS", footerLabel: "", footerPosition: 0 });
+  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   const onDelete = async (page: PageRecord) => {
-    if (!confirmDeleteAction(`page "${page.title}"`)) {
+    if (["home", "about", "contact", "services", "blog", "docs", "faq", "subscription", "registration"].includes(page.slug)) {
+      setToast({ type: "error", message: "System pages cannot be deleted." });
       return;
     }
-
+    if (!confirmDeleteAction(`page "${page.title}"`)) return;
     try {
       await requestJson("/api/cms/pages", "DELETE", { slug: page.slug });
       setMessage(`Deleted page ${page.title}.`);
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Delete failed.");
+      setToast({ type: "error", message: error instanceof Error ? error.message : "Delete failed." });
     }
   };
 
-  return (
-    <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <h2 className="text-xl font-bold text-white">Page list</h2>
-        <div className="mt-4 space-y-3">
-          {pages.map((page) => (
-            <div key={page.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">
-              <div>
-                <div className="font-semibold text-white">{page.title}</div>
-                <div className="text-sm text-cyan-300">/{page.slug}</div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => router.push(`/cms/pages/${page.slug}`)}
-                  className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200"
-                >
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onDelete(page)}
-                  className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+  const isEditing = Boolean(draft.id);
+  const systemSlug = isEditing && ["home", "about", "contact", "services", "blog", "docs", "faq", "subscription", "registration"].includes(draft.slug);
 
-      <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <h2 className="text-xl font-bold text-white">{draft.id ? "Edit page" : "Add page"}</h2>
-        <div className="mt-4 space-y-4">
-          <label className="block text-sm text-slate-300">
-            Title
-            <input
-              value={draft.title}
-              onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-              placeholder="Page title"
-            />
-          </label>
-
-          <label className="block text-sm text-slate-300">
-            Slug
-            <input
-              value={draft.slug}
-              onChange={(event) => setDraft((current) => ({ ...current, slug: event.target.value }))}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-              placeholder="page-slug"
-            />
-          </label>
-
-          <label className="block text-sm text-slate-300">
-            Status
-            <select
-              value={draft.status}
-              onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value as "DRAFT" | "PUBLISHED" }))}
-              className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-            >
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-            </select>
-          </label>
-
-          <button type="submit" className="w-full rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">
-            {draft.id ? "Save page" : "Create page"}
-          </button>
-
-          {message ? <div className="text-sm text-cyan-200">{message}</div> : null}
-        </div>
-      </form>
-    </div>
-  );
-}
-
-export function NavigationEditor({ navigation }: { navigation: { key: string; label: string; items: NavigationItem[] } }) {
-  const router = useRouter();
-  const [items, setItems] = useState<NavigationItem[]>(navigation.items);
-  const [draft, setDraft] = useState({ label: "", href: "" });
-  const [message, setMessage] = useState("");
-
-  const save = async () => {
+  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsLoading(true);
+    setMessage("");
     try {
-      await requestJson("/api/navigation", "PUT", { key: navigation.key, label: navigation.label, items });
-      setMessage("Navigation saved.");
+      const method = isEditing ? "PUT" : "POST";
+      const payload: Record<string, unknown> = {
+        id: draft.id || undefined,
+        title: draft.title,
+        status: draft.status,
+        showInHeader: draft.showInHeader,
+        headerLabel: draft.headerLabel || draft.title,
+        headerPosition: draft.headerPosition,
+        showInFooter: draft.showInFooter,
+        footerGroup: draft.footerGroup,
+        footerLabel: draft.footerLabel || draft.title,
+        footerPosition: draft.footerPosition,
+        blocks: [],
+        seo: { title: draft.title, description: "Edited via CMS" },
+      };
+      if (!isEditing || !systemSlug) payload.slug = normalizeSlug(draft.slug || draft.title);
+      await requestJson("/api/cms/pages", method, payload);
+      setHasUnsavedChanges(false);
+      setToast({ type: "success", message: "Page saved successfully." });
+      setMessage("Page saved successfully.");
       router.refresh();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Navigation save failed.");
+      const serverMessage = error instanceof Error ? error.message : "Page save failed.";
+      setToast({ type: "error", message: serverMessage });
+      setMessage(serverMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <h2 className="text-xl font-bold text-white">Main navigation</h2>
-        <div className="mt-4 space-y-3">
-          {items.map((item, index) => (
-            <div key={`${item.label}-${index}`} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3">
-              <div>
-                <div className="font-medium text-white">{item.label}</div>
-                <div className="text-sm text-cyan-300">{item.href}</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setItems((current) => current.filter((_, filterIndex) => filterIndex !== index))}
-                className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="grid gap-4 md:grid-cols-2">
-          <input
-            value={draft.label}
-            onChange={(event) => setDraft((current) => ({ ...current, label: event.target.value }))}
-            placeholder="Label"
-            className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-          />
-          <input
-            value={draft.href}
-            onChange={(event) => setDraft((current) => ({ ...current, href: event.target.value }))}
-            placeholder="/about or https://..."
-            className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-          />
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              if (!draft.label.trim()) return;
-              setItems((current) => [...current, { label: draft.label.trim(), href: draft.href.trim() || "/", position: current.length }]);
-              setDraft({ label: "", href: "" });
-            }}
-            className="rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-950"
-          >
-            Add item
-          </button>
-          <button type="button" onClick={save} className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 font-semibold text-cyan-200">
-            Save navigation
-          </button>
-        </div>
-        {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
-      </div>
+  return <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+    {hasUnsavedChanges ? <div className="xl:col-span-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">You have unsaved page changes.</div> : null}
+    {toast ? <div className={`xl:col-span-2 rounded-xl border px-4 py-3 text-sm ${toast.type === "success" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100" : "border-rose-400/30 bg-rose-400/10 text-rose-100"}`} role="status">{toast.message}</div> : null}
+    <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+      <h2 className="text-xl font-bold text-white">Page list</h2>
+      <div className="mt-4 space-y-3">{pages.map((page) => <div key={page.id} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-950/60 px-4 py-3"><div><div className="font-semibold text-white">{page.title}</div><div className="text-sm text-cyan-300">/{page.slug}</div></div><div className="flex gap-2"><button type="button" onClick={() => router.push(`/cms/pages/${page.slug}`)} className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Edit</button><button type="button" disabled={["home", "about", "contact", "services", "blog", "docs", "faq", "subscription", "registration"].includes(page.slug)} onClick={() => onDelete(page)} className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200 disabled:cursor-not-allowed disabled:opacity-40">Delete</button></div></div>)}</div>
     </div>
-  );
-}
-
-export function FooterEditor({ footer }: { footer: FooterRecord }) {
-  const router = useRouter();
-  const [form, setForm] = useState(footer);
-  const [message, setMessage] = useState("");
-
-  const updateLink = (index: number, field: "label" | "href", value: string) => {
-    setForm((current) => ({
-      ...current,
-      links: current.links.map((link, linkIndex) => (linkIndex === index ? { ...link, [field]: value } : link)),
-    }));
-  };
-
-  const addLink = () => {
-    setForm((current) => ({ ...current, links: [...current.links, { label: "New link", href: "/", position: current.links.length }] }));
-  };
-
-  const save = async () => {
-    try {
-      await requestJson("/api/footer", "PUT", form);
-      setMessage("Footer saved.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Footer save failed.");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="space-y-4">
-          <label className="block text-sm text-slate-300">
-            Title
-            <input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          </label>
-          <label className="block text-sm text-slate-300">
-            Description
-            <textarea value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" rows={3} />
-          </label>
-          <label className="block text-sm text-slate-300">
-            Copyright
-            <input value={form.copyright ?? ""} onChange={(event) => setForm((current) => ({ ...current, copyright: event.target.value }))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          </label>
-        </div>
+    <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+      <h2 className="text-xl font-bold text-white">{isEditing ? "Edit page" : "Add page"}</h2>
+      <div className="mt-4 space-y-4">
+        <label className="block text-sm text-slate-300">Title<input required value={draft.title} onChange={(event) => { setDraft((current) => ({ ...current, title: event.target.value })); setHasUnsavedChanges(true); }} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+        <label className="block text-sm text-slate-300">Slug<input required readOnly={systemSlug} value={draft.slug} onChange={(event) => { setDraft((current) => ({ ...current, slug: event.target.value })); setHasUnsavedChanges(true); }} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white read-only:cursor-not-allowed read-only:opacity-70" /><span className="mt-1 block text-xs text-cyan-200">{systemSlug ? "This page address is fixed" : "Use a unique URL slug"}</span></label>
+        <label className="block text-sm text-slate-300">Status<select value={draft.status} onChange={(event) => { setDraft((current) => ({ ...current, status: event.target.value as "DRAFT" | "PUBLISHED" })); setHasUnsavedChanges(true); }} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option></select></label>
       </div>
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">Footer links</h2>
-          <button type="button" onClick={addLink} className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Add link</button>
-        </div>
-        <div className="space-y-3">
-          {form.links.map((link, index) => (
-            <div key={`${link.label}-${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
-              <input
-                value={link.label}
-                onChange={(event) => updateLink(index, "label", event.target.value)}
-                className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-              />
-              <input
-                value={link.href}
-                onChange={(event) => updateLink(index, "href", event.target.value)}
-                className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-              />
-              <button
-                type="button"
-                onClick={() => setForm((current) => ({ ...current, links: current.links.filter((_, i) => i !== index) }))}
-                className="rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-        </div>
-        <button type="button" onClick={save} className="mt-5 rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-950">Save footer</button>
-        {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
-      </div>
-    </div>
-  );
+      <button type="submit" disabled={isLoading || !draft.title || (!systemSlug && !draft.slug)} className="mt-6 w-full rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">{isLoading ? "Saving..." : isEditing ? "Save page" : "Create page"}</button>
+      {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
+    </form>
+  </div>;
 }
 
 export function SeoEditor({ entries }: { entries: SeoEntry[] }) {
-  const router = useRouter();
-  const [list, setList] = useState(entries);
-  const [message, setMessage] = useState("");
-
-  const updateField = (index: number, field: keyof SeoEntry, value: string) => {
-    setList((current) => current.map((entry, entryIndex) => (entryIndex === index ? { ...entry, [field]: value } : entry)));
-  };
-
-  const save = async () => {
-    try {
-      await requestJson("/api/seo", "PUT", { entries: list });
-      setMessage("SEO settings saved.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "SEO save failed.");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      {list.map((entry, index) => (
-        <div key={entry.slug} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <h2 className="text-lg font-bold text-white">/{entry.slug}</h2>
-          <div className="mt-4 space-y-4">
-            <label className="block text-sm text-slate-300">
-              Title
-              <input value={entry.title ?? ""} onChange={(event) => updateField(index, "title", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-            </label>
-            <label className="block text-sm text-slate-300">
-              Description
-              <textarea value={entry.description ?? ""} onChange={(event) => updateField(index, "description", event.target.value)} rows={3} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-            </label>
-            <label className="block text-sm text-slate-300">
-              Keywords
-              <input value={entry.keywords ?? ""} onChange={(event) => updateField(index, "keywords", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-            </label>
-            <label className="block text-sm text-slate-300">
-              Canonical
-              <input value={entry.canonical ?? ""} onChange={(event) => updateField(index, "canonical", event.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-            </label>
-          </div>
-        </div>
-      ))}
-      <button type="button" onClick={save} className="rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-950">Save SEO</button>
-      {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
-    </div>
-  );
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">SEO</h2><div className="mt-4 space-y-2">{entries.map((entry) => <div key={entry.slug} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3"><div className="font-semibold text-white">/{entry.slug}</div><div className="text-sm text-slate-300">{entry.title ?? "—"}</div></div>)}</div></div>;
 }
 
 export function MediaEditor({ media }: { media: MediaRecord[] }) {
-  const router = useRouter();
-  const [items, setItems] = useState(media);
-  const [draft, setDraft] = useState({ title: "", url: "", mimeType: "image/png", altText: "" });
-  const [message, setMessage] = useState("");
-
-  const save = async () => {
-    try {
-      const body = {
-        title: draft.title,
-        url: draft.url,
-        mimeType: draft.mimeType,
-        altText: draft.altText,
-        caption: draft.altText,
-        size: 0,
-      };
-
-      const response = await requestJson<{ success: true; media: MediaRecord }>("/api/media", "POST", body);
-      setItems((current) => [...current, response.media]);
-      setDraft({ title: "", url: "", mimeType: "image/png", altText: "" });
-      setMessage("Media saved.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Media save failed.");
-    }
-  };
-
-  const remove = async (item: MediaRecord) => {
-    if (!confirmDeleteAction(`media "${item.title}"`)) {
-      return;
-    }
-
-    try {
-      await requestJson("/api/media", "DELETE", { id: item.id });
-      setItems((current) => current.filter((entry) => entry.id !== item.id));
-      setMessage(`Removed ${item.title}.`);
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Delete failed.");
-    }
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <h2 className="text-xl font-bold text-white">Add media</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <input value={draft.title} onChange={(event) => setDraft((current) => ({ ...current, title: event.target.value }))} placeholder="Title" className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          <input value={draft.url} onChange={(event) => setDraft((current) => ({ ...current, url: event.target.value }))} placeholder="https://... or /image.png" className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />
-          <input value={draft.altText} onChange={(event) => setDraft((current) => ({ ...current, altText: event.target.value }))} placeholder="Alt text" className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white md:col-span-2" />
-          <select value={draft.mimeType} onChange={(event) => setDraft((current) => ({ ...current, mimeType: event.target.value }))} className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white md:col-span-2">
-            <option value="image/png">image/png</option>
-            <option value="image/jpeg">image/jpeg</option>
-            <option value="image/webp">image/webp</option>
-            <option value="image/svg+xml">image/svg+xml</option>
-          </select>
-        </div>
-        <button type="button" onClick={save} className="mt-4 rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-950">Save media</button>
-      </div>
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <h2 className="text-xl font-bold text-white">Media library</h2>
-        {items.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-white/10 bg-slate-950/50 p-8 text-center">
-            <div className="text-lg font-semibold text-white">No media uploaded yet</div>
-            <p className="mt-2 text-sm text-slate-400">Add your first asset above to start building the gallery.</p>
-          </div>
-        ) : (
-          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {items.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-                {item.url ? (
-                  <Image src={item.url} alt={item.altText ?? item.title} width={1200} height={700} className="h-28 w-full rounded-xl object-cover" />
-                ) : null}
-                <div className="mt-3 font-semibold text-white">{item.title}</div>
-                <div className="text-xs text-slate-400">{item.mimeType}</div>
-                <div className="mt-2 text-sm text-cyan-300">{item.size ? `${item.size} bytes` : "No size recorded"}</div>
-                <button type="button" onClick={() => remove(item)} className="mt-3 rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1.5 text-sm text-red-200">Delete</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      {message ? <div className="text-sm text-cyan-200">{message}</div> : null}
-    </div>
-  );
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Media</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{media.map((item) => <div key={item.id} className="rounded-xl border border-white/10 bg-slate-950 p-3"><div className="font-semibold text-white">{item.title}</div><div className="mt-1 truncate text-xs text-cyan-300">{item.url}</div></div>)}</div></div>;
 }
 
 export function SettingsEditor({ settings }: { settings: Array<{ id: string; key: string; slug: string; value: string; status: string }> }) {
-  const router = useRouter();
-
-  const [formState, setFormState] = useState(() =>
-    settings.map((entry) => ({
-      id: entry.id,
-      key: entry.key,
-      label: entry.key,
-      type: entry.value === "true" || entry.value === "false" ? "checkbox" : "text",
-      value: entry.value,
-    })),
-  );
-  const [message, setMessage] = useState("");
-
-  const save = async () => {
-    try {
-      const payload = formState.map((field) => ({
-        id: field.id,
-        key: field.key,
-        slug: field.key,
-        value: field.value,
-        status: "PUBLISHED",
-      }));
-
-      await requestJson("/api/cms/settings", "PUT", { settings: payload });
-      setMessage("Settings saved successfully.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Settings save failed.");
-    }
-  };
-
-  return (
-    <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-      <div className="grid gap-4 md:grid-cols-2">
-        {formState.map((field) => (
-          <label key={field.key} className="block text-sm text-slate-300 md:col-span-1">
-            <span className="mb-1 block font-medium text-white">{field.label}</span>
-            {field.type === "checkbox" ? (
-              <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white">
-                <input
-                  type="checkbox"
-                  checked={field.value === "true"}
-                  onChange={(event) =>
-                    setFormState((current) =>
-                      current.map((item) => (item.key === field.key ? { ...item, value: String(event.target.checked) } : item)),
-                    )
-                  }
-                  className="h-4 w-4 rounded border-white/10 bg-slate-900 text-cyan-400"
-                />
-                <span>{field.value === "true" ? "Enabled" : "Disabled"}</span>
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={field.value}
-                onChange={(event) =>
-                  setFormState((current) =>
-                    current.map((item) => (item.key === field.key ? { ...item, value: event.target.value } : item)),
-                  )
-                }
-                className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white"
-              />
-            )}
-          </label>
-        ))}
-      </div>
-
-      <button type="button" onClick={save} className="mt-5 rounded-xl bg-cyan-500 px-4 py-2 font-semibold text-slate-950">Save settings</button>
-      {message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}
-    </div>
-  );
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Settings</h2><div className="mt-4 space-y-2">{settings.map((setting) => <div key={setting.id} className="grid gap-2 rounded-xl border border-white/10 bg-slate-950 px-4 py-3 md:grid-cols-[1fr_2fr_auto]"><div className="font-semibold text-white">{setting.key}</div><div className="text-sm text-slate-300">{setting.value}</div><div className="text-xs text-slate-400">{setting.status}</div></div>)}</div></div>;
 }
 
 export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[] }> }) {
-  const router = useRouter();
-  const [items, setItems] = useState(forms);
-  const [message, setMessage] = useState("");
-
-  const save = async (form: typeof items[number]) => {
-    try {
-      await requestJson("/api/cms/forms", "PUT", form);
-      setMessage("Form saved successfully.");
-      router.refresh();
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Form save failed.");
-    }
-  };
-
-  return (
-    <div className="space-y-4">
-      {items.map((form) => (
-        <div key={form.id} className="rounded-2xl border border-white/10 bg-slate-950/60 p-5">
-          <div className="grid gap-3 md:grid-cols-2">
-            <label className="text-sm text-slate-300">Name
-              <input value={form.name} onChange={(event) => setItems((current) => current.map((item) => item.id === form.id ? { ...item, name: event.target.value } : item))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white" />
-            </label>
-            <label className="text-sm text-slate-300">Status
-              <select value={form.status} onChange={(event) => setItems((current) => current.map((item) => item.id === form.id ? { ...item, status: event.target.value } : item))} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-white">
-                <option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="SCHEDULED">Scheduled</option><option value="ARCHIVED">Archived</option>
-              </select>
-            </label>
-          </div>
-          <button type="button" onClick={() => void save(form)} className="mt-4 rounded-xl bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950">Save form</button>
-        </div>
-      ))}
-      {message ? <div className="text-sm text-cyan-200">{message}</div> : null}
-    </div>
-  );
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Forms</h2><div className="mt-4 space-y-2">{forms.map((form) => <div key={form.id} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3"><div className="font-semibold text-white">{form.name}</div><div className="text-xs text-slate-400">/{form.slug} · {form.status} · {form.fields.length} fields</div></div>)}</div></div>;
 }
-
