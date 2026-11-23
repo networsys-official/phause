@@ -39,12 +39,7 @@ export function normalizeAuthErrorKey(error: string | null | undefined): string 
               ? "service_unavailable"
               : "";
 
-  console.log("ERROR_PIPELINE", {
-    rawError: raw,
-    normalizedError: normalized,
-    resolvedKey,
-    mappedMessage: "pending",
-  });
+
 
   return resolvedKey;
 }
@@ -72,12 +67,7 @@ export function mapAuthError(error: string | null | undefined): string {
     }
   })();
 
-  console.log("ERROR_PIPELINE", {
-    rawError: raw,
-    normalizedError: normalized,
-    resolvedKey: key,
-    mappedMessage: message,
-  });
+
 
   return message;
 }

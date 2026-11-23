@@ -1,5 +1,5 @@
 import React from "react";
-import { act, render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SimpleCmsResourceManager } from "@/components/cms/resource-manager";
@@ -99,7 +99,7 @@ describe("CMS validation", () => {
     expect(isPublicCmsReadRoute("/api/cms/forms", "GET")).toBe(false);
   });
 
-  it("refreshes resource rows when fetched items arrive after initial render", () => {
+  it("refreshes resource rows when fetched items arrive after initial render", async () => {
     const originalFetch = globalThis.fetch;
     globalThis.fetch = vi.fn().mockResolvedValue({ json: async () => ({ items: [] }), ok: true }) as typeof fetch;
 
@@ -123,8 +123,7 @@ describe("CMS validation", () => {
 
     expect(screen.getByText("No FAQs published yet")).toBeTruthy();
 
-    act(() => {
-      rerender(
+    rerender(
         React.createElement(SimpleCmsResourceManager, {
           title: "Frequently asked questions",
           description: "FAQ records",
@@ -141,9 +140,8 @@ describe("CMS validation", () => {
           emptyState: { title: "No FAQs published yet", description: "Create your first question" },
         }),
       );
-    });
 
-    expect(screen.getByText("What is Phause?")).toBeTruthy();
+    await waitFor(() => expect(screen.getByText("What is Phause?")).toBeTruthy());
 
     globalThis.fetch = originalFetch;
   });

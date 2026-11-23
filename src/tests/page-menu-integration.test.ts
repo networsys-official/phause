@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { prisma } from "@/infrastructure/database/prisma";
+import { homeHeroSeed } from "@/features/cms/seed-defaults";
 
 vi.mock("@/auth", () => ({ auth: async () => ({ user: { role: "ADMIN" } }) }));
 vi.mock("@/lib/cms-access", () => ({ hasCmsRequestAccess: () => true }));
@@ -31,6 +32,27 @@ describe("page menu visibility integration", () => {
   const slugs: string[] = [];
 
   beforeAll(async () => {
+    const home = await prisma.page.upsert({
+      where: { slug: "home" },
+      update: { title: "Home", status: "PUBLISHED", publishedAt: new Date(), deletedAt: null },
+      create: { slug: "home", title: "Home", status: "PUBLISHED", publishedAt: new Date(), version: 1 },
+    });
+
+    const existingHero = await prisma.pageBlock.findFirst({
+      where: { pageId: home.id, type: "HERO", deletedAt: null },
+      orderBy: { order: "asc" },
+    });
+    if (existingHero) {
+      await prisma.pageBlock.update({
+        where: { id: existingHero.id },
+        data: { order: 0, props: homeHeroSeed as object, deletedAt: null },
+      });
+    } else {
+      await prisma.pageBlock.create({
+        data: { pageId: home.id, type: "HERO", order: 0, props: homeHeroSeed as object, version: 1 },
+      });
+    }
+
     await prisma.navigation.upsert({
       where: { key: "main" },
       update: {},
