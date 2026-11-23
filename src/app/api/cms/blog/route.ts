@@ -137,7 +137,6 @@ export async function GET() {
       },
     });
 
-    revalidateCmsState();
     return NextResponse.json({
       success: true,
       items: posts.map((post) => ({
@@ -191,6 +190,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({
       success: true,
       item: created,
@@ -232,6 +232,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({
       success: true,
       item: updated,
@@ -260,6 +261,7 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.post.delete({ where: { id } });
 
+    revalidateCmsState();
     return NextResponse.json({
       success: true,
       items: await prisma.post.findMany({ orderBy: { createdAt: "desc" } }),

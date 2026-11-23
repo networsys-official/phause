@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
 import { revalidateCmsState } from "@/features/cms/cms-revalidation";
-import { revalidateTag } from "next/cache";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { normalizeFooterLinks, slugToHref } from "@/features/cms/cms-service";
@@ -85,8 +84,7 @@ export async function PUT(request: NextRequest) {
       return tx.footer.findFirst({ where: { id: record.id }, include: { links: { orderBy: { position: "asc" } } } });
     });
 
-    revalidateTag("cms-footer", "max");
-    revalidateTag("cms-pages", "max");
+    revalidateCmsState();
     logger.info("Footer update request received", { title: payload.title ?? "unknown", linkCount: links.length });
     return NextResponse.json({ success: true, footer: { title: footer?.title ?? payload.title ?? "Phause", description: footer?.description ?? payload.description ?? "", copyright: footer?.copyright ?? payload.copyright ?? "", links } });
   } catch (error) {

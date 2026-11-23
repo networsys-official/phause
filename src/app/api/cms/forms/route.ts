@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
   const rateLimit = checkRateLimit(`cms-forms:${key}`, 120, 60_000);
 
   if (!rateLimit.allowed) {
-    revalidateCmsState();
     return NextResponse.json({ success: false, message: "Rate limit exceeded." }, { status: 429 });
   }
 
@@ -52,6 +51,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, form }, { status: 201 });
   } catch (error) {
     logger.error("Form creation failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -91,6 +91,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, form });
   } catch (error) {
     logger.error("Form update failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -120,6 +121,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date(), status: "ARCHIVED" },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, form });
   } catch (error) {
     logger.error("Form delete failed", { error: error instanceof Error ? error.message : "Unknown error" });

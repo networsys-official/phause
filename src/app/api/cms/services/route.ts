@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
     where: publishedOnly ? { status: "PUBLISHED", deletedAt: null } : undefined,
     orderBy: { createdAt: "desc" },
   });
-  revalidateCmsState();
     return NextResponse.json({ success: true, items: services.map((item) => normalizeServiceRecord({ ...item, description: item.description ?? "" } as Record<string, unknown>)) });
 }
 
@@ -53,6 +52,7 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get("content-type") ?? "";
     let payload: Record<string, unknown>;
 
+    revalidateCmsState();
     if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       payload = Object.fromEntries(formData.entries());
@@ -130,6 +130,7 @@ export async function PUT(request: NextRequest) {
     });
 
     const items = await prisma.feature.findMany({ orderBy: { createdAt: "desc" } });
+    revalidateCmsState();
     return NextResponse.json({ success: true, item: normalizeServiceRecord(item as Record<string, unknown>), items: items.map((service) => normalizeServiceRecord(service as Record<string, unknown>)) });
   } catch (error) {
     return NextResponse.json({ success: false, message: error instanceof Error ? error.message : "Unable to update service" }, { status: 400 });
@@ -149,6 +150,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await prisma.feature.delete({ where: { id } });
+    revalidateCmsState();
     const items = await prisma.feature.findMany({ orderBy: { createdAt: "desc" } });
     return NextResponse.json({ success: true, items: items.map((service) => normalizeServiceRecord(service as Record<string, unknown>)) });
   } catch (error) {

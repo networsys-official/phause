@@ -59,7 +59,6 @@ export async function GET() {
 		},
 	});
 
-	revalidateCmsState();
     return NextResponse.json({ success: true, items: faqs });
 }
 
@@ -89,6 +88,7 @@ export async function POST(request: NextRequest) {
 		});
 
 		const items = await prisma.faq.findMany({ orderBy: { createdAt: "desc" } });
+		revalidateCmsState();
 		return NextResponse.json({ success: true, item, items });
 	} catch (error) {
 		return NextResponse.json(
@@ -130,6 +130,7 @@ export async function PUT(request: NextRequest) {
 		});
 
 		const items = await prisma.faq.findMany({ orderBy: { createdAt: "desc" } });
+		revalidateCmsState();
 		return NextResponse.json({ success: true, item, items });
 	} catch (error) {
 		return NextResponse.json(
@@ -156,6 +157,7 @@ export async function DELETE(request: NextRequest) {
 		}
 
 		await prisma.faq.delete({ where: { id } });
+		revalidateCmsState();
 		const items = await prisma.faq.findMany({ orderBy: { createdAt: "desc" } });
 		return NextResponse.json({ success: true, items });
 	} catch (error) {

@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
   const rateLimit = checkRateLimit(`media:${key}`, 120, 60_000);
 
   if (!rateLimit.allowed) {
-    revalidateCmsState();
     return NextResponse.json({ success: false, message: "Rate limit exceeded." }, { status: 429 });
   }
 
@@ -85,6 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     logger.info("Media upload processed", { title, id: media.id });
+    revalidateCmsState();
     return NextResponse.json({ success: true, media }, { status: 201 });
   } catch (error) {
     logger.error("Media upload failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -113,6 +113,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date(), status: "ARCHIVED", updatedAt: new Date() },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, media });
   } catch (error) {
     logger.error("Media delete failed", { error: error instanceof Error ? error.message : "Unknown error" });

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
 import { revalidateCmsState } from "@/features/cms/cms-revalidation";
-import { revalidateTag } from "next/cache";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { normalizeNavigationItems, slugToHref } from "@/features/cms/cms-service";
@@ -76,8 +75,7 @@ export async function PUT(request: NextRequest) {
       });
     });
 
-    revalidateTag("cms-navigation", "max");
-    revalidateTag("cms-pages", "max");
+    revalidateCmsState();
     logger.info("Navigation update request received", { key: navKey, itemCount: items.length });
     return NextResponse.json({ success: true, navigation: { key: navKey, label: payload.label ?? "Main navigation", items } });
   } catch (error) {

@@ -16,7 +16,6 @@ export async function GET() {
     orderBy: { key: "asc" },
   });
 
-  revalidateCmsState();
     return NextResponse.json({ success: true, settings });
 }
 
@@ -60,6 +59,7 @@ export async function POST(request: NextRequest) {
       }),
     );
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, settings: saved }, { status: 201 });
   } catch (error) {
     logger.error("Settings update failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -97,6 +97,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date(), status: "ARCHIVED" },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, setting: record });
   } catch (error) {
     logger.error("Setting delete failed", { error: error instanceof Error ? error.message : "Unknown error" });
