@@ -3,6 +3,7 @@ import { beforeAll, afterAll, describe, expect, it, vi } from "vitest";
 import type { CmsSaveResponse } from "@/features/cms/cms-page-contract";
 import { prisma } from "@/infrastructure/database/prisma";
 
+vi.mock("@/auth", () => ({ auth: async () => ({ user: { role: "ADMIN" } }) }));
 vi.mock("@/lib/cms-access", () => ({ hasCmsRequestAccess: () => true }));
 import { PUT as saveCmsPage, GET as loadCmsPage } from "@/app/api/cms/pages/route";
 import { GET as loadPublicPage } from "@/app/api/pages/route";

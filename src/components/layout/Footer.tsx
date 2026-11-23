@@ -9,7 +9,7 @@ import Logo from "../../../public/logo/phause-logo.png";
 import { FacebookIcon } from "@/components/icons/lucide-facebook";
 import { InstagramIcon } from "@/components/icons/lucide-instagram";
 import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
-import { FOOTER_LEGAL_LINKS, FOOTER_LINKS, FOOTER_SERVICES } from "@/lib/routes";
+import { FALLBACK_FOOTER_LINKS, groupFooterLinks, type FooterCmsLink } from "@/features/cms/footer-groups";
 
 const SOCIALS = [
   { icon: FacebookIcon, href: "https://www.facebook.com", label: "Facebook" },
@@ -23,9 +23,8 @@ export default function Footer() {
     description:
       "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
     copyright: "Strengthen. Aware. Defend.",
-    links: FOOTER_SERVICES,
+    links: FALLBACK_FOOTER_LINKS,
   });
-  const [navigation, setNavigation] = useState({ items: FOOTER_LINKS });
   const [supportEmail, setSupportEmail] = useState("hello@phause.com");
   const [supportPhone, setSupportPhone] = useState("+1 (555) 010-PHAUSE");
   const [locationLabel, setLocationLabel] = useState("San Francisco, CA");
@@ -43,14 +42,13 @@ export default function Footer() {
         }
 
         if (footerPayload?.footer) {
-          const cmsLinks = Array.isArray(footerPayload.footer.links) && footerPayload.footer.links.length > 0 ? footerPayload.footer.links : FOOTER_LINKS;
+          const cmsLinks = Array.isArray(footerPayload.footer.links) && footerPayload.footer.links.length > 0 ? footerPayload.footer.links : FALLBACK_FOOTER_LINKS;
           setFooter((current) => ({
             title: footerPayload.footer.title ?? "Phause",
             description: footerPayload.footer.description ?? current.description,
             copyright: footerPayload.footer.copyright ?? current.copyright,
             links: cmsLinks,
           }));
-          setNavigation({ items: cmsLinks });
         }
 
         const emailLink = footerPayload?.footer?.links?.find((link: { href?: string; label?: string }) => link.href?.includes("@"));
@@ -69,17 +67,10 @@ export default function Footer() {
     };
   }, []);
 
-  const quickLinks = Array.isArray(navigation.items) && navigation.items.length > 0
-    ? navigation.items.filter((link) => ["Home", "About Us", "Services", "Blog", "Docs", "Subscription", "FAQ", "Contact Us"].includes(link.label))
-      .slice(0, 8)
-    : FOOTER_LINKS;
-
-  const serviceLinks = Array.isArray(footer.links) && footer.links.length > 0
-    ? footer.links.filter((link) => ["Threat Detection", "Security Audits", "Cloud Protection", "Data Encryption"].includes(link.label) || ["/services#threat-detection", "/services#security-audits", "/services#cloud-protection", "/services#data-encryption"].includes(link.href))
-      .slice(0, 4)
-    : FOOTER_SERVICES;
-
-  const legalLinks = FOOTER_LEGAL_LINKS;
+  const footerLinks: FooterCmsLink[] = Array.isArray(footer.links) && footer.links.length > 0
+    ? footer.links
+    : FALLBACK_FOOTER_LINKS;
+  const footerGroups = groupFooterLinks(footerLinks);
 
   return (
     <footer id="contact-us" className="relative overflow-hidden pb-10 pt-24">
@@ -119,53 +110,23 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h4 className="mb-5 text-lg font-bold">Quick Links</h4>
-            <ul className="space-y-3">
-              {quickLinks.map((link) => (
-                <li key={`${link.label}-${link.href}`}>
-                  <div className="transition-transform duration-200 hover:translate-x-1.5">
-                    <Link href={link.href} className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-phause-cyan">
-                      <span className="h-1.5 w-1.5 rounded-full bg-phause-cyan/50" />
-                      {link.label}
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-5 text-lg font-bold">Services</h4>
-            <ul className="space-y-3">
-              {serviceLinks.map((s, index) => (
-                <li key={`${s.label}-${index}`}>
-                  <div className="transition-transform duration-200 hover:translate-x-1.5">
-                    <Link href={s.href} className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-phause-cyan">
-                      <span className="h-1.5 w-1.5 rounded-full bg-phause-cyan/50" />
-                      {s.label}
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-5 text-lg font-bold">Legal</h4>
-            <ul className="space-y-3">
-              {legalLinks.map((link) => (
-                <li key={link.label}>
-                  <div className="transition-transform duration-200 hover:translate-x-1.5">
-                    <Link href={link.href} className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-phause-cyan">
-                      <span className="h-1.5 w-1.5 rounded-full bg-phause-cyan/50" />
-                      {link.label}
-                    </Link>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {footerGroups.map((group) => (
+            <div key={group.type}>
+              <h4 className="mb-5 text-lg font-bold">{group.title}</h4>
+              <ul className="space-y-3">
+                {group.items.map((link) => (
+                  <li key={`${link.label}-${link.href}`}>
+                    <div className="transition-transform duration-200 hover:translate-x-1.5">
+                      <Link href={link.href} className="inline-flex items-center gap-1.5 text-sm text-slate-400 transition-colors hover:text-phause-cyan">
+                        <span className="h-1.5 w-1.5 rounded-full bg-phause-cyan/50" />
+                        {link.label}
+                      </Link>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
 
           <div>
             <h4 className="mb-5 text-lg font-bold">Contact</h4>
@@ -180,8 +141,9 @@ export default function Footer() {
         <div className="flex flex-col items-center justify-between gap-4 border-t border-phause-border pt-8 md:flex-row">
           <p className="text-sm text-slate-500">© {currentYear} Phause. All rights reserved. {footer.copyright}</p>
           <div className="flex gap-6 text-sm text-slate-500">
-            <Link href="/privacy-policy" className="transition-colors hover:text-phause-cyan">Privacy Policy</Link>
-            <Link href="/terms-of-service" className="transition-colors hover:text-phause-cyan">Terms of Service</Link>
+            {(footerGroups.find((group) => group.type === "LEGAL")?.items ?? []).map((link) => (
+              <Link key={`${link.label}-${link.href}`} href={link.href} className="transition-colors hover:text-phause-cyan">{link.label}</Link>
+            ))}
           </div>
         </div>
       </div>

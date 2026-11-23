@@ -108,9 +108,12 @@ export function normalizePageInput(input: Partial<CmsPageInput> = {}): CmsPageIn
   };
 }
 
-export function normalizeNavigationItems(items: Array<{ label?: string; href?: string; position?: number }>) {
+export function normalizeNavigationItems(items: Array<{ id?: string; pageId?: string | null; pageTitle?: string | null; label?: string; href?: string; position?: number }>) {
   return (items ?? [])
     .map((item, index) => ({
+      id: item.id,
+      pageId: item.pageId ?? null,
+      pageTitle: item.pageTitle ?? null,
       label: (item.label ?? "Untitled").toString().trim() || `Link ${index + 1}`,
       href: (item.href ?? "/").toString().trim() || "/",
       position: Number.isFinite(item.position) ? Number(item.position) : index,
@@ -119,9 +122,13 @@ export function normalizeNavigationItems(items: Array<{ label?: string; href?: s
     .map((item, index) => ({ ...item, position: index }));
 }
 
-export function normalizeFooterLinks(items: Array<{ label?: string; href?: string; position?: number }>) {
+export function normalizeFooterLinks(items: Array<{ id?: string; pageId?: string | null; pageTitle?: string | null; type?: string; label?: string; href?: string; position?: number }>) {
   return (items ?? [])
     .map((item, index) => ({
+      id: item.id,
+      pageId: item.pageId ?? null,
+      pageTitle: item.pageTitle ?? null,
+      type: item.type,
       label: (item.label ?? "Untitled").toString().trim() || `Link ${index + 1}`,
       href: (item.href ?? "/").toString().trim() || "/",
       position: Number.isFinite(item.position) ? Number(item.position) : index,
@@ -307,4 +314,9 @@ export function hasPageChanges(current: unknown, previous: unknown) {
   };
 
   return normalize(current) !== normalize(previous);
+}
+
+export function slugToHref(slug: string) {
+  const normalized = (slug ?? "").trim().toLowerCase().replace(/^\/+|\/+$/g, "");
+  return normalized === "" || normalized === "home" ? "/" : `/${normalized}`;
 }

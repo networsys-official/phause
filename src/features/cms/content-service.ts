@@ -1,4 +1,5 @@
 import { prisma } from "@/infrastructure/database/prisma";
+import { slugToHref } from "@/features/cms/cms-service";
 import { logger } from "@/shared/lib/logger";
 
 const DEFAULT_ADMIN_EMAIL = "phause@gmail.com";
@@ -925,21 +926,42 @@ export async function getNavigationConfig() {
   try {
     const navigation = await prisma.navigation.findFirst({
       where: { key: defaultNavigation.key, deletedAt: null },
-      include: { items: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
+      include: { items: { where: { deletedAt: null }, orderBy: { position: "asc" }, include: { page: true } } },
     });
 
     if (navigation) {
-      const cmsItems = navigation.items.map((item) => ({ label: item.label, href: item.href, position: item.position }));
-      const requiredItems = defaultNavigation.items;
-      const mergedItems = requiredItems.map((required) => {
-        const existing = cmsItems.find((item) => item.href === required.href);
-        return existing ? { ...required, label: existing.label, position: required.position } : required;
+      type VisibleNavigationItem = { id: string; label: string; href: string; position: number; pageId: string | null; pageTitle: string | null };
+      const visibleItems: VisibleNavigationItem[] = navigation.items.flatMap((item): VisibleNavigationItem[] => {
+        if (item.pageId) {
+          if (item.page?.status !== "PUBLISHED" || item.page.deletedAt) return [];
+          return [{ id: item.id, label: item.label, href: slugToHref(item.page.slug), position: item.position, pageId: item.pageId, pageTitle: item.page.title }];
+        }
+        if (item.status !== "PUBLISHED") return [];
+        return [{ id: item.id, label: item.label, href: item.href, position: item.position, pageId: null, pageTitle: null }];
       });
+
+      const dedupedVisibleItems: VisibleNavigationItem[] = [];
+      const seenPageIds = new Set<string>();
+      const seenHrefs = new Set<string>();
+      for (const item of visibleItems.sort((left, right) => left.position - right.position)) {
+        if (item.pageId && seenPageIds.has(item.pageId)) continue;
+        if (seenHrefs.has(item.href)) continue;
+        if (item.pageId) seenPageIds.add(item.pageId);
+        seenHrefs.add(item.href);
+        dedupedVisibleItems.push(item);
+      }
+
+      const requiredItems = defaultNavigation.items.map((item) => ({ ...item, href: slugToHref(item.href) }));
+      const mergedItems = requiredItems.map((required) => {
+        const existing = dedupedVisibleItems.find((item) => item.href === required.href);
+        return existing ? { ...required, label: existing.label, position: existing.position, id: existing.id, pageId: existing.pageId, pageTitle: existing.pageTitle } : required;
+      });
+      const extras = dedupedVisibleItems.filter((item) => !requiredItems.some((required) => required.href === item.href));
 
       return {
         key: navigation.key,
         label: navigation.label,
-        items: mergedItems,
+        items: [...mergedItems, ...extras].sort((a, b) => a.position - b.position),
       };
     }
 
@@ -957,15 +979,24 @@ export async function getFooterConfig() {
   try {
     const footer = await prisma.footer.findFirst({
       where: { slug: "main-footer", deletedAt: null },
-      include: { links: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
+      include: { links: { where: { deletedAt: null }, orderBy: { position: "asc" }, include: { page: true } } },
     });
 
     if (footer) {
+      type VisibleFooterLink = { id: string; label: string; href: string; position: number; type: string; pageId: string | null; pageTitle: string | null };
+      const links: VisibleFooterLink[] = footer.links.flatMap((link): VisibleFooterLink[] => {
+        if (link.pageId) {
+          if (link.page?.status !== "PUBLISHED" || link.page.deletedAt) return [];
+          return [{ id: link.id, label: link.label, href: slugToHref(link.page.slug), position: link.position, type: link.type, pageId: link.pageId, pageTitle: link.page.title }];
+        }
+        if (link.status !== "PUBLISHED") return [];
+        return [{ id: link.id, label: link.label, href: link.href, position: link.position, type: link.type, pageId: null, pageTitle: null }];
+      });
       return {
         title: footer.title,
         description: footer.description ?? defaultFooter.description,
         copyright: footer.copyright ?? defaultFooter.copyright,
-        links: footer.links.map((link) => ({ label: link.label, href: link.href, position: link.position })),
+        links,
       };
     }
 

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
-import { normalizeFooterLinks } from "@/features/cms/cms-service";
+import { normalizeFooterLinks, slugToHref } from "@/features/cms/cms-service";
 import { getFooterConfig } from "@/features/cms/content-service";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { logger } from "@/shared/lib/logger";
@@ -17,6 +19,9 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -53,15 +58,21 @@ export async function PUT(request: NextRequest) {
 
       await Promise.all(
         links.map(async (item) => {
-          const existing = await tx.footerLink.findFirst({
-            where: { footerId: record.id, href: item.href, deletedAt: null },
-          });
+          let linkedPage = null;
+          if (item.pageId) linkedPage = await tx.page.findUnique({ where: { id: item.pageId } });
+          const href = linkedPage ? slugToHref(linkedPage.slug) : item.href;
+          const existing = item.pageId
+            ? await tx.footerLink.findFirst({ where: { footerId: record.id, pageId: item.pageId, deletedAt: null } })
+            : item.id
+              ? await tx.footerLink.findFirst({ where: { id: item.id, footerId: record.id, deletedAt: null } })
+              : await tx.footerLink.findFirst({ where: { footerId: record.id, href, deletedAt: null } });
           const data = {
             label: item.label,
-            href: item.href,
+            href,
             position: item.position,
-            type: item.href.includes("http") || item.href.startsWith("#") ? "SOCIAL" : "LINK",
-            status: "PUBLISHED" as const,
+            type: linkedPage ? (item.type ?? "QUICK_LINKS") : (item.href.includes("http") || item.href.startsWith("#") ? "SOCIAL" : "LINK"),
+            status: linkedPage ? linkedPage.status : "PUBLISHED" as const,
+            pageId: linkedPage?.id ?? null,
           };
           if (existing) {
             await tx.footerLink.update({ where: { id: existing.id }, data });
@@ -73,6 +84,7 @@ export async function PUT(request: NextRequest) {
       return tx.footer.findFirst({ where: { id: record.id }, include: { links: { orderBy: { position: "asc" } } } });
     });
 
+    revalidateCmsState();
     logger.info("Footer update request received", { title: payload.title ?? "unknown", linkCount: links.length });
     return NextResponse.json({ success: true, footer: { title: footer?.title ?? payload.title ?? "Phause", description: footer?.description ?? payload.description ?? "", copyright: footer?.copyright ?? payload.copyright ?? "", links } });
   } catch (error) {

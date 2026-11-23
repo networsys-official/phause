@@ -91,4 +91,13 @@ describe("subscription admin plan cards", () => {
     render(React.createElement(SubscriptionPlanSection, { plans: [], isLoading: false, error: "Unable to load subscription plans." }));
     expect(screen.getByText("Unable to load subscription plans.")).toBeTruthy();
   });
+
+  it("renders three plans once and exactly three loading skeleton cards", () => {
+    const plans = [fixture, { ...fixture, id: "fixture-two", name: "Professional" }, { ...fixture, id: "fixture-three", name: "Enterprise" }].map((item) => mapApiPlanToPlan(item as unknown as import("@/types/plan").SubscriptionPlanResponse));
+    render(React.createElement(SubscriptionPlanSection, { plans, isLoading: false, error: null }));
+    expect(screen.getAllByText(/Tier 0/i)).toHaveLength(3);
+
+    const skeleton = render(React.createElement(SubscriptionPlanSection, { plans: [], isLoading: true, error: null }));
+    expect(skeleton.container.querySelectorAll(".animate-pulse").length).toBeGreaterThanOrEqual(3);
+  });
 });

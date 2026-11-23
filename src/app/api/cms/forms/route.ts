@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
@@ -27,6 +29,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -46,6 +51,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, form }, { status: 201 });
   } catch (error) {
     logger.error("Form creation failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -54,6 +60,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -82,6 +91,7 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, form });
   } catch (error) {
     logger.error("Form update failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -90,6 +100,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -108,6 +121,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date(), status: "ARCHIVED" },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, form });
   } catch (error) {
     logger.error("Form delete failed", { error: error instanceof Error ? error.message : "Unknown error" });

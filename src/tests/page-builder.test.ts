@@ -1,7 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { buildPage, getBlockProp, normalizeEditableBlockProps, serializeContactDetails, toBlockPayload } from "@/features/cms/page-builder";
 import { normalizeServiceRecord } from "@/app/api/cms/services/route";
+
+vi.mock("@/auth", () => ({ auth: async () => ({ user: { role: "ADMIN" } }) }));
 
 describe("page builder", () => {
   it("sorts blocks by order and keeps registry data intact", () => {

@@ -13,6 +13,7 @@ import {
   motion,
   useReducedMotion,
 } from "framer-motion";
+import Link from "next/link";
 
 import {
   ArrowRight,
@@ -1043,19 +1044,19 @@ const handleResendOtp = async () => {
 
                       <span className="text-xs leading-5 text-slate-400">
                         I agree to the{" "}
-                        <a
+                        <Link
                           href="/terms"
                           className="font-semibold text-phause-cyan"
                         >
                           Terms &amp; Conditions
-                        </a>{" "}
+                        </Link>{" "}
                         and{" "}
-                        <a
+                        <Link
                           href="/privacy"
                           className="font-semibold text-phause-cyan"
                         >
                           Privacy Policy
-                        </a>
+                        </Link>
                         .
                       </span>
                     </label>

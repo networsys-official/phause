@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { normalizeSlug } from "@/features/cms/cms-service";
@@ -42,6 +44,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -79,6 +84,7 @@ export async function POST(request: NextRequest) {
     });
 
     logger.info("Media upload processed", { title, id: media.id });
+    revalidateCmsState();
     return NextResponse.json({ success: true, media }, { status: 201 });
   } catch (error) {
     logger.error("Media upload failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -87,6 +93,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -104,6 +113,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date(), status: "ARCHIVED", updatedAt: new Date() },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, media });
   } catch (error) {
     logger.error("Media delete failed", { error: error instanceof Error ? error.message : "Unknown error" });

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
 
@@ -57,10 +59,13 @@ export async function GET() {
 		},
 	});
 
-	return NextResponse.json({ success: true, items: faqs });
+    return NextResponse.json({ success: true, items: faqs });
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
 	try {
 		const payload = await request.json();
 		const question = String(payload.question ?? "").trim();
@@ -83,6 +88,7 @@ export async function POST(request: NextRequest) {
 		});
 
 		const items = await prisma.faq.findMany({ orderBy: { createdAt: "desc" } });
+		revalidateCmsState();
 		return NextResponse.json({ success: true, item, items });
 	} catch (error) {
 		return NextResponse.json(
@@ -97,6 +103,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
 	try {
 		const payload = await request.json();
 		const id = String(payload.id ?? "").trim();
@@ -121,6 +130,7 @@ export async function PUT(request: NextRequest) {
 		});
 
 		const items = await prisma.faq.findMany({ orderBy: { createdAt: "desc" } });
+		revalidateCmsState();
 		return NextResponse.json({ success: true, item, items });
 	} catch (error) {
 		return NextResponse.json(
@@ -135,6 +145,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
 	try {
 		const payload = await request.json();
 		const id = String(payload.id ?? "").trim();
@@ -144,6 +157,7 @@ export async function DELETE(request: NextRequest) {
 		}
 
 		await prisma.faq.delete({ where: { id } });
+		revalidateCmsState();
 		const items = await prisma.faq.findMany({ orderBy: { createdAt: "desc" } });
 		return NextResponse.json({ success: true, items });
 	} catch (error) {

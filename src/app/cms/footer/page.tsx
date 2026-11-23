@@ -5,7 +5,7 @@ import { CmsShell } from "@/components/cms/admin-shell";
 export default async function CmsFooterPage() {
   const footer = await prisma.footer.findFirst({
     where: { slug: "main-footer", deletedAt: null },
-    include: { links: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
+    include: { links: { where: { deletedAt: null }, orderBy: { position: "asc" }, include: { page: true } } },
   });
 
   const value = footer
@@ -13,7 +13,7 @@ export default async function CmsFooterPage() {
         title: footer.title,
         description: footer.description ?? "",
         copyright: footer.copyright ?? "",
-        links: footer.links.map((link) => ({ label: link.label, href: link.href, position: link.position })),
+        links: footer.links.map((link) => ({ id: link.id, pageId: link.pageId, pageTitle: link.page?.title ?? null, label: link.label, href: link.href, position: link.position, type: link.type })),
       }
     : {
         title: "Phause",

@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Link from "next/link";
 import {
   ArrowRight,
   AtSign,
@@ -964,21 +965,21 @@ export default function RegisterPage() {
 
                           <span className="text-sm leading-6 text-slate-400 transition-colors group-hover:text-slate-300">
                             I agree to the{" "}
-                            <a
+                            <Link
                               href="/terms"
                               onClick={(event) => event.stopPropagation()}
                               className="font-semibold text-phause-cyan underline decoration-phause-cyan/30 underline-offset-4 transition-colors hover:text-white"
                             >
                               Terms &amp; Conditions
-                            </a>{" "}
+                            </Link>{" "}
                             and{" "}
-                            <a
+                            <Link
                               href="/privacy"
                               onClick={(event) => event.stopPropagation()}
                               className="font-semibold text-phause-cyan underline decoration-phause-cyan/30 underline-offset-4 transition-colors hover:text-white"
                             >
                               Privacy Policy
-                            </a>
+                            </Link>
                             .
                           </span>
                         </label>

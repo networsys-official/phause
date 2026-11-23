@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireCmsWriteAccess } from "@/features/cms/cms-write-access";
+import { revalidateCmsState } from "@/features/cms/cms-revalidation";
 
 import { prisma } from "@/infrastructure/database/prisma";
 import { hasCmsRequestAccess } from "@/lib/cms-access";
@@ -14,10 +16,13 @@ export async function GET() {
     orderBy: { key: "asc" },
   });
 
-  return NextResponse.json({ success: true, settings });
+    return NextResponse.json({ success: true, settings });
 }
 
 export async function POST(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -54,6 +59,7 @@ export async function POST(request: NextRequest) {
       }),
     );
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, settings: saved }, { status: 201 });
   } catch (error) {
     logger.error("Settings update failed", { error: error instanceof Error ? error.message : "Unknown error" });
@@ -62,10 +68,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   return POST(request);
 }
 
 export async function DELETE(request: NextRequest) {
+  const accessError = await requireCmsWriteAccess(request);
+  if (accessError) return accessError;
+
   if (!canAccess(request)) {
     return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
   }
@@ -85,6 +97,7 @@ export async function DELETE(request: NextRequest) {
       data: { deletedAt: new Date(), status: "ARCHIVED" },
     });
 
+    revalidateCmsState();
     return NextResponse.json({ success: true, setting: record });
   } catch (error) {
     logger.error("Setting delete failed", { error: error instanceof Error ? error.message : "Unknown error" });

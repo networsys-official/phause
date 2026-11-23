@@ -5,14 +5,14 @@ import { CmsShell } from "@/components/cms/admin-shell";
 export default async function CmsNavigationPage() {
   const navigation = await prisma.navigation.findFirst({
     where: { key: "main", deletedAt: null },
-    include: { items: { where: { deletedAt: null }, orderBy: { position: "asc" } } },
+    include: { items: { where: { deletedAt: null }, orderBy: { position: "asc" }, include: { page: true } } },
   });
 
   const value = navigation
     ? {
         key: navigation.key,
         label: navigation.label,
-        items: navigation.items.map((item) => ({ label: item.label, href: item.href, position: item.position })),
+        items: navigation.items.map((item) => ({ id: item.id, pageId: item.pageId, pageTitle: item.page?.title ?? null, label: item.label, href: item.href, position: item.position })),
       }
     : {
         key: "main",
