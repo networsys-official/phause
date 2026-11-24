@@ -25,6 +25,7 @@ export async function applyContentPatches() {
           await tx.pageBlock.update({ where: { id: block.id }, data: { props: nextProps as never } });
         }
       }
+      
 
       await tx.seo.updateMany({ where: { title: patch.old }, data: { title: patch.new } });
       await tx.seo.updateMany({ where: { description: patch.old }, data: { description: patch.new } });
