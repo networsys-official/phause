@@ -19,7 +19,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U postgres"
+          --health-cmd="pg_isready -U postgres -d phause"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -39,21 +39,22 @@ jobs:
 
       - name: Write root environment file
         env:
-          POSTGRES_USER_VALUE: ${{ vars.POSTGRES_USER || 'postgres' }}
-          POSTGRES_PASSWORD_VALUE: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
-          POSTGRES_DB_VALUE: ${{ vars.POSTGRES_DB || 'phause' }}
+          POSTGRES_USER_VALUE: postgres
+          POSTGRES_PASSWORD_VALUE: postgres
+          POSTGRES_DB_VALUE: phause
           AUTH_SECRET_VALUE: ${{ secrets.AUTH_SECRET || 'ci-build-only-not-for-runtime' }}
           BOOTSTRAP_ADMIN_PASSWORD_VALUE: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD || 'ci-bootstrap-password' }}
           NEXT_PUBLIC_SITE_URL_VALUE: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://phause.com' }}
           NEXT_PUBLIC_PLANS_API_URL_VALUE: ${{ vars.NEXT_PUBLIC_PLANS_API_URL || 'https://phishingsimulation.webandappdevelopmenttech.com/api/plans' }}
         run: |
-          cat > .env <<'ENV_EOF'
-          POSTGRES_USER="$POSTGRES_USER_VALUE"
-          POSTGRES_PASSWORD="$POSTGRES_PASSWORD_VALUE"
-          POSTGRES_DB="$POSTGRES_DB_VALUE"
-          DATABASE_URL="postgresql://${POSTGRES_USER_VALUE}:${POSTGRES_PASSWORD_VALUE}@localhost:5432/${POSTGRES_DB_VALUE}?schema=public"
+          POSTGRES_PASSWORD_URLENCODED=$(node -e 'console.log(encodeURIComponent(process.env.POSTGRES_PASSWORD_VALUE))')
+          cat > .env <<ENV_EOF
+          POSTGRES_USER=$POSTGRES_USER_VALUE
+          POSTGRES_PASSWORD=$POSTGRES_PASSWORD_VALUE
+          POSTGRES_DB=$POSTGRES_DB_VALUE
+          DATABASE_URL="postgresql://$POSTGRES_USER_VALUE:$POSTGRES_PASSWORD_URLENCODED@localhost:5432/$POSTGRES_DB_VALUE?schema=public"
           AUTH_SECRET="$AUTH_SECRET_VALUE"
-          AUTH_URL="${NEXT_PUBLIC_SITE_URL_VALUE}"
+          AUTH_URL="$NEXT_PUBLIC_SITE_URL_VALUE"
           NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL_VALUE"
           APP_PORT=3000
           BOOTSTRAP_ADMIN_PASSWORD="$BOOTSTRAP_ADMIN_PASSWORD_VALUE"
@@ -64,6 +65,20 @@ jobs:
             echo "Invalid NEXT_PUBLIC_PLANS_API_URL: it must be a full HTTPS URL ending in /api/plans." >&2
             exit 1
           fi
+
+      - name: Mask and inspect database URL components
+        env:
+          POSTGRES_PASSWORD_VALUE: postgres
+        run: |
+          echo "::add-mask::$POSTGRES_PASSWORD_VALUE"
+          node <<'NODE'
+          const fs = require('fs');
+          const env = fs.readFileSync('.env', 'utf8');
+          const match = env.match(/^DATABASE_URL="?([^"\n]+)"?$/m);
+          if (!match) throw new Error('DATABASE_URL is missing from .env');
+          const url = new URL(match[1]);
+          console.log(`DATABASE_URL user=${url.username} host=${url.hostname} port=${url.port || '5432'} database=${url.pathname.slice(1)} password=<hidden>`);
+          NODE
 
       - name: Generate Prisma client
         run: npx prisma generate
