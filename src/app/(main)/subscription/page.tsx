@@ -1087,8 +1087,12 @@ export default function SubscriptionPage() {
                 if (!controller.signal.aborted) {
                     setAdminPlansLoading(false);
                     const message = error instanceof Error ? error.message : "Unable to load subscription plans.";
-                    setAdminPlansError("Unable to load subscription plans.");
-                    console.warn("[subscription] admin plans unavailable", message);
+                    setAdminPlansError(message);
+                    if (process.env.NODE_ENV === "development") {
+                        console.error("[subscription] admin plans unavailable", { message, url: "/api/plans" });
+                    } else {
+                        console.warn("[subscription] admin plans unavailable", message);
+                    }
                 }
             });
         return () => controller.abort();

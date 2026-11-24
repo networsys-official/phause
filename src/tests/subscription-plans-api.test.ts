@@ -5,6 +5,7 @@ import { fetchPublicPlans, loadSubscriptionPlans } from "@/features/subscription
 afterEach(() => {
   vi.unstubAllGlobals();
   delete process.env.NEXT_PUBLIC_PLANS_API_URL;
+  delete process.env.ADMIN_PLANS_API_URL;
 });
 
 describe("public subscription plans API", () => {
@@ -40,6 +41,21 @@ describe("public subscription plans API", () => {
       billingCycle: "MONTHLY",
       features: { apiQuotaMonthly: 1000 },
     });
+  });
+
+
+  it("supports the legacy ADMIN_PLANS_API_URL for local compatibility", async () => {
+    process.env.ADMIN_PLANS_API_URL = "https://plans.invalid";
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify([{
+      id: "legacy-id",
+      name: "Legacy",
+      price: "10",
+      billingCycle: "MONTHLY",
+    }]), { status: 200 })));
+
+    const plans = await fetchPublicPlans();
+
+    expect(plans[0]?.name).toBe("Legacy");
   });
 
   it("returns an empty list for a valid empty API response", async () => {
