@@ -45,7 +45,7 @@ export async function loadSubscriptionPlans(signal?: AbortSignal): Promise<Admin
     } catch (fallbackError) {
       const reason = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
       if (process.env.NODE_ENV === "development") {
-        console.error("[subscription] local plans fallback failed", { url: "/api/plans", reason });
+        console.error(`[subscription] local plans fallback failed: ${reason}`);
       }
       throw new Error(reason);
     }
@@ -57,7 +57,7 @@ export async function loadSubscriptionPlans(signal?: AbortSignal): Promise<Admin
     if (signal?.aborted) throw directError;
     const reason = directError instanceof Error ? directError.message : String(directError);
     if (process.env.NODE_ENV === "development") {
-      console.error("[subscription] direct plans request failed", { reason });
+      console.error(`[subscription] direct plans request failed: ${reason}`);
     }
   }
 
@@ -74,7 +74,7 @@ export async function loadSubscriptionPlans(signal?: AbortSignal): Promise<Admin
   } catch (fallbackError) {
     const reason = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
     if (process.env.NODE_ENV === "development") {
-      console.error("[subscription] plans fallback failed", { url: "/api/plans", reason });
+      console.error(`[subscription] plans fallback failed: ${reason}`);
     }
     throw new Error(reason);
   }
