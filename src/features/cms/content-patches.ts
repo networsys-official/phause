@@ -14,6 +14,7 @@ function replaceJsonValue(value: unknown, patch: (typeof PATCHES)[number]): unkn
   return value;
 }
 
+
 export async function applyContentPatches() {
   for (const patch of PATCHES) {
     await prisma.$transaction(async (tx) => {
