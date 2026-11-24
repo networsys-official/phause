@@ -17,7 +17,7 @@ const SOCIALS = [
   { icon: InstagramIcon, href: "https://www.instagram.com", label: "Instagram" },
 ];
 
-export default function Footer() {
+export default function Footer({ initialSupportEmail = "hello@phause.com", initialSupportPhone = "+1 (555) 010-PHAUSE", initialLogoUrl = "/logo/phause-logo.png", initialBrandName = "Phause" }: { initialSupportEmail?: string; initialSupportPhone?: string; initialLogoUrl?: string; initialBrandName?: string } = {}) {
   const [footer, setFooter] = useState({
     title: "Phause",
     description:
@@ -25,10 +25,10 @@ export default function Footer() {
     copyright: "Strengthen. Aware. Defend.",
     links: FALLBACK_FOOTER_LINKS,
   });
-  const [supportEmail, setSupportEmail] = useState("hello@phause.com");
-  const [supportPhone, setSupportPhone] = useState("+1 (555) 010-PHAUSE");
+  const [supportEmail, setSupportEmail] = useState(initialSupportEmail);
+  const [supportPhone, setSupportPhone] = useState(initialSupportPhone);
   const [locationLabel, setLocationLabel] = useState("San Francisco, CA");
-  const [logoUrl, setLogoUrl] = useState("/logo/phause-logo.png");
+  const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -96,15 +96,15 @@ export default function Footer() {
         <div className="mb-16 grid gap-12 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-1">
             <div className="mb-5 flex items-center gap-3">
-              <Image
+              {logoUrl.startsWith("http") ? <img src={logoUrl} alt={initialBrandName || footer.title || "Phause Logo"} width={600} height={200} className="h-20 w-auto" /> : <Image
                 src={logoUrl || Logo}
-                alt={footer.title || "Phause Logo"}
-                width={220}
-                height={80}
+                alt={initialBrandName || footer.title || "Phause Logo"}
+                width={600}
+                height={200}
                 priority
                 sizes="(max-width: 768px) 160px, 220px"
                 className="h-20 w-auto"
-              />
+              />}
             </div>
             <p className="mb-6 text-sm leading-relaxed text-slate-400">{footer.description}</p>
             <div className="flex gap-3">

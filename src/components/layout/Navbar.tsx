@@ -25,14 +25,14 @@ function subscribeToAuthChanges(onChange: () => void) {
   };
 }
 
-export default function Navbar() {
+export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "/logo/phause-logo.png" }: { initialBrandName?: string; initialLogoUrl?: string } = {}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>(NAV_LINKS);
-  const [brandName, setBrandName] = useState("Phause");
-  const [logoUrl, setLogoUrl] = useState("/logo/phause-logo.png");
+  const [brandName, setBrandName] = useState(initialBrandName);
+  const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const router = useRouter();
   const pathname = usePathname();
   const isLoggedIn = useSyncExternalStore(
@@ -104,7 +104,11 @@ export default function Navbar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
           <motion.div whileHover={{ scale: 1.05 }}>
             <Link href={ROUTES.home} className="flex items-center gap-3" aria-label={brandName}>
-              <Image src={logoUrl || Logo} alt={brandName || "Phause Logo"} className="h-20 w-full" priority />
+              {logoUrl.startsWith("http") ? (
+                <img src={logoUrl} alt={brandName || "Phause Logo"} width={600} height={200} className="h-20 w-auto" />
+              ) : (
+                <Image src={logoUrl || Logo} alt={brandName || "Phause Logo"} width={600} height={200} className="h-20 w-auto" priority />
+              )}
             </Link>
           </motion.div>
 
