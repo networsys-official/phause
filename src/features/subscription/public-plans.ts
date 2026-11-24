@@ -43,6 +43,7 @@ export async function loadSubscriptionPlans(signal?: AbortSignal): Promise<Admin
       }
       return parseAdminPlans(payload);
     } catch (fallbackError) {
+      if (signal?.aborted) throw fallbackError;
       const reason = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
       if (process.env.NODE_ENV === "development") {
         console.error(`[subscription] local plans fallback failed: ${reason}`);

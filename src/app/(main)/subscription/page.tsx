@@ -1089,7 +1089,7 @@ export default function SubscriptionPage() {
                     const message = error instanceof Error ? error.message : "Unable to load subscription plans.";
                     setAdminPlansError(message);
                     if (process.env.NODE_ENV === "development") {
-                        console.error("[subscription] admin plans unavailable", { message, url: "/api/plans" });
+                        console.error(`[subscription] admin plans unavailable: ${message} (/api/plans)`);
                     } else {
                         console.warn("[subscription] admin plans unavailable", message);
                     }
