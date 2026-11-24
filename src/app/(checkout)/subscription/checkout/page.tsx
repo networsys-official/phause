@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -202,48 +202,58 @@ function CheckoutInner() {
         return formatCurrency(plan.price, plan.currency);
     }, [plan]);
 
-    const fetchSelectedPlan = useCallback(async () => {
-        if (!planId) {
-            setError("No subscription plan was selected. Please select a plan first.");
-            setLoadingPlan(false);
-            return;
-        }
+  useEffect(() => {
+    let isActive = true;
 
-        setLoadingPlan(true);
-        setError("");
+    // No plan ID: let the unavailable-plan UI render directly.
+    // Avoid setting state synchronously inside this effect.
+    if (!planId) {
+        return () => {
+            isActive = false;
+        };
+    }
 
+    const loadSelectedPlan = async () => {
         try {
-            // Fetch the current plans from the existing plans API.
-            // This avoids calling the missing /api/plans/[id] route.
+            // Fetch plans from the existing plans API.
             const plans = await planService.getPlans();
 
+            if (!isActive) return;
+
             const selectedPlan = plans.find(
-                (item) => item.id === planId && item.isActive,
+                (item) => item.id === planId && item.isActive
             );
 
             if (!selectedPlan) {
                 setPlan(null);
                 setError(
-                    "This plan is no longer available. Please return to the subscription page and choose another plan.",
+                    "This plan is no longer available. Please return to the subscription page and choose another plan."
                 );
                 return;
             }
 
             setPlan(selectedPlan);
         } catch (err) {
+            if (!isActive) return;
+
             setError(
                 err instanceof Error
                     ? err.message
-                    : "Unable to load the selected subscription plan.",
+                    : "Unable to load the selected subscription plan."
             );
         } finally {
-            setLoadingPlan(false);
+            if (isActive) {
+                setLoadingPlan(false);
+            }
         }
-    }, [planId]);
+    };
 
-    useEffect(() => {
-        void fetchSelectedPlan();
-    }, [fetchSelectedPlan]);
+    void loadSelectedPlan();
+
+    return () => {
+        isActive = false;
+    };
+}, [planId]);
 
     const handleCheckout = async () => {
         if (!plan) {
@@ -303,9 +313,9 @@ function CheckoutInner() {
         }
     };
 
-    if (loadingPlan) {
-        return <LoadingScreen message="Loading your selected plan..." />;
-    }
+   if (loadingPlan && planId) {
+    return <LoadingScreen message="Loading your selected plan..." />;
+}
 
     if (!plan) {
         return (
@@ -326,7 +336,10 @@ function CheckoutInner() {
                     </h1>
 
                     <p className="mt-3 text-sm leading-6 text-slate-400">
-                        {error || "We could not find the selected subscription plan."}
+                        {error ||
+    (!planId
+        ? "No subscription plan was selected. Please select a plan first."
+        : "We could not find the selected subscription plan.")}
                     </p>
 
                     <button
