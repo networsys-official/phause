@@ -14,7 +14,7 @@ function checkoutRequest(body: unknown, authorization?: string) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  delete process.env.ADMIN_PLANS_API_URL;
+  delete process.env.NEXT_PUBLIC_PLANS_API_URL;
 });
 
 describe("subscription checkout route", () => {
@@ -34,7 +34,7 @@ describe("subscription checkout route", () => {
   });
 
   it("passes upstream error status and message", async () => {
-    process.env.ADMIN_PLANS_API_URL = "https://admin.example";
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://admin.example/api/plans";
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "Payment provider rejected the plan" }), { status: 422 })));
     const response = await POST(checkoutRequest({ planId: "plan-1", provider: "paypal" }, "Bearer test-token"));
     expect(response.status).toBe(422);
@@ -42,19 +42,19 @@ describe("subscription checkout route", () => {
   });
 
   it("returns 502 on network failure", async () => {
-    process.env.ADMIN_PLANS_API_URL = "https://admin.example";
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://admin.example/api/plans";
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
     const response = await POST(checkoutRequest({ planId: "plan-1", provider: "stripe" }, "Bearer test-token"));
     expect(response.status).toBe(502);
   });
 
-  it("returns 503 when ADMIN_PLANS_API_URL is missing", async () => {
+  it("returns 503 when NEXT_PUBLIC_PLANS_API_URL is missing", async () => {
     const response = await POST(checkoutRequest({ planId: "plan-1", provider: "stripe" }, "Bearer test-token"));
     expect(response.status).toBe(503);
   });
 
   it("returns the upstream success body", async () => {
-    process.env.ADMIN_PLANS_API_URL = "https://admin.example/";
+    process.env.NEXT_PUBLIC_PLANS_API_URL = "https://admin.example/api/plans";
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ checkoutUrl: "https://pay.example/session" }), { status: 201 })));
     const response = await POST(checkoutRequest({ planId: "plan-1", provider: "razorpay" }, "Bearer test-token"));
     expect(response.status).toBe(201);

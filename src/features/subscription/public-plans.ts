@@ -4,10 +4,7 @@ function getPlansEndpoint(): string {
   const publicEndpoint = process.env.NEXT_PUBLIC_PLANS_API_URL?.trim();
   if (publicEndpoint) return publicEndpoint.replace(/\/$/, "");
 
-  const adminEndpoint = process.env.ADMIN_PLANS_API_URL?.trim();
-  if (adminEndpoint) return `${adminEndpoint.replace(/\/$/, "")}/api/plans`;
-
-  throw new Error("Plans API is not configured. Set NEXT_PUBLIC_PLANS_API_URL (or ADMIN_PLANS_API_URL).");
+  throw new Error("Plans API is not configured. Set NEXT_PUBLIC_PLANS_API_URL.");
 }
 
 export async function fetchPublicPlans(signal?: AbortSignal): Promise<AdminPlan[]> {

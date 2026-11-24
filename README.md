@@ -44,3 +44,7 @@ git config core.hooksPath .githooks
 ```
 
 Before a commit containing code changes, the hook runs `npm run typecheck`. Documentation-only commits are skipped.
+## Environment configuration
+
+This repository uses only the root `.env` file. Do not create `.env.local`, `.env.production`, or any other duplicate environment file. Compose, Next.js, CI, and deployment read configuration from `.env`.
+

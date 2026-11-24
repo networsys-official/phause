@@ -34,8 +34,18 @@ export async function POST(request: Request) {
         );
     }
 
-    const baseUrl = process.env.ADMIN_PLANS_API_URL?.trim().replace(/\/$/, "");
-    if (!baseUrl) {
+    const plansEndpoint = process.env.NEXT_PUBLIC_PLANS_API_URL?.trim();
+    if (!plansEndpoint) {
+        return NextResponse.json(
+            { message: "The payment service is not configured. Please try again later." },
+            { status: 503 },
+        );
+    }
+
+    let baseUrl: string;
+    try {
+        baseUrl = new URL(plansEndpoint).origin;
+    } catch {
         return NextResponse.json(
             { message: "The payment service is not configured. Please try again later." },
             { status: 503 },

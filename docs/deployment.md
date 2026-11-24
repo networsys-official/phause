@@ -14,12 +14,11 @@ Pushes to `main` run the existing lint, test, and build checks. After those pass
    cd /opt/phause
    ```
 
-3. Create the production environment file and set strong, unique values. The database password in `DATABASE_URL` must match `POSTGRES_PASSWORD`; use a URL-safe password or URL-encode special characters. Generate secrets with `openssl rand -hex 32`.
+3. Create or update the repository root `.env` file and set strong, unique values. `.env` is the only environment file used by local development and deployment. The database password in `DATABASE_URL` must match `POSTGRES_PASSWORD`; use a URL-safe password or URL-encode special characters. Generate secrets with `openssl rand -hex 32`.
 
    ```sh
-   cp .env.production.example .env.production
-   chmod 600 .env.production
-   nano .env.production
+   chmod 600 .env
+   nano .env
    ```
 
    Set `NEXT_PUBLIC_PLANS_API_URL` to the full HTTPS plans endpoint. The subscription page tries this endpoint directly, so it appears in DevTools Network; if the API rejects browser cross-origin requests, the page retries through the app's same-origin `/api/plans` route. This public URL is bundled during the Docker build, so changing it requires rebuilding the app image.
@@ -38,6 +37,6 @@ In the repository's **Settings → Secrets and variables → Actions**, add:
 - `VPS_DEPLOY_PATH`: absolute path to the cloned repository, such as `/opt/phause`.
 - `VPS_SSH_PORT`: optional SSH port; defaults to `22`.
 
-The first deployment happens on the next successful push to `main`. The deploy workflow preserves `.env.production` and the named PostgreSQL data volume across updates. Back up the database volume separately; deployment is not a backup strategy.
+The first deployment happens on the next successful push to `main`. The deploy workflow preserves `.env` and the named PostgreSQL data volume across updates. Back up the database volume separately; deployment is not a backup strategy.
 
-To inspect the deployment on the VPS, run `docker compose --env-file .env.production ps` and `docker compose --env-file .env.production logs -f app` from the deployment directory.
+To inspect the deployment on the VPS, run `docker compose --env-file .env ps` and `docker compose --env-file .env logs -f app` from the deployment directory.

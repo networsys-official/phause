@@ -8,10 +8,6 @@ on:
 jobs:
   lint-test-build:
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/phause
-      NEXT_PUBLIC_SITE_URL: https://phause.com
-      NEXT_PUBLIC_PLANS_API_URL: https://phishingsimulation.webandappdevelopmenttech.com/api/plans
 
     services:
       postgres:
@@ -40,6 +36,34 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Write root environment file
+        env:
+          POSTGRES_USER_VALUE: ${{ vars.POSTGRES_USER || 'postgres' }}
+          POSTGRES_PASSWORD_VALUE: ${{ secrets.POSTGRES_PASSWORD || 'postgres' }}
+          POSTGRES_DB_VALUE: ${{ vars.POSTGRES_DB || 'phause' }}
+          AUTH_SECRET_VALUE: ${{ secrets.AUTH_SECRET || 'ci-build-only-not-for-runtime' }}
+          BOOTSTRAP_ADMIN_PASSWORD_VALUE: ${{ secrets.BOOTSTRAP_ADMIN_PASSWORD || 'ci-bootstrap-password' }}
+          NEXT_PUBLIC_SITE_URL_VALUE: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://phause.com' }}
+          NEXT_PUBLIC_PLANS_API_URL_VALUE: ${{ vars.NEXT_PUBLIC_PLANS_API_URL || 'https://phishingsimulation.webandappdevelopmenttech.com/api/plans' }}
+        run: |
+          cat > .env <<'ENV_EOF'
+          POSTGRES_USER="$POSTGRES_USER_VALUE"
+          POSTGRES_PASSWORD="$POSTGRES_PASSWORD_VALUE"
+          POSTGRES_DB="$POSTGRES_DB_VALUE"
+          DATABASE_URL="postgresql://${POSTGRES_USER_VALUE}:${POSTGRES_PASSWORD_VALUE}@localhost:5432/${POSTGRES_DB_VALUE}?schema=public"
+          AUTH_SECRET="$AUTH_SECRET_VALUE"
+          AUTH_URL="${NEXT_PUBLIC_SITE_URL_VALUE}"
+          NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL_VALUE"
+          APP_PORT=3000
+          BOOTSTRAP_ADMIN_PASSWORD="$BOOTSTRAP_ADMIN_PASSWORD_VALUE"
+          NEXT_PUBLIC_PLANS_API_URL="$NEXT_PUBLIC_PLANS_API_URL_VALUE"
+          ENV_EOF
+          chmod 600 .env
+          if [[ ! "$NEXT_PUBLIC_PLANS_API_URL_VALUE" =~ ^https://[^[:space:]#]+/api/plans/?$ ]]; then
+            echo "Invalid NEXT_PUBLIC_PLANS_API_URL: it must be a full HTTPS URL ending in /api/plans." >&2
+            exit 1
+          fi
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -96,4 +120,4 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "$VPS_USER@$VPS_HOST" \
-            "cd '$VPS_DEPLOY_PATH' && git fetch origin main && git checkout -f -B main origin/main && set -e; if [ ! -f .env.production ]; then echo 'ERROR: .env.production is missing on the server. Add it before deploying.' >&2; exit 1; fi; if ! grep -Eq '^NEXT_PUBLIC_PLANS_API_URL=https://[^[:space:]#]+/api/plans/?$' .env.production; then echo 'ERROR: NEXT_PUBLIC_PLANS_API_URL must contain the full HTTPS /api/plans endpoint in .env.production.' >&2; exit 1; fi; docker compose --env-file .env.production --profile migrate run --build --rm migrator sh -lc 'npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts' && docker compose --env-file .env.production up -d --build --remove-orphans"
+            "cd '$VPS_DEPLOY_PATH' && git fetch origin main && git checkout -f -B main origin/main && set -e; if [ ! -f .env ]; then echo 'ERROR: .env is missing on the server. Add it before deploying.' >&2; exit 1; fi; if ! grep -Eq '^NEXT_PUBLIC_PLANS_API_URL=https://[^[:space:]#]+/api/plans/?$' .env; then echo 'ERROR: NEXT_PUBLIC_PLANS_API_URL is missing or invalid; configure a full HTTPS URL ending in /api/plans in the root .env file.' >&2; exit 1; fi; docker compose --env-file .env --profile migrate run --build --rm migrator sh -lc 'npx prisma migrate deploy && npm run prisma:seed && npx tsx src/features/cms/content-patches.ts' && docker compose --env-file .env up -d --build --remove-orphans"
