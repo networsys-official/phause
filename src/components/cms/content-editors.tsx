@@ -1564,8 +1564,115 @@ export function MediaEditor({ media }: { media: MediaRecord[] }) {
   return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Media</h2><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{media.map((item) => <div key={item.id} className="rounded-xl border border-white/10 bg-slate-950 p-3"><div className="font-semibold text-white">{item.title}</div><div className="mt-1 truncate text-xs text-cyan-300">{item.url}</div></div>)}</div></div>;
 }
 
-export function SettingsEditor({ settings }: { settings: Array<{ id: string; key: string; slug: string; value: string; status: string }> }) {
-  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Settings</h2><div className="mt-4 space-y-2">{settings.map((setting) => <div key={setting.id} className="grid gap-2 rounded-xl border border-white/10 bg-slate-950 px-4 py-3 md:grid-cols-[1fr_2fr_auto]"><div className="font-semibold text-white">{setting.key}</div><div className="text-sm text-slate-300">{setting.value}</div><div className="text-xs text-slate-400">{setting.status}</div></div>)}</div></div>;
+export function SettingsEditor({ settings }: { settings: Array<{ id: string; key: string; slug: string; value: string; status: string; version: number }> }) {
+  const [rows, setRows] = useState(settings);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const systemKeys = new Set(["siteName", "timezone", "publishingMode", "cmsApiEnabled", "mediaPipelineEnabled", "seoSyncEnabled", "supportEmail", "supportPhone", "logoUrl"]);
+  const timezoneOptions = ["UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Europe/London", "Europe/Paris", "Asia/Dubai", "Asia/Kolkata", "Asia/Singapore", "Asia/Tokyo", "Australia/Sydney"];
+
+  useEffect(() => {
+    void fetch("/api/media").then((response) => response.json()).then((payload) => {
+      const media = Array.isArray(payload?.media) ? payload.media : [];
+      setMediaUrls(media.map((item: { url?: string }) => String(item.url ?? "")).filter(Boolean));
+    }).catch(() => setMediaUrls([]));
+  }, []);
+
+  const beginEdit = (setting: (typeof rows)[number]) => {
+    setEditing(setting.id);
+    setDraft(setting.value);
+    setMessage("");
+    setError("");
+  };
+
+  const save = async (setting: (typeof rows)[number], status: "DRAFT" | "PUBLISHED") => {
+    setIsSaving(true);
+    setError("");
+    setMessage("");
+    try {
+      const saved = await requestJson<{ success: boolean; settings: Array<{ id: string; key: string; slug: string; value: string; status: string; version: number }> }>("/api/cms/settings", "POST", { id: setting.id, key: setting.key, slug: setting.slug, value: draft, status, version: setting.version });
+      if (!saved.success) throw new Error("Setting save failed.");
+      setRows((current) => current.map((row) => row.id === setting.id ? { ...row, value: draft, status, version: row.version + 1 } : row));
+      setEditing(null);
+      setMessage(status === "PUBLISHED" ? `${setting.key} published.` : `${setting.key} saved as draft.`);
+    } catch (saveError) {
+      setError(saveError instanceof Error ? saveError.message : "Setting save failed.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const remove = async (setting: (typeof rows)[number]) => {
+    if (systemKeys.has(setting.key)) return;
+    if (!confirmDeleteAction(`setting "${setting.key}"`)) return;
+    try {
+      await requestJson("/api/cms/settings", "DELETE", { id: setting.id, key: setting.key });
+      setRows((current) => current.filter((row) => row.id !== setting.id));
+      setMessage(`${setting.key} deleted.`);
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Setting delete failed.");
+    }
+  };
+
+  const inputFor = (setting: (typeof rows)[number]) => {
+    if (["cmsApiEnabled", "mediaPipelineEnabled", "seoSyncEnabled"].includes(setting.key)) {
+      return <select aria-label={`${setting.key} value`} value={draft === "true" ? "true" : "false"} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white"><option value="true">Enabled</option><option value="false">Disabled</option></select>;
+    }
+    if (setting.key === "publishingMode") {
+      return <select aria-label="Publishing mode" value={["Draft + publish", "Draft only", "Publish immediately"].includes(draft) ? draft : "Draft + publish"} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white"><option>Draft + publish</option><option>Draft only</option><option>Publish immediately</option></select>;
+    }
+    if (setting.key === "timezone") {
+      return <select aria-label="Timezone" value={timezoneOptions.includes(draft) ? draft : "UTC"} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white">{timezoneOptions.map((zone) => <option key={zone} value={zone}>{zone}</option>)}</select>;
+    }
+    if (setting.key === "supportEmail") {
+      return <input aria-label="Support email" type="email" value={draft} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" />;
+    }
+    if (setting.key === "supportPhone") {
+      return <input aria-label="Support phone" type="tel" value={draft} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" />;
+    }
+    if (setting.key === "logoUrl") {
+      return <div className="grid gap-2"><input aria-label="Logo URL" value={draft} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" />{mediaUrls.length ? <select aria-label="Choose media logo" value="" onChange={(event) => event.target.value && setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white"><option value="">Choose from media library</option>{mediaUrls.map((url) => <option key={url} value={url}>{url}</option>)}</select> : null}</div>;
+    }
+    if (setting.key === "siteName") {
+      return <input aria-label="Site name" required value={draft} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" />;
+    }
+    return <input aria-label={`${setting.key} value`} value={draft} onChange={(event) => setDraft(event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" />;
+  };
+
+  return (
+    <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+      <h2 className="text-xl font-bold text-white">Settings</h2>
+      {message ? <div role="status" className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">{message}</div> : null}
+      {error ? <div role="alert" className="mt-4 rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-sm text-rose-100">{error}</div> : null}
+      <div className="mt-4 space-y-3">
+        {rows.map((setting) => (
+          <div key={setting.id} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-4">
+            {editing === setting.id ? (
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between"><div className="font-semibold text-white">{setting.key}</div><div className="text-xs text-slate-400">{setting.status} · v{setting.version}</div></div>
+                {inputFor(setting)}
+                <div className="flex flex-wrap gap-2">
+                  <button type="button" disabled={isSaving} onClick={() => save(setting, "DRAFT")} className="rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-200 disabled:opacity-50">{isSaving ? "Saving..." : "Save"}</button>
+                  <button type="button" disabled={isSaving} onClick={() => save(setting, "PUBLISHED")} className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:opacity-50">{isSaving ? "Publishing..." : "Publish"}</button>
+                  <button type="button" disabled={isSaving} onClick={() => { setEditing(null); setDraft(setting.value); setError(""); }} className="rounded-lg px-3 py-2 text-sm text-slate-300">Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-2 md:grid-cols-[1fr_2fr_auto] md:items-center">
+                <div className="font-semibold text-white">{setting.key}</div>
+                <div className="text-sm text-slate-300">{setting.value}</div>
+                <div className="flex items-center gap-2"><span className="text-xs text-slate-400">{setting.status} · v{setting.version}</span><button type="button" onClick={() => beginEdit(setting)} className="rounded-lg border border-cyan-400/30 px-2.5 py-1.5 text-xs text-cyan-200">Edit</button>{!systemKeys.has(setting.key) ? <button type="button" onClick={() => remove(setting)} className="rounded-lg border border-red-500/30 px-2.5 py-1.5 text-xs text-red-200">Delete</button> : null}</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[] }> }) {

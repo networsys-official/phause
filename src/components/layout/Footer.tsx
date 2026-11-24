@@ -28,6 +28,7 @@ export default function Footer() {
   const [supportEmail, setSupportEmail] = useState("hello@phause.com");
   const [supportPhone, setSupportPhone] = useState("+1 (555) 010-PHAUSE");
   const [locationLabel, setLocationLabel] = useState("San Francisco, CA");
+  const [logoUrl, setLogoUrl] = useState("/logo/phause-logo.png");
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -39,6 +40,16 @@ export default function Footer() {
 
         if (!active) {
           return;
+        }
+
+        try {
+          const settingsResponse = await fetch("/api/settings");
+          const settingsPayload = await settingsResponse.json();
+          if (settingsPayload?.settings?.supportEmail) setSupportEmail(settingsPayload.settings.supportEmail);
+          if (settingsPayload?.settings?.supportPhone) setSupportPhone(settingsPayload.settings.supportPhone);
+          if (settingsPayload?.settings?.logoUrl) setLogoUrl(settingsPayload.settings.logoUrl);
+        } catch {
+          // defaults remain when published settings are unavailable
         }
 
         if (footerPayload?.footer) {
@@ -86,7 +97,7 @@ export default function Footer() {
           <div className="lg:col-span-1">
             <div className="mb-5 flex items-center gap-3">
               <Image
-                src={Logo}
+                src={logoUrl || Logo}
                 alt={footer.title || "Phause Logo"}
                 width={220}
                 height={80}

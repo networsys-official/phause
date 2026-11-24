@@ -56,6 +56,7 @@ export default async function CmsSettingsPage() {
           slug: setting.slug,
           value: setting.value,
           status: setting.status,
+          version: setting.version,
         }))}
       />
     </CmsShell>

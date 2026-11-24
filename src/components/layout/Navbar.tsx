@@ -32,6 +32,7 @@ export default function Navbar() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>(NAV_LINKS);
   const [brandName, setBrandName] = useState("Phause");
+  const [logoUrl, setLogoUrl] = useState("/logo/phause-logo.png");
   const router = useRouter();
   const pathname = usePathname();
   const isLoggedIn = useSyncExternalStore(
@@ -71,6 +72,15 @@ export default function Navbar() {
           setNavLinks([...mergedItems, ...extraItems]);
         }
 
+        try {
+          const settingsResponse = await fetch("/api/settings");
+          const settingsPayload = await settingsResponse.json();
+          if (settingsPayload?.settings?.siteName) setBrandName(settingsPayload.settings.siteName);
+          if (settingsPayload?.settings?.logoUrl) setLogoUrl(settingsPayload.settings.logoUrl);
+        } catch {
+          // published settings fallback is handled by the API
+        }
+
         if (payload?.navigation?.label) {
           setBrandName(payload.navigation.label.replace(" navigation", ""));
         }
@@ -94,7 +104,7 @@ export default function Navbar() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6">
           <motion.div whileHover={{ scale: 1.05 }}>
             <Link href={ROUTES.home} className="flex items-center gap-3" aria-label={brandName}>
-              <Image src={Logo} alt={brandName || "Phause Logo"} className="h-20 w-full" priority />
+              <Image src={logoUrl || Logo} alt={brandName || "Phause Logo"} className="h-20 w-full" priority />
             </Link>
           </motion.div>
 
