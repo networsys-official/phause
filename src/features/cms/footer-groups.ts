@@ -7,6 +7,7 @@ export type FooterCmsLink = {
   status?: string | null;
 };
 
+
 export const FALLBACK_FOOTER_LINKS = [
   { label: "Home", href: "/", position: 0, type: "QUICK_LINKS" },
   { label: "About Us", href: "/about", position: 1, type: "QUICK_LINKS" },
