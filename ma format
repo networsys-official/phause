@@ -1,0 +1,18 @@
+            id             |                   slug                    |                title                |  status   | deletedAt 
+---------------------------+-------------------------------------------+-------------------------------------+-----------+-----------
+ cmvyyssqo0000wvwjyp1aaav7 | home                                      | Home                                | PUBLISHED | 
+ cmvyyssr40005wvwj1x53xzn6 | about                                     | About                               | PUBLISHED | 
+ cmvyyssrf0009wvwj045r9b6e | contact                                   | Contact                             | PUBLISHED | 
+ cmvyyssrq000cwvwj9fxynogh | subscription                              | Subscription                        | PUBLISHED | 
+ cmvz1nylg0021wvga68lp3qru | registration                              | Registration                        | PUBLISHED | 
+ cmw0hkevs000dwvt9fpt1jwaa | services                                  | Services                            | PUBLISHED | 
+ cmw0hkex0000hwvt9tjms6m6n | blog                                      | Blog                                | PUBLISHED | 
+ cmw0hkexr000kwvt940v1kmov | docs                                      | Docs                                | PUBLISHED | 
+ cmw0hkeyn000nwvt99js4xh96 | faq                                       | FAQ                                 | PUBLISHED | 
+ cmwjbpc2w0000wvao2wu3lo3k | page                                      | Untitled page                       | DRAFT     | 
+ cmwomet0x005pwv9luej86ibw | blog-why-cybersecurity-matters            | Phause | Strengthen. Aware. Defend. | PUBLISHED | 
+ cmwomet1d005zwv9liyurf404 | blog-building-a-smarter-it-infrastructure | Phause | Strengthen. Aware. Defend. | PUBLISHED | 
+ cmwomet1l0069wv9lzwrgvlhb | blog-the-value-of-managed-it-services     | Phause | Strengthen. Aware. Defend. | PUBLISHED | 
+ cmwsye3v9001kwv88qehgfih0 | test                                      | test                                | PUBLISHED | 
+(14 rows)
+
