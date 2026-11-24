@@ -14,9 +14,14 @@ export const publicSettingDefaults = {
 
 export async function getPublishedSettings() {
   const keys = Object.keys(publicSettingDefaults);
-  const settings = await prisma.setting.findMany({
-    where: { key: { in: keys }, status: "PUBLISHED", deletedAt: null },
-  });
+  let settings: Array<{ key: string; value: string }> = [];
+  try {
+    settings = await prisma.setting.findMany({
+      where: { key: { in: keys }, status: "PUBLISHED", deletedAt: null },
+    });
+  } catch (error) {
+    console.warn("[settings] published settings unavailable; using defaults", error instanceof Error ? error.name : "database error");
+  }
 
   const values: Record<string, string> = {};
   for (const setting of settings) values[setting.key] = setting.value;

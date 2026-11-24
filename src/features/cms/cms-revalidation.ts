@@ -6,6 +6,7 @@ export function revalidateCmsState(slug?: string) {
     revalidateTag("cms-seo", "max");
     revalidateTag("cms-navigation", "max");
     revalidateTag("cms-footer", "max");
+    revalidateTag("cms-settings", "max");
     revalidatePath("/");
     if (slug) revalidatePath(`/${slug === "home" ? "" : slug}`);
     revalidatePath("/sitemap.xml");

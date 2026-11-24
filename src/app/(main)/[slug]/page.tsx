@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -6,13 +7,18 @@ import { normalizeBlockType } from "@/features/cms/cms-service";
 import { DynamicPageRenderer } from "@/features/cms/dynamic-page-renderer";
 
 async function loadPublishedPage(slug: string) {
-  return prisma.page.findFirst({
+  try {
+    return await prisma.page.findFirst({
     where: { slug, deletedAt: null, status: "PUBLISHED" },
     include: {
       seo: true,
       blocks: { where: { deletedAt: null }, orderBy: { order: "asc" } },
     },
-  });
+    });
+  } catch {
+    console.warn("[page] database unavailable; serving fallback", slug);
+    return null;
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

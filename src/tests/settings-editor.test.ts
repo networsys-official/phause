@@ -8,6 +8,13 @@ vi.mock("@/infrastructure/database/prisma", () => ({
 }));
 
 describe("settings editor", () => {
+  it("returns defaults when Prisma setting lookup rejects", async () => {
+    const { prisma } = await import("@/infrastructure/database/prisma") as unknown as { prisma: { setting: { findMany: ReturnType<typeof vi.fn> } } };
+    prisma.setting.findMany.mockRejectedValueOnce(new Error("127.0.0.1:5432 unreachable"));
+
+    await expect(getPublishedSettings()).resolves.toEqual(publicSettingDefaults);
+  });
+
   it("validates known setting types", () => {
     expect(validateSettingValue("siteName", "Phause")).toBeNull();
     expect(validateSettingValue("cmsApiEnabled", "true")).toBeNull();
