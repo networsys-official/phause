@@ -1,0 +1,2482 @@
+{
+  "meta": {
+    "coverTitle": "PHAUSE Complete Website Content Library",
+    "coverSubtitle": "CMS-ready page copy, features, FAQs, resources, legal-page briefs and image direction",
+    "prepared": "Prepared 18 November 2026 | Destination: phause.com",
+    "source": "Phause_Full_Website_Content.docx (prepared 18 November 2026)",
+    "generatedFromSourceByScript": true,
+    "counts": {
+      "faqs": 24,
+      "posts": 4,
+      "pages": 14
+    }
+  },
+  "global": {
+    "positioningStatement": "Phause is a phishing simulation and security-awareness management platform that helps organisations plan authorised simulations, understand how employees interact with simulated messages, and turn campaign findings into focused awareness activity.",
+    "mainTagline": "Turn phishing awareness into measurable security readiness.",
+    "supportingLine": "Plan simulations. Understand employee interactions. Strengthen awareness with meaningful follow-up.",
+    "productDescription": "Phause brings employee management, phishing email templates, campaign scheduling, interaction tracking, reporting, risk insights and training records together in one practical workspace.",
+    "elevatorPitch": "A phishing-awareness programme should do more than send a test email. It should help a security team plan a responsible exercise, understand the resulting interactions, see where additional guidance may be useful and organise the next learning step. Phause brings those activities into one connected workflow so teams can manage their programme with greater clarity.",
+    "footerDescription": "Phause helps organisations run authorised phishing simulations, understand employee interactions and strengthen security awareness through reporting and follow-up training.",
+    "socialDescription": "Phishing simulations and security-awareness management for teams that want to practise, measure and improve.",
+    "trustNote": "Phishing simulations should be conducted only with appropriate organisational authorisation. Define the scope, audience and learning purpose before launching a campaign, and handle employee-level results responsibly.",
+    "ctas": {
+      "Primary": "Create an Account",
+      "Secondary": "Explore the Platform",
+      "For higher-intent visitors": "Request a Product Walkthrough",
+      "For existing users": "Sign In"
+    },
+    "messagingPillars": [
+      {
+        "title": "Practise safely",
+        "description": "Use authorised phishing simulations to give employees a practical opportunity to recognise suspicious messages in a controlled organisational exercise."
+      },
+      {
+        "title": "Understand the signals",
+        "description": "Review campaign activity such as delivery, opens, link interactions, landing-page views and user reports. Interpret each signal in context rather than treating it as a complete measure of employee knowledge."
+      },
+      {
+        "title": "Make the next step useful",
+        "description": "Use campaign reports, risk indicators and training records to plan relevant follow-up activity and improve the programme over time."
+      },
+      {
+        "title": "Keep the programme organised",
+        "description": "Manage employee records, templates, campaign targeting, scheduling, reporting and training administration from one platform."
+      }
+    ]
+  },
+  "pages": {
+    "home": {
+      "slug": "home",
+      "route": "/",
+      "status": "PUBLISHED",
+      "seo": {
+        "title": "Phause | Phishing Simulation & Security Awareness",
+        "description": "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with Phause campaign management, reporting and training tools.",
+        "primaryKeywordTheme": "phishing simulation platform",
+        "secondaryThemes": "security awareness platform, phishing awareness training, phishing campaign reporting",
+        "pageGoal": "Explain Phause within seconds, show the connected product workflow, and encourage visitors to create an account or explore the platform."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "PHISHING SIMULATION & SECURITY AWARENESS",
+          "title": "Turn phishing awareness into measurable security readiness.",
+          "description": "Phishing is a people problem as much as a technology problem. Phause helps your organisation run authorised simulations, understand employee interactions and turn campaign findings into practical security-awareness action.",
+          "buttonText": "Create an Account",
+          "buttonLink": "/registration",
+          "secondaryButtonText": "Explore the Platform",
+          "secondaryButtonLink": "/services",
+          "imageAlt": "Phause platform dashboard showing phishing simulation campaign management and employee awareness reporting.",
+          "_imageDirection": "Use a real, clean screenshot of the Phause dashboard or a designed product interface showing campaign activity, employee groups and a report preview. Do not use a generic hacker-in-a-hoodie stock image. Do not fabricate dashboard metrics."
+        },
+        {
+          "type": "customSection",
+          "variant": "challenge",
+          "eyebrow": "THE HUMAN SIDE OF SECURITY",
+          "title": "Your people are part of your security strategy.",
+          "description": [
+            "A convincing message can create urgency, imitate a familiar service or appear to come from someone an employee trusts. Awareness advice is important, but organisations also need a way to practise recognition and understand where further guidance may help.",
+            "Phause gives security teams a structured way to run controlled exercises, review the signals those exercises produce and plan meaningful follow-up."
+          ],
+          "items": [
+            {
+              "title": "Awareness needs practice",
+              "description": "Reading a policy is not the same as recognising a suspicious message in a busy workday. Simulations give employees an opportunity to practise in a controlled setting."
+            },
+            {
+              "title": "Activity needs context",
+              "description": "A click or an open is only one signal. Teams need campaign-level context, employee and department views, and careful interpretation of the results."
+            },
+            {
+              "title": "Learning needs follow-through",
+              "description": "A simulation is most valuable when the findings guide the next step. Use the results to identify topics for training, communication and future exercises."
+            }
+          ]
+        },
+        {
+          "type": "homeServices",
+          "eyebrow": "ONE CONNECTED WORKFLOW",
+          "title": "From employee preparation to programme insight.",
+          "description": "Phause brings the essential parts of a phishing-awareness programme into one workspace. Prepare your employee audience, select a simulation template, configure a campaign, review recorded interactions and use reporting and training records to guide what happens next.",
+          "items": [
+            {
+              "title": "Employee management",
+              "description": "Organise employee records with details such as name, email, department and seniority. Review eligibility and consent before including employees in a simulation."
+            },
+            {
+              "title": "Phishing templates",
+              "description": "Work with saved phishing email templates or create your own. Set the message subject and content, choose a lure type and category, and preview the email before it is used in a campaign."
+            },
+            {
+              "title": "Campaign management",
+              "description": "Create campaigns from saved templates. Select the eligible audience, choose a segment or sample percentage, set the delivery approach and review the configuration before dispatch."
+            },
+            {
+              "title": "Interaction tracking",
+              "description": "Review recorded campaign events such as sends, opens, link clicks, landing-page views and reported messages, subject to the campaign's tracking configuration."
+            },
+            {
+              "title": "Reports and risk insights",
+              "description": "Generate campaign reports, review engagement measures and examine risk indicators and trends to identify where additional awareness may be useful."
+            },
+            {
+              "title": "Training administration",
+              "description": "Manage training modules, review enrolments and keep completion records to support follow-up learning."
+            }
+          ],
+          "buttonText": "Explore All Platform Features",
+          "buttonLink": "/services"
+        },
+        {
+          "type": "homeProcess",
+          "eyebrow": "A PRACTICAL PROGRAMME CYCLE",
+          "title": "Plan. Simulate. Learn. Improve.",
+          "items": [
+            {
+              "number": "01",
+              "title": "Prepare your audience",
+              "description": "Set up your organisation, add employee records and confirm which employees are authorised and eligible for the exercise."
+            },
+            {
+              "number": "02",
+              "title": "Choose your simulation",
+              "description": "Select a saved template or create a message that matches the learning objective of your campaign."
+            },
+            {
+              "number": "03",
+              "title": "Configure your campaign",
+              "description": "Choose the target audience, delivery method and schedule. Review the settings before dispatch."
+            },
+            {
+              "number": "04",
+              "title": "Review campaign activity",
+              "description": "Understand how the campaign performed by reviewing available interaction events and campaign status."
+            },
+            {
+              "number": "05",
+              "title": "Turn insight into learning",
+              "description": "Generate reports, examine risk indicators and use training records to plan the next awareness activity."
+            }
+          ],
+          "buttonText": "See How Phause Works",
+          "buttonLink": "/how-it-works",
+          "_note": "Source says: add the /how-it-works route if not yet available (it is created as a CMS page by this seed)."
+        },
+        {
+          "type": "homeReasons",
+          "eyebrow": "BUILT FOR REPEATABLE AWARENESS",
+          "title": "Make awareness easier to manage and easier to explain.",
+          "items": [
+            {
+              "title": "A clearer programme workflow",
+              "description": "Bring employee preparation, templates, campaigns, tracking, reports and training administration into one connected process."
+            },
+            {
+              "title": "More controlled campaign planning",
+              "description": "Choose eligible recipients, target a department segment or use a sample percentage. Schedule a campaign or configure it for immediate delivery."
+            },
+            {
+              "title": "More useful reporting conversations",
+              "description": "Use campaign metrics and risk indicators to identify patterns, discuss improvement areas and explain the next step to stakeholders."
+            },
+            {
+              "title": "Follow-up that does not stop at the inbox",
+              "description": "Keep training modules, enrolments and completion records connected to your wider awareness activity."
+            }
+          ]
+        },
+        {
+          "type": "customSection",
+          "variant": "audience",
+          "eyebrow": "FOR THE PEOPLE RESPONSIBLE FOR READINESS",
+          "title": "A practical workspace for the teams behind security awareness.",
+          "items": [
+            {
+              "title": "Security leaders",
+              "description": "maintain visibility over simulation activity and use reports to guide programme priorities."
+            },
+            {
+              "title": "IT administrators",
+              "description": "manage employee records, templates, campaign configuration and day-to-day operations."
+            },
+            {
+              "title": "Security-awareness managers",
+              "description": "organise exercises and coordinate follow-up training."
+            },
+            {
+              "title": "Business owners and operations leaders",
+              "description": "establish a more consistent awareness process without treating every campaign as a one-off activity."
+            }
+          ]
+        },
+        {
+          "type": "customSection",
+          "variant": "responsibleSimulations",
+          "eyebrow": "PRACTICE WITH PURPOSE",
+          "title": "Better awareness starts with responsible programme design.",
+          "description": "Phishing simulations should have a clear learning objective, appropriate organisational authorisation and a defined audience. Confirm eligibility and consent requirements, coordinate with relevant internal teams and communicate learning points constructively. Employee-level results should be handled confidentially and used to support improvement, not embarrassment.",
+          "buttonText": "Read Our Responsible Use Guidance",
+          "buttonLink": "/responsible-disclosure",
+          "_note": "Source: \"/responsible-disclosure or the approved responsible-use page after its copy is reviewed.\" Using /responsible-disclosure until a dedicated responsible-use page is approved."
+        },
+        {
+          "type": "faq",
+          "title": "Frequently asked questions",
+          "items": [
+            {
+              "question": "What is Phause?",
+              "answer": "Phause is a phishing simulation and security-awareness management platform. It helps organisations plan authorised campaigns, review employee interactions and organise follow-up training."
+            },
+            {
+              "question": "Can we choose who receives a simulation?",
+              "answer": "Campaign configuration supports eligible employees, department-based targeting and sample-percentage targeting. Review the target audience before dispatch."
+            },
+            {
+              "question": "Can we review campaign results?",
+              "answer": "Yes. The reporting area provides campaign reports and engagement measures, with additional risk and trend views available in the platform."
+            },
+            {
+              "question": "Does Phause include training administration?",
+              "answer": "The platform includes training module and enrolment/completion management to help teams organise follow-up learning."
+            }
+          ],
+          "buttonText": "View All FAQs",
+          "buttonLink": "/faq"
+        },
+        {
+          "type": "homeCta",
+          "title": "Make your next awareness exercise more meaningful.",
+          "description": "Bring your simulations, campaign activity, reporting and follow-up training into a more organised workflow with Phause.",
+          "buttonText": "Create an Account",
+          "buttonLink": "/registration",
+          "secondaryButtonText": "Contact the Phause Team",
+          "secondaryButtonLink": "/contact"
+        }
+      ],
+      "_cmsNotes": [
+        "Recommended block order and data:",
+        "hero: eyebrow, title, description, buttonText, buttonLink, secondaryButtonText, secondaryButtonLink.",
+        "customSection or route-specific rich content: challenge section with three cards.",
+        "homeServices or features: six platform capability cards.",
+        "homeProcess: five workflow steps.",
+        "homeReasons: four benefits.",
+        "customSection: audience cards.",
+        "customSection: responsible simulation guidance.",
+        "faq: use items: [{question, answer}].",
+        "homeCta or cta: final CTA fields.",
+        "Do not use generic statistics or fictional testimonials as proof. If you have real customer-approved testimonials, add them only with permission and exact approved wording."
+      ]
+    },
+    "services": {
+      "slug": "services",
+      "route": "/services",
+      "status": "PUBLISHED",
+      "seo": {
+        "title": "Phause Platform | Phishing Campaigns, Reporting & Awareness",
+        "description": "Explore Phause features for employee management, phishing email templates, campaign planning, interaction tracking, reports, risk insights and training administration.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Describe the actual modules customers can use and connect each feature to a customer outcome."
+      },
+      "blocks": [
+        {
+          "type": "servicesHero",
+          "eyebrow": "THE PHAUSE PLATFORM",
+          "title": "Everything you need to manage a phishing-awareness programme.",
+          "description": "Prepare your employee audience, build simulations, run controlled campaigns, understand engagement and organise follow-up learning. Phause brings the programme workflow together so your team can focus on what the results mean and what to do next.",
+          "primaryButtonText": "Create an Account",
+          "primaryButtonLink": "/registration",
+          "secondaryButtonText": "See How It Works",
+          "secondaryButtonLink": "/how-it-works"
+        },
+        {
+          "type": "servicesFeatures",
+          "items": [
+            {
+              "number": "01",
+              "title": "Employee directory and eligibility",
+              "description": "Know who is included before a campaign begins.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "A well-prepared audience reduces avoidable campaign mistakes and helps the team understand which groups are in scope.",
+              "imageSuggestion": "Employee directory screen with illustrative sample data only. Blur or replace any real personal information.",
+              "imageAlt": "Phause employee directory showing employee records and department organisation.",
+              "overview": "Maintain employee records with the information your team needs to organise simulations, including names, email addresses, departments and seniority. Use employee details to organise target groups and review who is eligible for a campaign.",
+              "featuresHeading": "What your team can do",
+              "features": [
+                "Add and manage employee records.",
+                "Organise employees by department and seniority.",
+                "Review consent/eligibility status before campaign targeting.",
+                "Use department-based or broader audience selection during campaign setup."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "02",
+              "title": "Phishing email templates",
+              "description": "Build simulations around a clear learning objective.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "A clear template library helps teams choose messages that match the training objective and maintain consistency across campaigns.",
+              "imageSuggestion": "Template library with the preview panel visible. Use a fictional sample organisation and non-functional placeholder links.",
+              "imageAlt": "Phause phishing template editor with email subject, message preview and simulation category fields.",
+              "overview": "Create and manage phishing email templates with a name, subject, HTML content and plain-text version. Classify each template by lure type, category and difficulty, then preview the message before using it in a campaign.",
+              "featuresHeading": "Template options include",
+              "features": [
+                "Lure types such as urgency, authority, curiosity and reward.",
+                "Categories such as credential-harvest simulation, attachment, link-click, awareness and data-entry scenarios.",
+                "Difficulty levels to help organise the exercise.",
+                "A disclaimer setting where appropriate to your internal programme design."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "03",
+              "title": "Campaign management",
+              "description": "Configure each campaign before it reaches the audience.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "Campaign planning keeps the audience, template and delivery approach connected to the exercise objective.",
+              "important": "Organisation authorisation/Rules of Engagement must be completed where required by the product before campaigns can be created or sent. Email delivery also depends on the configured sending service.",
+              "imageSuggestion": "Campaign creation workflow with the selected template, targeting and schedule settings.",
+              "imageAlt": "Phause campaign setup screen showing template selection, target audience and scheduling options.",
+              "overview": "Create a campaign from a saved template. Name the campaign, select the target audience and configure delivery. Depending on the campaign options available to your account, you can target all eligible employees, a department segment or a sample percentage. Set a delivery window and choose immediate or scheduled dispatch.",
+              "featuresHeading": "Campaign planning includes",
+              "features": [
+                "Selecting a saved email template.",
+                "Naming and reviewing the campaign.",
+                "Choosing audience scope.",
+                "Configuring segment or sample-percentage targeting.",
+                "Setting a stagger window where supported.",
+                "Sending immediately or scheduling delivery.",
+                "Reviewing campaign details and status."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "04",
+              "title": "Tracking and interaction events",
+              "description": "Understand how the simulation was interacted with.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "Tracking gives a programme owner evidence about how a simulated message was encountered and which learning topics may need attention.",
+              "interpretationNote": "Email opens may be affected by image blocking, privacy features and mail-security proxies. Automated security scanners can also follow links. Treat opens and clicks as indicators, not unquestionable proof of human behaviour.",
+              "imageSuggestion": "Tracking events table with names and network information replaced by safe sample values.",
+              "imageAlt": "Phause campaign event view displaying simulated email interaction events and timestamps.",
+              "overview": "Phause can record campaign events such as message sent, email open, link click, landing-page view, reported message and training completion, depending on how the campaign and its tracking flow are configured.",
+              "featuresHeading": "Use the event view to",
+              "features": [
+                "Review the activity associated with a campaign.",
+                "See which employee record is associated with an event, subject to permissions.",
+                "Review event type and timestamp.",
+                "Investigate interaction patterns across the campaign."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "05",
+              "title": "Campaign reports and exports",
+              "description": "Turn campaign activity into a report your team can use.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "A clear report helps the team move from raw event activity to a conversation about programme improvements.",
+              "imageSuggestion": "Campaign report showing the summary and charts with fictional sample values clearly labelled as demo data.",
+              "imageAlt": "Phause campaign report with delivery, open and click engagement summaries.",
+              "overview": "Generate a report for an eligible campaign and review the available campaign summary, target count and engagement measures. Report detail pages can include campaign information and insight text, with export options for supported report formats.",
+              "featuresHeading": "Reporting can help your team",
+              "features": [
+                "Review campaign-level engagement.",
+                "Compare patterns across campaigns.",
+                "Share a campaign summary with relevant stakeholders.",
+                "Export report data in the available formats."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "06",
+              "title": "Risk insights and trends",
+              "description": "Prioritise follow-up with context.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "Risk indicators can help teams prioritise learning activity rather than treating every campaign outcome as equally important.",
+              "imageSuggestion": "Risk trend and department breakdown view with sample employee information.",
+              "imageAlt": "Phause risk insights dashboard showing awareness risk trends by department.",
+              "overview": "Phause provides employee risk indicators and views that help programme owners explore patterns across campaigns and departments. Risk scores are decision-support signals based on observed simulation and programme factors; they are not a judgement of an employee's character or overall job performance.",
+              "featuresHeading": "Use risk views to",
+              "features": [
+                "Identify areas where additional awareness may be useful.",
+                "Review risk tiers and trends.",
+                "Explore department-level patterns.",
+                "Plan focused training and future simulations."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "07",
+              "title": "Training administration",
+              "description": "Connect simulation findings with follow-up learning.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "A simulation is only one part of an awareness programme. Training administration helps the team organise what happens after the exercise.",
+              "imageSuggestion": "Training module list and enrolment history using synthetic data.",
+              "imageAlt": "Phause training administration screen showing learning modules and employee completion records.",
+              "overview": "Manage training modules and review employee enrolments and completion records. Training module records can reference supported video content such as YouTube, Vimeo or direct video files, depending on the configured module.",
+              "featuresHeading": "Training administration includes",
+              "features": [
+                "Creating and managing training module records.",
+                "Reviewing employee enrolments.",
+                "Recording completion information and optional scores where supported.",
+                "Reviewing training history."
+              ],
+              "suitableFor": null
+            },
+            {
+              "number": "08",
+              "title": "Organisation setup and programme governance",
+              "description": "Put the right approvals in place before you launch.",
+              "icon": null,
+              "image": null,
+              "whyItMatters": "Clear ownership and documented approval make it easier to run simulations responsibly and keep the programme within the agreed scope.",
+              "imageSuggestion": "Organisation settings and authorisation workflow with private details removed.",
+              "imageAlt": "Phause organisation setup showing the programme authorisation section.",
+              "overview": "Set up your organisation, review account details and complete the required authorisation information for simulations. Depending on your organisation's workflow, setup may include verifying email domains and recording Rules of Engagement or campaign authorisation details.",
+              "featuresHeading": null,
+              "features": [],
+              "suitableFor": null
+            }
+          ]
+        },
+        {
+          "type": "servicesProcess",
+          "items": [
+            {
+              "number": "01",
+              "title": "Prepare your audience",
+              "description": "Set up your organisation, add employee records and confirm which employees are authorised and eligible for the exercise."
+            },
+            {
+              "number": "02",
+              "title": "Choose your simulation",
+              "description": "Select a saved template or create a message that matches the learning objective of your campaign."
+            },
+            {
+              "number": "03",
+              "title": "Configure your campaign",
+              "description": "Choose the target audience, delivery method and schedule. Review the settings before dispatch."
+            },
+            {
+              "number": "04",
+              "title": "Review campaign activity",
+              "description": "Understand how the campaign performed by reviewing available interaction events and campaign status."
+            },
+            {
+              "number": "05",
+              "title": "Turn insight into learning",
+              "description": "Generate reports, examine risk indicators and use training records to plan the next awareness activity."
+            }
+          ],
+          "_derived": "Source gives the block name but no separate copy; re-uses Home \"How it works\" steps. Confirm or remove."
+        },
+        {
+          "type": "servicesAudiences",
+          "items": [
+            {
+              "title": "Security leaders",
+              "description": "maintain visibility over simulation activity and use reports to guide programme priorities."
+            },
+            {
+              "title": "IT administrators",
+              "description": "manage employee records, templates, campaign configuration and day-to-day operations."
+            },
+            {
+              "title": "Security-awareness managers",
+              "description": "organise exercises and coordinate follow-up training."
+            },
+            {
+              "title": "Business owners and operations leaders",
+              "description": "establish a more consistent awareness process without treating every campaign as a one-off activity."
+            }
+          ],
+          "_derived": "Re-uses Home \"Who Phause is for\". Confirm or remove."
+        },
+        {
+          "type": "servicesBenefits",
+          "items": [
+            {
+              "title": "A clearer programme workflow",
+              "description": "Bring employee preparation, templates, campaigns, tracking, reports and training administration into one connected process."
+            },
+            {
+              "title": "More controlled campaign planning",
+              "description": "Choose eligible recipients, target a department segment or use a sample percentage. Schedule a campaign or configure it for immediate delivery."
+            },
+            {
+              "title": "More useful reporting conversations",
+              "description": "Use campaign metrics and risk indicators to identify patterns, discuss improvement areas and explain the next step to stakeholders."
+            },
+            {
+              "title": "Follow-up that does not stop at the inbox",
+              "description": "Keep training modules, enrolments and completion records connected to your wider awareness activity."
+            }
+          ],
+          "_derived": "Re-uses Home \"Why teams use Phause\". Confirm or remove."
+        },
+        {
+          "type": "servicesFaq",
+          "items": [
+            {
+              "question": "What is Phause?",
+              "answer": "Phause is a phishing simulation and security-awareness management platform. It helps organisations plan authorised campaigns, review employee interactions and organise follow-up training."
+            },
+            {
+              "question": "Can we choose who receives a simulation?",
+              "answer": "Campaign configuration supports eligible employees, department-based targeting and sample-percentage targeting. Review the target audience before dispatch."
+            },
+            {
+              "question": "Can we review campaign results?",
+              "answer": "Yes. The reporting area provides campaign reports and engagement measures, with additional risk and trend views available in the platform."
+            },
+            {
+              "question": "Does Phause include training administration?",
+              "answer": "The platform includes training module and enrolment/completion management to help teams organise follow-up learning."
+            }
+          ],
+          "_derived": "Re-uses Home FAQ preview. Confirm or remove."
+        },
+        {
+          "type": "servicesCta",
+          "title": "Bring your awareness programme into one workflow.",
+          "description": "Start with employee preparation and build a repeatable process for simulation, reporting and follow-up learning.",
+          "primaryButtonText": "Create an Account",
+          "primaryButtonLink": "/registration",
+          "secondaryButtonText": "Contact Us",
+          "secondaryButtonLink": "/contact"
+        }
+      ],
+      "_hide": [
+        "servicesStats (omit until approved, measurable statistics exist)"
+      ],
+      "_cmsNotes": [
+        "Use the route-specific blocks already read by the Services page where available:",
+        "servicesHero: eyebrow, title, description.",
+        "servicesFeatures: items array with number, title, description, overview, features, suitableFor, icon, and image.",
+        "servicesProcess: items array with title and description.",
+        "servicesAudiences: items array with title and description.",
+        "servicesBenefits: items array with title and description.",
+        "servicesFaq: items array with question and answer.",
+        "servicesCta: title, description and button text/link.",
+        "Avoid servicesStats until you have approved, measurable product statistics. Do not use generic cloud-security service cards."
+      ]
+    },
+    "how-it-works": {
+      "slug": "how-it-works",
+      "route": "/how-it-works",
+      "status": "PUBLISHED",
+      "new": true,
+      "seo": {
+        "title": "How Phause Works | From Phishing Simulation to Awareness",
+        "description": "See how Phause helps your team prepare employees, build phishing simulations, configure campaigns, review interactions and plan follow-up awareness training.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Walk a prospective customer through the actual product workflow from authorisation to reporting and training."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "HOW PHAUSE WORKS",
+          "title": "A clearer path from simulation to stronger awareness.",
+          "description": "Phause helps your team plan an authorised phishing exercise, understand the interactions it produces and organise the next learning step. Follow a repeatable process that connects preparation, campaign delivery, reporting and training administration.",
+          "ctaPrimary": "Create an Account",
+          "ctaPrimaryHref": "/registration",
+          "ctaSecondary": "Explore Features",
+          "ctaSecondaryHref": "/services"
+        },
+        {
+          "type": "features",
+          "title": "From authorisation to reporting and training",
+          "items": [
+            {
+              "number": "01",
+              "title": "Prepare the organisation and audience",
+              "headline": "Start with the right scope.",
+              "description": "Set up your organisation and complete the required programme authorisation. Add employee records and organise them by department or other available employee attributes. Review consent and eligibility so that campaign targeting reflects the approved scope.",
+              "checklistHeading": "Your checklist",
+              "checklist": [
+                "Confirm the business owner and purpose of the exercise.",
+                "Record the required Rules of Engagement or authorisation.",
+                "Add the employee records that belong in scope.",
+                "Review eligibility and consent requirements.",
+                "Coordinate the planned exercise with relevant internal stakeholders."
+              ],
+              "outcome": "A prepared and authorised audience for the campaign."
+            },
+            {
+              "number": "02",
+              "title": "Select or create a template",
+              "headline": "Match the message to the learning objective.",
+              "description": "Choose a saved phishing template or create a new one. Add the subject, HTML body and plain-text version. Choose the lure type, category and difficulty, then use the preview to review the message before it is selected for a campaign.",
+              "checklistHeading": "Your checklist",
+              "checklist": [
+                "Choose one clear learning objective.",
+                "Select a suitable message scenario.",
+                "Review the sender, subject and message content.",
+                "Confirm the tracking elements required by the campaign setup.",
+                "Preview and approve the template."
+              ],
+              "outcome": "A reviewed simulation template ready for campaign configuration."
+            },
+            {
+              "number": "03",
+              "title": "Configure and review the campaign",
+              "headline": "Choose who receives it and when.",
+              "description": "Create a campaign using the saved template. Name it, select the audience and choose the available targeting approach: all eligible employees, a segment or a sample percentage. Configure the delivery window and choose to send immediately or schedule the campaign. Review the campaign details before dispatch.",
+              "checklistHeading": "Your checklist",
+              "checklist": [
+                "Confirm the saved template.",
+                "Set a clear campaign name.",
+                "Review the audience and eligibility.",
+                "Confirm the schedule and any stagger settings.",
+                "Check that email delivery is configured.",
+                "Review and dispatch only after final approval."
+              ],
+              "outcome": "A campaign configured for the approved audience and schedule."
+            },
+            {
+              "number": "04",
+              "title": "Review interactions",
+              "headline": "Look at the event pattern, not just one number.",
+              "description": "After delivery, review the campaign's available tracking events. Depending on the campaign setup, these may include sends, opens, link clicks, landing-page views and reported messages. Consider the limitations of email privacy tools and automated link scanners when interpreting results.",
+              "checklistHeading": "Your checklist",
+              "checklist": [
+                "Confirm campaign delivery status.",
+                "Review the available event types and timestamps.",
+                "Investigate anomalies before drawing conclusions.",
+                "Compare patterns by department or campaign where appropriate.",
+                "Keep individual employee data limited to people who need it."
+              ],
+              "outcome": "A contextual view of the campaign's interactions."
+            },
+            {
+              "number": "05",
+              "title": "Report, coach and improve",
+              "headline": "Turn the results into a useful next step.",
+              "description": "Generate a campaign report where the campaign status makes reporting available. Review engagement metrics and relevant risk indicators, then decide whether the next step is a targeted training module, a team briefing, updated guidance or another simulation. Use training records to follow up on completion.",
+              "checklistHeading": "Your checklist",
+              "checklist": [
+                "Generate the available campaign report.",
+                "Review risk insights and department-level trends.",
+                "Identify a small number of learning priorities.",
+                "Assign or organise relevant follow-up training.",
+                "Record completions where supported.",
+                "Use the learning to plan the next campaign."
+              ],
+              "outcome": "A repeatable improvement cycle rather than a one-off test."
+            }
+          ],
+          "_note": "Heading text above is NOT from the source; the source gives no section heading for the five steps. Remove the title if you prefer none."
+        },
+        {
+          "type": "richText",
+          "title": "Responsible-use reminder",
+          "content": "Phause is intended for authorised organisational simulations. Do not target people or systems outside the approved scope. Avoid collecting real passwords or unnecessary sensitive information. Communicate the learning purpose in line with your organisation's policies and handle results confidentially."
+        },
+        {
+          "type": "cta",
+          "title": "Ready to make your awareness programme more consistent?",
+          "description": "Start with a defined audience, a clear exercise objective and a plan for what happens after the campaign.",
+          "label": "Get Started",
+          "href": "/registration"
+        }
+      ],
+      "_cmsNotes": [
+        "For a generic dynamic CMS page, use hero, features for the five steps, richText for the responsible-use note and cta for the closing action. If the page uses the custom Next.js route, the route component must render the selected CMS page data; the content record alone does not create the route."
+      ]
+    },
+    "solutions": {
+      "slug": "solutions",
+      "route": "/solutions",
+      "status": "PUBLISHED",
+      "new": true,
+      "seo": {
+        "title": "Phause Use Cases | Phishing Awareness for Modern Teams",
+        "description": "See how security leaders, IT administrators, awareness managers and growing organisations use Phause to plan simulations, review engagement and organise follow-up learning.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Help visitors recognise their role and understand how Phause fits into their workflow without claiming industry-specific compliance outcomes."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "WHO PHAUSE SUPPORTS",
+          "title": "A more organised way to run security awareness.",
+          "description": "Different teams own different parts of security awareness. Phause provides a shared workflow for preparing employee audiences, managing simulations, reviewing campaign interactions and organising follow-up training.",
+          "ctaPrimary": "Explore the Platform",
+          "ctaPrimaryHref": "/services"
+        },
+        {
+          "type": "features",
+          "title": "Who Phause supports",
+          "items": [
+            {
+              "title": "For security leaders",
+              "headline": "Make the programme easier to review and explain.",
+              "description": "Security leaders need a clear view of what the organisation is practising, which campaigns have run and where additional awareness may be useful. Phause brings campaign activity, reports and risk indicators into the programme workflow so leaders can review patterns and plan priorities.",
+              "workflowsHeading": "Useful workflows",
+              "workflows": [
+                "Review campaign summaries and available engagement measures.",
+                "Explore risk indicators and trends.",
+                "Identify department-level areas for further attention.",
+                "Use reports to support programme discussions with stakeholders."
+              ]
+            },
+            {
+              "title": "For IT administrators",
+              "headline": "Make campaign operations more manageable.",
+              "description": "IT teams often coordinate employee records, message templates, targeting and campaign delivery. Phause provides a central place to maintain employee data, prepare templates and configure campaigns for the approved audience.",
+              "workflowsHeading": "Useful workflows",
+              "workflows": [
+                "Organise employee records by department and seniority.",
+                "Review employee eligibility and consent.",
+                "Maintain reusable phishing templates.",
+                "Configure audience scope and delivery schedules.",
+                "Review tracking events after dispatch."
+              ]
+            },
+            {
+              "title": "For security-awareness managers",
+              "headline": "Connect simulations with practical learning.",
+              "description": "Awareness managers need more than an email test. They need to understand the exercise, explain the learning objective and plan follow-up. Phause connects campaign results with training administration so the team can organise the next step.",
+              "workflowsHeading": "Useful workflows",
+              "workflows": [
+                "Select scenarios that match the learning objective.",
+                "Review engagement patterns in campaign reports.",
+                "Identify topics for follow-up guidance.",
+                "Manage training modules and completion records.",
+                "Use previous campaign findings when planning future exercises."
+              ]
+            },
+            {
+              "title": "For growing organisations",
+              "headline": "Build a repeatable programme as your team grows.",
+              "description": "A growing organisation may begin with a small set of employees and a few campaigns. As the programme develops, it becomes more important to keep employee records, authorisation, templates and reporting organised. Phause provides a structured place to manage these activities.",
+              "workflowsHeading": "Useful workflows",
+              "workflows": [
+                "Establish a defined audience and campaign process.",
+                "Reuse approved templates.",
+                "Schedule exercises around business activity.",
+                "Keep campaign reports and training records together."
+              ]
+            },
+            {
+              "title": "For governance and risk stakeholders",
+              "headline": "Support a more consistent record of programme activity.",
+              "description": "Governance stakeholders may need to understand how awareness exercises are planned, what activity was recorded and what follow-up was organised. Phause provides campaign and reporting workflows that can support internal programme reviews.",
+              "workflowsHeading": "Useful workflows",
+              "workflows": [
+                "Keep campaign purpose and authorisation clear.",
+                "Review available reports and programme trends.",
+                "Coordinate relevant follow-up activity.",
+                "Use organisational policies to control access to employee-level information."
+              ]
+            }
+          ],
+          "_note": "Title above is not in the source; remove if undesired."
+        },
+        {
+          "type": "richText",
+          "content": "The platform does not, by itself, certify compliance or replace an organisation's governance process.",
+          "_note": "Governance disclaimer split from the last persona paragraph, as the source asks for a richText governance disclaimer."
+        },
+        {
+          "type": "cta",
+          "title": "Build an awareness programme your team can repeat.",
+          "description": "Explore the Phause workflow and see how it can support the way your organisation plans and reviews phishing simulations.",
+          "label": "Explore Features",
+          "href": "/services",
+          "secondaryLabel": "Contact the Team",
+          "secondaryHref": "/contact"
+        }
+      ],
+      "_cmsNotes": [
+        "Use a hero block, a features or services block for persona cards, a richText block for the governance disclaimer and a cta block. If /solutions is not an implemented route, publish this content as a section on /services until a route is added."
+      ]
+    },
+    "about": {
+      "slug": "about",
+      "route": "/about",
+      "status": "PUBLISHED",
+      "seo": {
+        "title": "About Phause | Building Better Phishing Awareness",
+        "description": "Learn about Phause and our focus on helping organisations practise phishing awareness, understand simulation results and organise meaningful follow-up learning.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Establish a credible product identity and explain the problem Phause exists to solve, without inventing company history, founding dates, offices, customer counts or certifications."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "ABOUT PHAUSE",
+          "title": "Helping organisations turn security awareness into action.",
+          "description": "Phause is built around a simple idea: awareness should be practised, understood and improved. We bring phishing simulations, campaign visibility, reporting and training administration into one connected platform to help organisations manage that process with greater clarity."
+        },
+        {
+          "type": "customSection",
+          "variant": "aboutPurpose",
+          "eyebrow": "Our purpose",
+          "title": "Make security awareness more practical and measurable.",
+          "description": [
+            "Security teams are asked to help people recognise suspicious messages and respond thoughtfully. That work needs a repeatable process: prepare the audience, run an authorised exercise, understand the interactions and provide useful follow-up.",
+            "Phause supports this process by connecting the operational tasks of a phishing-awareness programme in one workspace."
+          ]
+        },
+        {
+          "type": "customSection",
+          "variant": "aboutMission",
+          "title": "Our mission",
+          "description": "Help organisations build stronger security-awareness habits through responsible simulations, clear programme visibility and meaningful follow-up learning."
+        },
+        {
+          "type": "customSection",
+          "variant": "aboutVision",
+          "title": "Our vision",
+          "description": "A future where security awareness is treated as an ongoing organisational practice: planned with care, measured with context and improved through learning."
+        },
+        {
+          "type": "aboutValues",
+          "title": "What guides us",
+          "items": [
+            {
+              "title": "Responsibility",
+              "description": "Simulations should have a defined purpose, appropriate authorisation and a clear scope. We believe programme design should respect employees and protect their information."
+            },
+            {
+              "title": "Clarity",
+              "description": "Security-awareness information should be understandable and useful. We aim to make campaign activity, reports and programme workflows easier for teams to review."
+            },
+            {
+              "title": "Continuous learning",
+              "description": "A campaign is not the finish line. The value comes from understanding the results and using them to guide the next learning activity."
+            },
+            {
+              "title": "Practicality",
+              "description": "Tools should support the work teams actually need to do. Phause focuses on the connected activities of employee preparation, templates, campaigns, tracking, reporting and training administration."
+            }
+          ]
+        },
+        {
+          "type": "aboutCapabilities",
+          "title": "What Phause brings together",
+          "items": [
+            {
+              "title": "Employee management and audience eligibility."
+            },
+            {
+              "title": "Phishing email templates and preview."
+            },
+            {
+              "title": "Campaign setup, targeting and scheduling."
+            },
+            {
+              "title": "Simulation interaction events."
+            },
+            {
+              "title": "Campaign reporting and risk insights."
+            },
+            {
+              "title": "Training module, enrolment and completion administration."
+            }
+          ],
+          "_note": "Source gives capability lines as plain bullets (title only)."
+        },
+        {
+          "type": "aboutCommitments",
+          "title": "A responsible approach to awareness",
+          "description": "Employees should not be treated as security problems to punish. Simulation outcomes are signals that need context. A responsible programme uses clear authorisation, appropriate communication, confidential handling of results and practical learning opportunities."
+        },
+        {
+          "type": "cta",
+          "title": "Build a more consistent phishing-awareness programme.",
+          "description": "Explore the Phause platform or contact the team to discuss your organisation's needs.",
+          "label": "Explore the Platform",
+          "href": "/services",
+          "secondaryLabel": "Contact Phause",
+          "secondaryHref": "/contact"
+        }
+      ],
+      "_hide": [
+        "aboutTimeline",
+        "testimonials / fallback testimonial component",
+        "any founder story, founding year, offices, team bios, customers, numbers"
+      ],
+      "_editorialNote": "Do not add a founder story, founding year, office locations, team biographies, named customers, customer quotes or numerical milestones unless the company supplies verified, approved information. If you later add a team section, use real names, roles and consented biographies."
+    },
+    "subscription": {
+      "slug": "subscription",
+      "route": "/subscription",
+      "status": "PUBLISHED",
+      "seo": {
+        "title": "Phause Pricing | Plans for Phishing Awareness Programmes",
+        "description": "Explore Phause subscription options and compare the campaign, employee and reporting capacity available for your organisation.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Explain how to choose a plan while allowing the pricing interface to display current plan names, limits, currencies and prices from the live plan service."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "PLANS & PRICING",
+          "title": "Choose the right space for your awareness programme.",
+          "description": "Every organisation has a different starting point. Compare the plans available to your account, review the included campaign and employee limits, and choose an option that fits the way your team intends to run its programme."
+        },
+        {
+          "type": "richText",
+          "title": "Plan selection",
+          "content": "Use the current plan cards below to compare subscription price, billing cycle, employee limits, campaign limits and included capabilities. Plan details and prices are displayed from the configured plan service and may change as the product evolves.",
+          "_publishingNote": "Do not hardcode pricing figures in the page introduction. Keep plan names, prices, limits and feature availability tied to the live pricing data."
+        },
+        {
+          "type": "features",
+          "title": "What to consider when choosing a plan",
+          "items": [
+            {
+              "title": "Team size",
+              "description": "Estimate how many employee records your organisation needs to manage and how your audience may change over time."
+            },
+            {
+              "title": "Campaign activity",
+              "description": "Consider how frequently you plan to run simulations and how many campaigns your team expects to manage in a billing period."
+            },
+            {
+              "title": "Reporting needs",
+              "description": "Review which reporting and insight capabilities are included in each current plan."
+            },
+            {
+              "title": "Programme maturity",
+              "description": "A team starting with a small, defined exercise may need a different plan from an organisation coordinating multiple departments and recurring campaigns."
+            },
+            {
+              "title": "Administration and support",
+              "description": "Review the current plan descriptions and service terms for the actual support options included. Do not advertise a response-time SLA unless one is contractually defined and operationally available."
+            }
+          ]
+        },
+        {
+          "type": "cta",
+          "title": "Need help choosing?",
+          "description": "Not sure which plan fits your programme? Share your expected team size, campaign frequency and reporting needs with the Phause team.",
+          "label": "Contact Us About Plans",
+          "href": "/contact"
+        },
+        {
+          "type": "faq",
+          "title": "Pricing questions",
+          "items": [
+            {
+              "question": "Can I change my plan later?",
+              "answer": "Plan changes depend on the subscription options and billing rules shown in your account. Review the current plan terms or contact the team before making a change."
+            },
+            {
+              "question": "Are prices shown in my currency?",
+              "answer": "The pricing interface displays the currency configured for the plan. Check the amount and billing period shown at checkout before completing a purchase."
+            },
+            {
+              "question": "What happens when I reach a plan limit?",
+              "answer": "Available usage and restrictions depend on the plan assigned to your organisation. Review the current limits displayed in your account or contact the team if you expect to need more capacity."
+            },
+            {
+              "question": "Can I discuss a larger deployment?",
+              "answer": "Contact the Phause team with your organisation's expected employee count and campaign requirements to discuss available options."
+            }
+          ]
+        }
+      ],
+      "_publishingChecklist": [
+        "Verify plan names, prices and currency against the live plans endpoint.",
+        "Verify all employee, campaign and feature limits.",
+        "Confirm billing-cycle labels and discount calculations.",
+        "Test checkout and cancellation wording against the actual billing flow.",
+        "Remove old references to Sentinel, endpoints, event volumes, SOC monitoring, HIPAA automation, air-gapped plans or trial durations unless those have been revalidated for Phause.",
+        "Do not publish money-back guarantees, refunds or discounts without approved terms."
+      ],
+      "_warning": "Do NOT add a pricing block with plan figures. Plans/prices come from the live plans service (NEXT_PUBLIC_PLANS_API_URL / /api/plans)."
+    },
+    "resources": {
+      "slug": "resources",
+      "route": "/resources",
+      "status": "PUBLISHED",
+      "new": true,
+      "seo": {
+        "title": "Phause Resources | Phishing Awareness Guides & Insights",
+        "description": "Explore practical resources on phishing simulations, responsible campaign planning, employee awareness, reporting and follow-up training.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Make the resource area useful for security-awareness education, product guidance and programme ideas."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "PHAUSE RESOURCES",
+          "title": "Practical guidance for a stronger security-awareness programme.",
+          "description": "Explore ideas, checklists and product guidance to help your team plan responsible phishing simulations, understand campaign activity and turn results into useful learning."
+        },
+        {
+          "type": "features",
+          "title": "Resource categories",
+          "items": [
+            {
+              "title": "Phishing Awareness",
+              "description": "Understand common phishing patterns and build learning activities that help employees pause, verify and report suspicious messages."
+            },
+            {
+              "title": "Simulation Planning",
+              "description": "Prepare campaign scope, audiences, templates, internal communications and delivery schedules before an exercise begins."
+            },
+            {
+              "title": "Reporting and Improvement",
+              "description": "Interpret engagement signals carefully, review campaign trends and choose meaningful follow-up activity."
+            },
+            {
+              "title": "Product Guides",
+              "description": "Learn how to use employee management, templates, campaigns, tracking, reports and training administration in Phause."
+            }
+          ]
+        },
+        {
+          "type": "features",
+          "title": "Featured resources",
+          "items": [
+            {
+              "title": "Why Phishing Simulations Matter for Security Awareness",
+              "description": "How controlled exercises can support practical learning.",
+              "href": "/blog/why-phishing-simulations-matter"
+            },
+            {
+              "title": "How to Plan a Responsible Phishing Simulation",
+              "description": "A pre-campaign checklist for scope, approval and coordination.",
+              "href": "/blog/responsible-phishing-simulation-planning"
+            },
+            {
+              "title": "Turn Campaign Results into Better Learning",
+              "description": "Use reporting and follow-up training constructively.",
+              "href": "/blog/turn-phishing-campaign-results-into-learning"
+            },
+            {
+              "title": "Understanding Email Open and Click Metrics",
+              "description": "Why tracking signals need context.",
+              "href": "/blog/understanding-phishing-simulation-tracking-metrics"
+            }
+          ]
+        },
+        {
+          "type": "cta",
+          "title": "Need help with the platform?",
+          "description": "Looking for help with the platform? Visit the documentation or contact the Phause team.",
+          "label": "Documentation",
+          "href": "/docs",
+          "secondaryLabel": "Contact",
+          "secondaryHref": "/contact",
+          "_note": "Title is not in the source; description is source text verbatim."
+        }
+      ],
+      "newsletter": {
+        "omit": true,
+        "title": "Get useful security-awareness ideas in your inbox.",
+        "description": "Receive occasional product updates and practical guidance from Phause.",
+        "button": "Subscribe",
+        "publishingNote": "Only show this form if the website has a working mailing-list integration, a clear consent statement and an unsubscribe process. Otherwise omit the form.",
+        "_reason": "Only publish if a real mailing-list integration, consent statement and unsubscribe exist."
+      }
+    },
+    "faq": {
+      "slug": "faq",
+      "route": "/faq",
+      "status": "PUBLISHED",
+      "seo": {
+        "title": "Phause FAQs | Phishing Simulation & Awareness",
+        "description": "Get answers about Phause accounts, employee eligibility, phishing templates, campaigns, tracking, reporting, risk insights, training and responsible use.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": null
+      },
+      "blocks": [
+        {
+          "type": "faq",
+          "items": [
+            {
+              "question": "What is Phause?",
+              "answer": "Phause is a phishing simulation and security-awareness management platform. It helps organisations manage employee records, prepare phishing email templates, configure campaigns, review simulation interactions, generate reports and organise follow-up training.",
+              "category": "General"
+            },
+            {
+              "question": "Who is Phause designed for?",
+              "answer": "Phause is designed for security leaders, IT administrators, security-awareness managers and organisations that want a more structured way to plan and review phishing-awareness exercises.",
+              "category": "General"
+            },
+            {
+              "question": "Is Phause a managed security operations service or endpoint protection tool?",
+              "answer": "No. The product described here focuses on phishing simulations and security-awareness programme management. It should not be confused with endpoint detection, a managed SOC, a cloud firewall or a penetration-testing service.",
+              "category": "General"
+            },
+            {
+              "question": "How do I get started?",
+              "answer": "Create an account, verify your email address, complete your organisation setup and prepare your authorised audience. Before launching a campaign, review the required Rules of Engagement or authorisation record and confirm employee eligibility.",
+              "category": "General"
+            },
+            {
+              "question": "Can I organise employees by department?",
+              "answer": "Yes. Employee records can include department and seniority information, which helps your team organise the audience and use the available campaign targeting options.",
+              "category": "Employees and organisation setup"
+            },
+            {
+              "question": "Why does employee consent or eligibility matter?",
+              "answer": "Campaigns should only target people who are within the approved scope and meet your organisation's consent and eligibility requirements. Review the employee record and campaign audience before dispatch.",
+              "category": "Employees and organisation setup"
+            },
+            {
+              "question": "Do I need to record authorisation before creating a campaign?",
+              "answer": "The product includes an organisation authorisation or Rules of Engagement workflow. Campaign creation may be blocked until the required authorisation has been recorded. Follow your organisation's approval process before running a simulation.",
+              "category": "Employees and organisation setup"
+            },
+            {
+              "question": "Can I create my own phishing email templates?",
+              "answer": "Yes. The template workflow supports a name, subject, HTML body and plain-text body, along with lure type, category and difficulty. You can preview the message before using it in a campaign.",
+              "category": "Templates and campaigns"
+            },
+            {
+              "question": "What kinds of simulation scenarios can I organise?",
+              "answer": "Template classifications include urgency, authority, curiosity and reward lure types, as well as categories such as credential-harvest simulation, attachment, link-click, awareness and data-entry scenarios. Choose a scenario that matches the learning objective and your approved scope.",
+              "category": "Templates and campaigns"
+            },
+            {
+              "question": "Do I need to select a saved template before creating a campaign?",
+              "answer": "Yes. The current campaign workflow starts by selecting a saved template. Create or save the template first, then use it to configure a campaign.",
+              "category": "Templates and campaigns"
+            },
+            {
+              "question": "Can I choose who receives a campaign?",
+              "answer": "Campaign targeting supports all eligible employees, a department segment or a sample percentage, subject to the options available to your organisation and plan. Always review the final audience before dispatch.",
+              "category": "Templates and campaigns"
+            },
+            {
+              "question": "Can campaigns be scheduled?",
+              "answer": "The campaign workflow supports immediate delivery and scheduled delivery. Review the date, time and audience carefully before confirming the campaign.",
+              "category": "Templates and campaigns"
+            },
+            {
+              "question": "Can I cancel a campaign after dispatch?",
+              "answer": "Campaign changes depend on the current campaign status. Draft or scheduled campaigns may have more editing options than campaigns that are already sending or sent. Use the controls shown in the campaign detail view.",
+              "category": "Templates and campaigns"
+            },
+            {
+              "question": "What events can Phause track?",
+              "answer": "Depending on the campaign and tracking configuration, events may include sent, email open, link click, landing-page view, reported message and training completion. The exact events available depend on the workflow used.",
+              "category": "Tracking and reports"
+            },
+            {
+              "question": "Are email opens and clicks always accurate?",
+              "answer": "No tracking signal should be treated as perfect proof of human behaviour. Email privacy features and image proxies may cause opens to be recorded automatically or prevent them from appearing. Automated security scanners may also follow links. Interpret events in context and look for broader patterns.",
+              "category": "Tracking and reports"
+            },
+            {
+              "question": "Can I generate and download campaign reports?",
+              "answer": "The reporting area supports campaign reports for eligible campaign statuses and includes export workflows for supported formats. The report detail view shows the campaign information and metrics available for that report.",
+              "category": "Tracking and reports"
+            },
+            {
+              "question": "What is an employee risk score?",
+              "answer": "A risk score is a programme indicator intended to help prioritise follow-up awareness activity. It should not be used as a stand-alone judgement of an employee's character, competence or overall performance. Review the contributing context and use results constructively.",
+              "category": "Tracking and reports"
+            },
+            {
+              "question": "Does Phause provide training?",
+              "answer": "Phause includes training administration features for managing module records, reviewing enrolments and recording completion history. The exact learning experience depends on the configured module content and your organisation's workflow.",
+              "category": "Training and billing"
+            },
+            {
+              "question": "How do I know what my plan includes?",
+              "answer": "Review the plan and limits shown in your account or on the current pricing page. Employee limits, campaign limits and available capabilities can depend on the plan assigned to your organisation.",
+              "category": "Training and billing"
+            },
+            {
+              "question": "How do subscriptions and payments work?",
+              "answer": "The billing workflow displays the subscription and payment options configured for your account. Review the billing period, currency, amount and subscription terms at checkout before confirming a payment. For account-specific questions, contact the Phause team.",
+              "category": "Training and billing"
+            },
+            {
+              "question": "Does Phause store real employee passwords?",
+              "answer": "Phause's simulation landing flow is designed to record the interaction rather than retain actual submitted credential values. Do not configure exercises to collect real passwords, and verify the current landing-page settings before each campaign. The published Privacy Policy should explain precisely what event and employee data the live system processes.",
+              "category": "Responsible use and support"
+            },
+            {
+              "question": "How should we communicate simulations to employees?",
+              "answer": "Follow your organisation's policies and approvals. Use a clear learning purpose, avoid humiliating or blaming individuals, and share practical guidance after the exercise. Keep employee-level results confidential and limit access to those who need it.",
+              "category": "Responsible use and support"
+            },
+            {
+              "question": "Can I use Phause to simulate messages outside my organisation?",
+              "answer": "Only use Phause for exercises you are authorised to conduct. Do not target external people, organisations or systems without explicit permission and an agreed scope.",
+              "category": "Responsible use and support"
+            },
+            {
+              "question": "Where can I get help?",
+              "answer": "Use the Contact page to send the Phause team an enquiry. For product workflows, start with the Documentation page. Do not include passwords, one-time verification codes or confidential employee information in a support message.",
+              "category": "Responsible use and support"
+            }
+          ]
+        }
+      ],
+      "_cmsNotes": [
+        "Use the faq block with items objects containing question and answer. Existing FAQ page code also reads published FAQ records from the CMS FAQ collection; make sure the live CMS records do not continue to show older Sentinel, endpoint, 14-day-trial, discount or SOC claims. Review duplicate FAQ sources so visitors see one consistent answer set."
+      ]
+    },
+    "contact": {
+      "slug": "contact",
+      "route": "/contact",
+      "status": "PUBLISHED",
+      "seo": {
+        "title": "Contact Phause | Ask About Phishing Simulation",
+        "description": "Contact the Phause team to ask about the platform, request a product walkthrough or discuss your organisation's phishing-awareness programme.",
+        "primaryKeywordTheme": null,
+        "secondaryThemes": null,
+        "pageGoal": "Give prospective customers and existing users a clear way to contact the team without publishing unverified addresses, office locations or response-time promises."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "eyebrow": "CONTACT PHAUSE",
+          "title": "Let's talk about your phishing-awareness programme.",
+          "description": "Have a question about Phause, want to explore the platform or need help understanding where to begin? Send us a message and tell us what your organisation is looking to achieve."
+        },
+        {
+          "type": "features",
+          "title": "Contact options",
+          "items": [
+            {
+              "title": "Product information",
+              "description": "Ask about employee management, templates, campaign planning, tracking, reporting or training administration."
+            },
+            {
+              "title": "Product walkthrough",
+              "description": "Tell us about your team and the kind of phishing-awareness workflow you want to manage. We can use that context to guide the conversation."
+            },
+            {
+              "title": "Account and billing questions",
+              "description": "Include the page or feature you are asking about. Never send passwords, one-time codes, card details or other authentication information."
+            }
+          ]
+        },
+        {
+          "type": "form",
+          "formSlug": "contact-form"
+        },
+        {
+          "type": "features",
+          "title": "Helpful links",
+          "items": [
+            {
+              "title": "Explore the platform",
+              "href": "/services"
+            },
+            {
+              "title": "See how it works",
+              "href": "/how-it-works"
+            },
+            {
+              "title": "Read the FAQs",
+              "href": "/faq"
+            },
+            {
+              "title": "Visit the Documentation",
+              "href": "/docs"
+            }
+          ]
+        }
+      ],
+      "_contactDetails": {
+        "omit": true,
+        "rule": "Only display business email addresses, phone numbers, office locations and social links after the company has confirmed that they are accurate and actively monitored. If those details are not ready, show only the enquiry form and documentation link."
+      },
+      "_technicalNote": "Before publishing, submit a test enquiry from the live website and verify that it is actually saved and routed to the correct team. A success animation without a successful server response is not sufficient. Ensure the form endpoint is rate-limited, validates input and has a monitored lead-review process."
+    },
+    "security-policy": {
+      "slug": "security-policy",
+      "route": "/security-policy",
+      "status": "PUBLISH_PARTIAL",
+      "seo": {
+        "title": "Phause Security & Trust | Responsible Platform Operations",
+        "description": "Learn how Phause approaches responsible phishing simulations, access to programme information and clear customer guidance."
+      },
+      "blocks": [
+        {
+          "type": "hero",
+          "title": "Security awareness should be built on trust.",
+          "description": "Phause helps organisations manage phishing simulations and security-awareness activity. That work involves organisation records, employee information and simulation event data, so the programme must be planned and managed responsibly."
+        },
+        {
+          "type": "features",
+          "title": "Responsible programme operation",
+          "items": [
+            {
+              "title": "Defined authorisation",
+              "description": "Simulations should be conducted only within an approved organisational scope. Programme owners should record the required Rules of Engagement or authorisation before launching a campaign."
+            },
+            {
+              "title": "Access appropriate to role",
+              "description": "Access to organisation and programme information should be limited to authorised users according to the roles and permissions configured for the account."
+            },
+            {
+              "title": "Purposeful data handling",
+              "description": "Collect and use only the information needed to operate the service and review the authorised simulation. Handle employee-level results confidentially and use them constructively."
+            },
+            {
+              "title": "Clear customer guidance",
+              "description": "Customers should understand what a simulation records, how campaign reports should be interpreted and how to contact the organisation about privacy or security questions."
+            }
+          ]
+        }
+      ],
+      "_blocked": {
+        "controlsInstruction": [
+          "Before adding a detailed control statement, confirm it against the production architecture and security evidence. Fill in and approve the following items:"
+        ],
+        "productAndInfrastructureControls": [
+          "Authentication controls: [describe verified controls]",
+          "Role and permission model: [describe verified roles/access boundaries]",
+          "Encryption in transit and at rest: [state exact verified controls; do not assume]",
+          "Hosting region and data location: [name provider/region only after approval]",
+          "Backup and recovery: [describe verified process and tested objectives, if any]",
+          "Monitoring and incident handling: [describe verified operational process]",
+          "Subprocessors and third-party services: [link to current list]",
+          "Independent audits/certifications: [publish only if current certificate and scope are verified]"
+        ],
+        "contactAboutSecurity": [
+          "For a security or privacy question, use the approved contact route: [insert monitored security contact email or form URL]."
+        ],
+        "doNotPublish": [
+          "Do not publish 24/7 response promises, incident SLAs, compliance certification logos, AES/TLS claims, data residency statements or penetration-test claims unless they are current, evidenced and approved for public disclosure."
+        ]
+      },
+      "_reason": "Hero + four principles contain no placeholders and are safe. Controls and contact contain [placeholders] and need verified facts first."
+    },
+    "privacy-policy": {
+      "slug": "privacy-policy",
+      "route": "/privacy-policy",
+      "status": "SEO_ONLY",
+      "seo": {
+        "title": "Phause Privacy Policy",
+        "description": "Read how Phause collects, uses, stores and protects personal information when customers use the website and platform."
+      },
+      "introCopy": "Your privacy matters. This policy explains how [legal entity name] handles personal information when you visit the Phause website, create an account or use the Phause platform. It should be read together with any customer agreement or data-processing terms that apply to your organisation.",
+      "requiredSections": [
+        {
+          "title": "Who is responsible for your information?",
+          "brief": "Insert the legal company name, registered address, privacy contact and relevant controller/processor roles."
+        },
+        {
+          "title": "Information we collect.",
+          "brief": "Document account and contact details, organisation settings, employee records, campaign configuration, simulation event data, training records, billing metadata, support enquiries, device/browser information and cookies/analytics actually collected."
+        },
+        {
+          "title": "Why we use information.",
+          "brief": "Describe account creation and authentication, platform operation, authorised campaign delivery, event tracking, reporting, training administration, billing, support, service security and legal obligations."
+        },
+        {
+          "title": "Legal bases and instructions.",
+          "brief": "State the lawful bases that apply and explain when the customer organisation determines the purpose and means of employee data processing."
+        },
+        {
+          "title": "Simulation data and employee privacy.",
+          "brief": "Explain precisely which events may be recorded, which information appears in reports, who in the customer organisation can access it, whether landing-page fields are processed and whether submitted credential values are retained. Align this with the actual production implementation."
+        },
+        {
+          "title": "Sharing and service providers.",
+          "brief": "List hosting, email delivery, payments, analytics, customer support and other subprocessors that actually process data."
+        },
+        {
+          "title": "International transfers and data location.",
+          "brief": "State only the regions and transfer mechanisms confirmed by the contracts and production environment."
+        },
+        {
+          "title": "Retention and deletion.",
+          "brief": "Provide real retention periods or criteria for account records, employee records, campaign events, reports, support enquiries, billing records and backups."
+        },
+        {
+          "title": "Security.",
+          "brief": "Summarise approved security practices without disclosing sensitive operational details or overstating maturity."
+        },
+        {
+          "title": "Individual rights and requests.",
+          "brief": "Explain how a person can submit a request and how the responsible organisation routes it."
+        },
+        {
+          "title": "Children.",
+          "brief": "State the product's actual intended audience and policy for data relating to children, if applicable."
+        },
+        {
+          "title": "Changes and contact.",
+          "brief": "Add an effective date, version history and privacy contact."
+        }
+      ],
+      "doNotPublish": [
+        "Do not publish a generic claim such as “we never share your data” or “all data is encrypted with [algorithm]” unless the wording is accurate across all vendors, data flows and production environments."
+      ],
+      "_blocked": "Intro contains [legal entity name]; sections are instructions, not policy text. Counsel/company input required."
+    },
+    "cookie-policy": {
+      "slug": "cookie-policy",
+      "route": "/cookie-policy",
+      "status": "SEO_ONLY",
+      "seo": {
+        "title": "Phause Cookie Policy",
+        "description": "Learn which cookies and similar technologies Phause uses and how website visitors can manage their preferences."
+      },
+      "introCopy": "Phause uses cookies and similar technologies where needed to operate the website, remember preferences, protect forms or understand how the site is used. The exact technologies and purposes should be described in the current cookie inventory.",
+      "cookieTableTemplate": [
+        "| Cookie or provider | Purpose | Type | Duration | Required? |",
+        "|---|---|---|---|---|",
+        "| `[name]` | `[purpose]` | `[essential/analytics/marketing]` | `[duration]` | `[yes/no]` |"
+      ],
+      "cookieTableInstruction": [
+        "Include only cookies actually used by the production website and its embedded services. Ensure any consent controls, analytics tags and preference behaviour match the published policy and applicable laws."
+      ],
+      "_blocked": "Cookie table is a template; needs the real cookie inventory."
+    },
+    "terms-of-service": {
+      "slug": "terms-of-service",
+      "route": "/terms-of-service",
+      "status": "SEO_ONLY",
+      "seo": {
+        "title": "Phause Terms of Service",
+        "description": "Review the terms that govern access to and use of the Phause website and phishing simulation platform."
+      },
+      "introCopy": "These terms govern access to the Phause website and platform services provided by [legal entity name]. By creating an account or using the service, the customer agrees to the terms that apply to the selected subscription and any separate order or data-processing agreement.",
+      "requiredSections": [
+        "Definitions and parties.",
+        "Account creation, verification and administrator responsibilities.",
+        "Subscription plans, limits, billing cycle, taxes and payments.",
+        "Renewal, cancellation, suspension and termination.",
+        "Permitted use and acceptable-use restrictions.",
+        "Customer responsibility for authorisation, scope and Rules of Engagement for simulations.",
+        "Employee notices, consent and applicable workplace/privacy obligations.",
+        "Customer data, platform data and licence to operate the service.",
+        "Confidentiality and data-processing terms.",
+        "Intellectual property and feedback.",
+        "Service availability, support channels and any contractual service levels.",
+        "Disclaimers, liability limits and indemnities as approved by counsel.",
+        "Changes to the service and terms.",
+        "Governing law, dispute process and notices.",
+        "Contact details and effective date."
+      ],
+      "closingRequirement": "The terms must match the actual subscription checkout, cancellation flow, plan limits and customer agreement. Do not copy trial, refund, discount or SLA language from an old pricing template.",
+      "_blocked": "Intro contains [legal entity name]; list is an outline. Counsel review required."
+    },
+    "responsible-disclosure": {
+      "slug": "responsible-disclosure",
+      "route": "/responsible-disclosure",
+      "status": "SEO_ONLY",
+      "seo": {
+        "title": "Phause Responsible Disclosure Policy",
+        "description": "Learn how to report a potential security issue affecting Phause in a responsible and coordinated way."
+      },
+      "introCopy": "We appreciate reports that help us identify and address potential security issues affecting Phause. If you believe you have found a vulnerability, please report it through the approved security contact and give us enough information to understand and reproduce the issue safely.",
+      "instructionsToComplete": [
+        "Security contact: [insert monitored security email or form]",
+        "In-scope assets: [list domains, applications and APIs explicitly included]",
+        "Out-of-scope assets: [list third-party systems and excluded services]",
+        "Required report details: affected URL/component, steps to reproduce, impact, timestamps and supporting evidence with sensitive data removed.",
+        "Testing restrictions: do not access, modify, delete or exfiltrate another customer's data; do not disrupt service; do not run destructive tests; do not use social engineering against employees or customers; do not publish details before coordinated resolution.",
+        "Response process: [publish only response commitments the team can meet]",
+        "Disclosure coordination: [describe how the company will coordinate public disclosure]"
+      ],
+      "_blocked": "Instruction fields contain [placeholders].",
+      "doNotAdvertise": [
+        "Do not advertise a bug bounty, safe-harbour commitment or response SLA unless a formal programme and terms exist."
+      ]
+    }
+  },
+  "faqs": [
+    {
+      "order": 1,
+      "category": "General",
+      "question": "What is Phause?",
+      "answer": "Phause is a phishing simulation and security-awareness management platform. It helps organisations manage employee records, prepare phishing email templates, configure campaigns, review simulation interactions, generate reports and organise follow-up training.",
+      "slug": "faq-01-what-is-phause"
+    },
+    {
+      "order": 2,
+      "category": "General",
+      "question": "Who is Phause designed for?",
+      "answer": "Phause is designed for security leaders, IT administrators, security-awareness managers and organisations that want a more structured way to plan and review phishing-awareness exercises.",
+      "slug": "faq-02-who-is-phause-designed-for"
+    },
+    {
+      "order": 3,
+      "category": "General",
+      "question": "Is Phause a managed security operations service or endpoint protection tool?",
+      "answer": "No. The product described here focuses on phishing simulations and security-awareness programme management. It should not be confused with endpoint detection, a managed SOC, a cloud firewall or a penetration-testing service.",
+      "slug": "faq-03-is-phause-a-managed-security-operations-service-or-endpoint"
+    },
+    {
+      "order": 4,
+      "category": "General",
+      "question": "How do I get started?",
+      "answer": "Create an account, verify your email address, complete your organisation setup and prepare your authorised audience. Before launching a campaign, review the required Rules of Engagement or authorisation record and confirm employee eligibility.",
+      "slug": "faq-04-how-do-i-get-started"
+    },
+    {
+      "order": 5,
+      "category": "Employees and organisation setup",
+      "question": "Can I organise employees by department?",
+      "answer": "Yes. Employee records can include department and seniority information, which helps your team organise the audience and use the available campaign targeting options.",
+      "slug": "faq-05-can-i-organise-employees-by-department"
+    },
+    {
+      "order": 6,
+      "category": "Employees and organisation setup",
+      "question": "Why does employee consent or eligibility matter?",
+      "answer": "Campaigns should only target people who are within the approved scope and meet your organisation's consent and eligibility requirements. Review the employee record and campaign audience before dispatch.",
+      "slug": "faq-06-why-does-employee-consent-or-eligibility-matter"
+    },
+    {
+      "order": 7,
+      "category": "Employees and organisation setup",
+      "question": "Do I need to record authorisation before creating a campaign?",
+      "answer": "The product includes an organisation authorisation or Rules of Engagement workflow. Campaign creation may be blocked until the required authorisation has been recorded. Follow your organisation's approval process before running a simulation.",
+      "slug": "faq-07-do-i-need-to-record-authorisation-before-creating-a-campaign"
+    },
+    {
+      "order": 8,
+      "category": "Templates and campaigns",
+      "question": "Can I create my own phishing email templates?",
+      "answer": "Yes. The template workflow supports a name, subject, HTML body and plain-text body, along with lure type, category and difficulty. You can preview the message before using it in a campaign.",
+      "slug": "faq-08-can-i-create-my-own-phishing-email-templates"
+    },
+    {
+      "order": 9,
+      "category": "Templates and campaigns",
+      "question": "What kinds of simulation scenarios can I organise?",
+      "answer": "Template classifications include urgency, authority, curiosity and reward lure types, as well as categories such as credential-harvest simulation, attachment, link-click, awareness and data-entry scenarios. Choose a scenario that matches the learning objective and your approved scope.",
+      "slug": "faq-09-what-kinds-of-simulation-scenarios-can-i-organise"
+    },
+    {
+      "order": 10,
+      "category": "Templates and campaigns",
+      "question": "Do I need to select a saved template before creating a campaign?",
+      "answer": "Yes. The current campaign workflow starts by selecting a saved template. Create or save the template first, then use it to configure a campaign.",
+      "slug": "faq-10-do-i-need-to-select-a-saved-template-before-creating-a-campa"
+    },
+    {
+      "order": 11,
+      "category": "Templates and campaigns",
+      "question": "Can I choose who receives a campaign?",
+      "answer": "Campaign targeting supports all eligible employees, a department segment or a sample percentage, subject to the options available to your organisation and plan. Always review the final audience before dispatch.",
+      "slug": "faq-11-can-i-choose-who-receives-a-campaign"
+    },
+    {
+      "order": 12,
+      "category": "Templates and campaigns",
+      "question": "Can campaigns be scheduled?",
+      "answer": "The campaign workflow supports immediate delivery and scheduled delivery. Review the date, time and audience carefully before confirming the campaign.",
+      "slug": "faq-12-can-campaigns-be-scheduled"
+    },
+    {
+      "order": 13,
+      "category": "Templates and campaigns",
+      "question": "Can I cancel a campaign after dispatch?",
+      "answer": "Campaign changes depend on the current campaign status. Draft or scheduled campaigns may have more editing options than campaigns that are already sending or sent. Use the controls shown in the campaign detail view.",
+      "slug": "faq-13-can-i-cancel-a-campaign-after-dispatch"
+    },
+    {
+      "order": 14,
+      "category": "Tracking and reports",
+      "question": "What events can Phause track?",
+      "answer": "Depending on the campaign and tracking configuration, events may include sent, email open, link click, landing-page view, reported message and training completion. The exact events available depend on the workflow used.",
+      "slug": "faq-14-what-events-can-phause-track"
+    },
+    {
+      "order": 15,
+      "category": "Tracking and reports",
+      "question": "Are email opens and clicks always accurate?",
+      "answer": "No tracking signal should be treated as perfect proof of human behaviour. Email privacy features and image proxies may cause opens to be recorded automatically or prevent them from appearing. Automated security scanners may also follow links. Interpret events in context and look for broader patterns.",
+      "slug": "faq-15-are-email-opens-and-clicks-always-accurate"
+    },
+    {
+      "order": 16,
+      "category": "Tracking and reports",
+      "question": "Can I generate and download campaign reports?",
+      "answer": "The reporting area supports campaign reports for eligible campaign statuses and includes export workflows for supported formats. The report detail view shows the campaign information and metrics available for that report.",
+      "slug": "faq-16-can-i-generate-and-download-campaign-reports"
+    },
+    {
+      "order": 17,
+      "category": "Tracking and reports",
+      "question": "What is an employee risk score?",
+      "answer": "A risk score is a programme indicator intended to help prioritise follow-up awareness activity. It should not be used as a stand-alone judgement of an employee's character, competence or overall performance. Review the contributing context and use results constructively.",
+      "slug": "faq-17-what-is-an-employee-risk-score"
+    },
+    {
+      "order": 18,
+      "category": "Training and billing",
+      "question": "Does Phause provide training?",
+      "answer": "Phause includes training administration features for managing module records, reviewing enrolments and recording completion history. The exact learning experience depends on the configured module content and your organisation's workflow.",
+      "slug": "faq-18-does-phause-provide-training"
+    },
+    {
+      "order": 19,
+      "category": "Training and billing",
+      "question": "How do I know what my plan includes?",
+      "answer": "Review the plan and limits shown in your account or on the current pricing page. Employee limits, campaign limits and available capabilities can depend on the plan assigned to your organisation.",
+      "slug": "faq-19-how-do-i-know-what-my-plan-includes"
+    },
+    {
+      "order": 20,
+      "category": "Training and billing",
+      "question": "How do subscriptions and payments work?",
+      "answer": "The billing workflow displays the subscription and payment options configured for your account. Review the billing period, currency, amount and subscription terms at checkout before confirming a payment. For account-specific questions, contact the Phause team.",
+      "slug": "faq-20-how-do-subscriptions-and-payments-work"
+    },
+    {
+      "order": 21,
+      "category": "Responsible use and support",
+      "question": "Does Phause store real employee passwords?",
+      "answer": "Phause's simulation landing flow is designed to record the interaction rather than retain actual submitted credential values. Do not configure exercises to collect real passwords, and verify the current landing-page settings before each campaign. The published Privacy Policy should explain precisely what event and employee data the live system processes.",
+      "slug": "faq-21-does-phause-store-real-employee-passwords"
+    },
+    {
+      "order": 22,
+      "category": "Responsible use and support",
+      "question": "How should we communicate simulations to employees?",
+      "answer": "Follow your organisation's policies and approvals. Use a clear learning purpose, avoid humiliating or blaming individuals, and share practical guidance after the exercise. Keep employee-level results confidential and limit access to those who need it.",
+      "slug": "faq-22-how-should-we-communicate-simulations-to-employees"
+    },
+    {
+      "order": 23,
+      "category": "Responsible use and support",
+      "question": "Can I use Phause to simulate messages outside my organisation?",
+      "answer": "Only use Phause for exercises you are authorised to conduct. Do not target external people, organisations or systems without explicit permission and an agreed scope.",
+      "slug": "faq-23-can-i-use-phause-to-simulate-messages-outside-my-organisatio"
+    },
+    {
+      "order": 24,
+      "category": "Responsible use and support",
+      "question": "Where can I get help?",
+      "answer": "Use the Contact page to send the Phause team an enquiry. For product workflows, start with the Documentation page. Do not include passwords, one-time verification codes or confidential employee information in a support message.",
+      "slug": "faq-24-where-can-i-get-help"
+    }
+  ],
+  "posts": [
+    {
+      "slug": "why-phishing-simulations-matter",
+      "title": "Why Phishing Simulations Matter for Security Awareness",
+      "seoTitle": "Why Phishing Simulations Matter for Security Awareness | Phause",
+      "metaDescription": "Learn how authorised phishing simulations help organisations practise recognition, understand engagement patterns and plan useful awareness training.",
+      "excerpt": "Learn how authorised phishing simulations help organisations practise recognition, understand engagement patterns and plan useful awareness training.",
+      "_excerptNote": "Source provides no separate excerpt; meta description used. Replace if you prefer.",
+      "category": "Phishing Awareness",
+      "readingTime": "5–6 minutes",
+      "featuredImageAlt": "Security-awareness team reviewing a phishing simulation campaign report.",
+      "featuredImage": null,
+      "status": "PUBLISHED",
+      "contentHtml": "<h2>Awareness improves when people can practise</h2>\n<p>Employees receive messages throughout the day. Some are routine, some are urgent and some ask for an action that could expose information or create risk. A convincing phishing message can resemble an ordinary workplace request, which is why awareness needs to be more than an annual reminder.</p>\n<p>A phishing simulation gives an organisation a controlled way to practise recognition. Instead of discussing suspicious messages only in theory, a team can observe how a simulated message is encountered and use the exercise as a starting point for learning.</p>\n<h2>What a simulation can help reveal</h2>\n<p>A well-planned exercise can help a programme owner explore questions such as:</p>\n<ul><li>Do employees pause when a message creates urgency?</li><li>Are there message patterns that consistently attract interactions?</li><li>Do employees know how to report a suspicious message?</li><li>Which teams may benefit from additional guidance?</li><li>Are follow-up learning activities reaching the intended audience?</li></ul>\n<p>These questions are more useful than treating one click as a verdict. A campaign is a snapshot of activity under specific conditions, not a complete picture of an employee's judgement or competence.</p>\n<h2>Build the exercise around a learning objective</h2>\n<p>Before choosing a template, decide what the organisation wants to practise. It may be recognising an unexpected attachment, checking a link destination, verifying a payment-related request or reporting a message that appears to come from a trusted source.</p>\n<p>The learning objective should guide the template, audience, timing and follow-up. Avoid choosing a scenario only because it is likely to generate a high click rate. The aim is to improve awareness, not to trick employees for its own sake.</p>\n<h2>Use clear authorisation and scope</h2>\n<p>A responsible simulation begins before the message is sent. Confirm who approved the exercise, which employees are in scope, what internal teams need to know and how results will be handled. Review any consent and employee-communication requirements that apply to your organisation.</p>\n<p>Coordinate with the people responsible for email security and help-desk operations so that reports or unusual behaviour can be handled sensibly. Avoid collecting real passwords or unnecessary personal information.</p>\n<h2>Interpret campaign signals with care</h2>\n<p>Opens and clicks can be useful signals, but they are not perfect measures of human behaviour. Email clients may block images, privacy tools may pre-load content, and automated security scanners may visit links. Review the event pattern, delivery context and other available information before drawing conclusions.</p>\n<p>Use reports to identify themes and decide where a team conversation, short learning module or clearer reporting instructions could help.</p>\n<h2>Close the loop with learning</h2>\n<p>A simulation should lead to a useful next step. Share practical advice, make reporting routes clear and use the results to decide what the next awareness activity should cover. Follow-up should be constructive and respectful, not a public ranking of employees.</p>\n<p>Repeat the programme at an appropriate cadence and compare trends over time. Look for sustained improvement and better reporting habits rather than focusing on one campaign's headline number.</p>\n<h2>How Phause can support the workflow</h2>\n<p>Phause brings employee management, phishing email templates, campaign setup, interaction tracking, campaign reporting, risk insights and training administration into one workspace. Teams can use the workflow to organise an authorised simulation and connect the outcome with follow-up learning.</p>\n<p><strong>Take the next step:</strong> Explore the Phause platform at <a href=\"/services\">/services</a> or learn the workflow at <a href=\"/how-it-works\">/how-it-works</a>.</p>",
+      "contentMarkdown": "## Awareness improves when people can practise\n\nEmployees receive messages throughout the day. Some are routine, some are urgent and some ask for an action that could expose information or create risk. A convincing phishing message can resemble an ordinary workplace request, which is why awareness needs to be more than an annual reminder.\n\nA phishing simulation gives an organisation a controlled way to practise recognition. Instead of discussing suspicious messages only in theory, a team can observe how a simulated message is encountered and use the exercise as a starting point for learning.\n\n## What a simulation can help reveal\n\nA well-planned exercise can help a programme owner explore questions such as:\n\n- Do employees pause when a message creates urgency?\n\n- Are there message patterns that consistently attract interactions?\n\n- Do employees know how to report a suspicious message?\n\n- Which teams may benefit from additional guidance?\n\n- Are follow-up learning activities reaching the intended audience?\n\nThese questions are more useful than treating one click as a verdict. A campaign is a snapshot of activity under specific conditions, not a complete picture of an employee's judgement or competence.\n\n## Build the exercise around a learning objective\n\nBefore choosing a template, decide what the organisation wants to practise. It may be recognising an unexpected attachment, checking a link destination, verifying a payment-related request or reporting a message that appears to come from a trusted source.\n\nThe learning objective should guide the template, audience, timing and follow-up. Avoid choosing a scenario only because it is likely to generate a high click rate. The aim is to improve awareness, not to trick employees for its own sake.\n\n## Use clear authorisation and scope\n\nA responsible simulation begins before the message is sent. Confirm who approved the exercise, which employees are in scope, what internal teams need to know and how results will be handled. Review any consent and employee-communication requirements that apply to your organisation.\n\nCoordinate with the people responsible for email security and help-desk operations so that reports or unusual behaviour can be handled sensibly. Avoid collecting real passwords or unnecessary personal information.\n\n## Interpret campaign signals with care\n\nOpens and clicks can be useful signals, but they are not perfect measures of human behaviour. Email clients may block images, privacy tools may pre-load content, and automated security scanners may visit links. Review the event pattern, delivery context and other available information before drawing conclusions.\n\nUse reports to identify themes and decide where a team conversation, short learning module or clearer reporting instructions could help.\n\n## Close the loop with learning\n\nA simulation should lead to a useful next step. Share practical advice, make reporting routes clear and use the results to decide what the next awareness activity should cover. Follow-up should be constructive and respectful, not a public ranking of employees.\n\nRepeat the programme at an appropriate cadence and compare trends over time. Look for sustained improvement and better reporting habits rather than focusing on one campaign's headline number.\n\n## How Phause can support the workflow\n\nPhause brings employee management, phishing email templates, campaign setup, interaction tracking, campaign reporting, risk insights and training administration into one workspace. Teams can use the workflow to organise an authorised simulation and connect the outcome with follow-up learning.\n\n**Take the next step:** Explore the Phause platform at /services or learn the workflow at /how-it-works.",
+      "headings": [
+        "Awareness improves when people can practise",
+        "What a simulation can help reveal",
+        "Build the exercise around a learning objective",
+        "Use clear authorisation and scope",
+        "Interpret campaign signals with care",
+        "Close the loop with learning",
+        "How Phause can support the workflow"
+      ]
+    },
+    {
+      "slug": "responsible-phishing-simulation-planning",
+      "title": "How to Plan a Responsible Phishing Simulation",
+      "seoTitle": "How to Plan a Responsible Phishing Simulation | Phause",
+      "metaDescription": "Use this practical pre-campaign checklist to define the purpose, approval, audience, message and follow-up for an authorised phishing simulation.",
+      "excerpt": "Use this practical pre-campaign checklist to define the purpose, approval, audience, message and follow-up for an authorised phishing simulation.",
+      "_excerptNote": "Source provides no separate excerpt; meta description used. Replace if you prefer.",
+      "category": "Simulation Planning",
+      "readingTime": "6 minutes",
+      "featuredImageAlt": "Security team planning an authorised phishing simulation on a campaign workflow board.",
+      "featuredImage": null,
+      "status": "PUBLISHED",
+      "contentHtml": "<h2>Start with the purpose</h2>\n<p>A simulation should answer a learning question. Perhaps your organisation wants to help employees identify unexpected attachment requests, verify links before signing in or report messages that imitate an internal team.</p>\n<p>Write the objective in one sentence. If the team cannot explain what employees are meant to practise, pause before building the campaign.</p>\n<h2>Confirm approval and scope</h2>\n<p>Decide who owns the exercise and obtain the approvals required by your organisation. Define the audience, departments, exclusions, delivery period and internal stakeholders who need to be aware of the plan.</p>\n<p>Keep a record of the agreed Rules of Engagement or authorisation. Do not send simulated messages to people or systems outside the approved scope.</p>\n<h2>Prepare your employee audience</h2>\n<p>Review employee records before selecting the target group. Confirm that email addresses are current, departments are accurate and any consent or eligibility requirements are satisfied.</p>\n<p>If the exercise is intended for a sample of the organisation, define the selection method and ensure it is consistent with the approved plan. Check the final recipient list before dispatch.</p>\n<h2>Choose a suitable message</h2>\n<p>Select a template that fits the learning objective and the work context. Review the sender identity, subject line, message body, destination and any simulated landing-page behaviour.</p>\n<p>Avoid scenarios that are unnecessarily distressing, discriminatory or likely to cause operational disruption. Never ask employees to submit actual passwords or confidential business data.</p>\n<h2>Coordinate delivery</h2>\n<p>Choose a delivery window that does not conflict with critical business activity. Coordinate with the teams responsible for email operations, help-desk support and employee communications where appropriate.</p>\n<p>Confirm the configured sending service is ready and that the tracking flow is behaving as expected. Use a small internal test where your procedures allow it.</p>\n<h2>Review before launch</h2>\n<p>Use this checklist:</p>\n<ul class=\"checklist\"><li>The exercise has a clear learning objective.</li><li>The required approval and Rules of Engagement are recorded.</li><li>The intended audience and exclusions are documented.</li><li>Employee eligibility and consent requirements are reviewed.</li><li>The template has been previewed and approved.</li><li>The delivery window has been checked.</li><li>The sending service and tracking setup have been tested.</li><li>Internal stakeholders know how to handle reports or questions.</li><li>A follow-up learning activity has been considered.</li></ul>\n<h2>Decide how the results will be used</h2>\n<p>Before a campaign begins, agree who will review the report and how findings will be communicated. Limit employee-level data to people who need it. Use the results to identify learning themes and programme improvements, not to shame individuals.</p>\n<h2>Use Phause to organise the process</h2>\n<p>Phause supports employee management, template selection, campaign targeting, scheduling, interaction tracking and campaign reporting. Its training administration workflow can help teams organise follow-up module and completion records.</p>\n<p><strong>Next step:</strong> Review the Phause workflow at <a href=\"/how-it-works\">/how-it-works</a>.</p>",
+      "contentMarkdown": "## Start with the purpose\n\nA simulation should answer a learning question. Perhaps your organisation wants to help employees identify unexpected attachment requests, verify links before signing in or report messages that imitate an internal team.\n\nWrite the objective in one sentence. If the team cannot explain what employees are meant to practise, pause before building the campaign.\n\n## Confirm approval and scope\n\nDecide who owns the exercise and obtain the approvals required by your organisation. Define the audience, departments, exclusions, delivery period and internal stakeholders who need to be aware of the plan.\n\nKeep a record of the agreed Rules of Engagement or authorisation. Do not send simulated messages to people or systems outside the approved scope.\n\n## Prepare your employee audience\n\nReview employee records before selecting the target group. Confirm that email addresses are current, departments are accurate and any consent or eligibility requirements are satisfied.\n\nIf the exercise is intended for a sample of the organisation, define the selection method and ensure it is consistent with the approved plan. Check the final recipient list before dispatch.\n\n## Choose a suitable message\n\nSelect a template that fits the learning objective and the work context. Review the sender identity, subject line, message body, destination and any simulated landing-page behaviour.\n\nAvoid scenarios that are unnecessarily distressing, discriminatory or likely to cause operational disruption. Never ask employees to submit actual passwords or confidential business data.\n\n## Coordinate delivery\n\nChoose a delivery window that does not conflict with critical business activity. Coordinate with the teams responsible for email operations, help-desk support and employee communications where appropriate.\n\nConfirm the configured sending service is ready and that the tracking flow is behaving as expected. Use a small internal test where your procedures allow it.\n\n## Review before launch\n\nUse this checklist:\n\n- [ ] The exercise has a clear learning objective.\n\n- [ ] The required approval and Rules of Engagement are recorded.\n\n- [ ] The intended audience and exclusions are documented.\n\n- [ ] Employee eligibility and consent requirements are reviewed.\n\n- [ ] The template has been previewed and approved.\n\n- [ ] The delivery window has been checked.\n\n- [ ] The sending service and tracking setup have been tested.\n\n- [ ] Internal stakeholders know how to handle reports or questions.\n\n- [ ] A follow-up learning activity has been considered.\n\n## Decide how the results will be used\n\nBefore a campaign begins, agree who will review the report and how findings will be communicated. Limit employee-level data to people who need it. Use the results to identify learning themes and programme improvements, not to shame individuals.\n\n## Use Phause to organise the process\n\nPhause supports employee management, template selection, campaign targeting, scheduling, interaction tracking and campaign reporting. Its training administration workflow can help teams organise follow-up module and completion records.\n\n**Next step:** Review the Phause workflow at /how-it-works.",
+      "headings": [
+        "Start with the purpose",
+        "Confirm approval and scope",
+        "Prepare your employee audience",
+        "Choose a suitable message",
+        "Coordinate delivery",
+        "Review before launch",
+        "Decide how the results will be used",
+        "Use Phause to organise the process"
+      ]
+    },
+    {
+      "slug": "understanding-phishing-simulation-tracking-metrics",
+      "title": "Understanding Phishing Simulation Opens and Clicks",
+      "seoTitle": "How to Interpret Phishing Simulation Opens and Clicks | Phause",
+      "metaDescription": "Learn why email opens and link clicks need context and how to use phishing simulation events responsibly when reviewing campaign performance.",
+      "excerpt": "Learn why email opens and link clicks need context and how to use phishing simulation events responsibly when reviewing campaign performance.",
+      "_excerptNote": "Source provides no separate excerpt; meta description used. Replace if you prefer.",
+      "category": "Reporting and Improvement",
+      "readingTime": "5 minutes",
+      "featuredImageAlt": "Campaign analytics dashboard with email interaction events and a report summary.",
+      "featuredImage": null,
+      "status": "PUBLISHED",
+      "contentHtml": "<h2>Metrics are signals, not the full story</h2>\n<p>A campaign report can make it easier to understand what happened during a phishing simulation. Sends, opens, link clicks, landing-page views and reported messages each describe a different part of the interaction.</p>\n<p>It is tempting to treat a single number as the result. A more useful approach is to ask what the signal can tell you, what it cannot tell you and what additional context you need.</p>\n<h2>Email opens have limitations</h2>\n<p>Open tracking commonly relies on an image or tracking element being requested by an email client. Some clients block images. Others use privacy features or proxy services that load remote content automatically. As a result, an open event may not represent a person deliberately reading the message, and the absence of an open event does not necessarily mean the message was never seen.</p>\n<p>Use open rates as one directional measure. Avoid using them as a precise measure of employee attention.</p>\n<h2>Link clicks can be automated</h2>\n<p>Organisations often use email-security services that inspect message links before delivery or when a message is received. Those systems may visit URLs automatically. A click event can therefore be generated by an automated scanner rather than a human recipient.</p>\n<p>When reviewing clicks, consider timing, repeated requests, known scanning patterns and any additional event information available to your team. Do not assume every click proves a person interacted with the message.</p>\n<h2>Look at multiple indicators</h2>\n<p>Review the campaign as a whole. Consider delivery, different event types, employee reports, landing-page views and follow-up training records where available. Compare patterns across campaigns only when the audience, template, timing and tracking configuration are sufficiently similar.</p>\n<h2>Use the report to ask better questions</h2>\n<p>Rather than asking only whether the click rate went up or down, ask:</p>\n<ul><li>Which message themes generated the most interaction?</li><li>Did employees report the message through the expected route?</li><li>Did the campaign reach the intended audience?</li><li>Were there technical events that could affect the metrics?</li><li>Which topics should be included in the next learning activity?</li></ul>\n<h2>Keep the human context</h2>\n<p>Simulation metrics should support learning, not replace judgement. One employee interaction should not define a person's overall security awareness. Use individual information only where there is a clear organisational need, and communicate findings constructively.</p>\n<h2>Make reporting actionable with Phause</h2>\n<p>Phause provides campaign event views, reporting and risk insights to help teams review the available signals. Use those tools as part of a wider process that includes context, internal policy and practical follow-up.</p>\n<p><strong>Next step:</strong> Explore campaign reporting and risk insights on the <a href=\"/services\">/services</a> page.</p>",
+      "contentMarkdown": "## Metrics are signals, not the full story\n\nA campaign report can make it easier to understand what happened during a phishing simulation. Sends, opens, link clicks, landing-page views and reported messages each describe a different part of the interaction.\n\nIt is tempting to treat a single number as the result. A more useful approach is to ask what the signal can tell you, what it cannot tell you and what additional context you need.\n\n## Email opens have limitations\n\nOpen tracking commonly relies on an image or tracking element being requested by an email client. Some clients block images. Others use privacy features or proxy services that load remote content automatically. As a result, an open event may not represent a person deliberately reading the message, and the absence of an open event does not necessarily mean the message was never seen.\n\nUse open rates as one directional measure. Avoid using them as a precise measure of employee attention.\n\n## Link clicks can be automated\n\nOrganisations often use email-security services that inspect message links before delivery or when a message is received. Those systems may visit URLs automatically. A click event can therefore be generated by an automated scanner rather than a human recipient.\n\nWhen reviewing clicks, consider timing, repeated requests, known scanning patterns and any additional event information available to your team. Do not assume every click proves a person interacted with the message.\n\n## Look at multiple indicators\n\nReview the campaign as a whole. Consider delivery, different event types, employee reports, landing-page views and follow-up training records where available. Compare patterns across campaigns only when the audience, template, timing and tracking configuration are sufficiently similar.\n\n## Use the report to ask better questions\n\nRather than asking only whether the click rate went up or down, ask:\n\n- Which message themes generated the most interaction?\n\n- Did employees report the message through the expected route?\n\n- Did the campaign reach the intended audience?\n\n- Were there technical events that could affect the metrics?\n\n- Which topics should be included in the next learning activity?\n\n## Keep the human context\n\nSimulation metrics should support learning, not replace judgement. One employee interaction should not define a person's overall security awareness. Use individual information only where there is a clear organisational need, and communicate findings constructively.\n\n## Make reporting actionable with Phause\n\nPhause provides campaign event views, reporting and risk insights to help teams review the available signals. Use those tools as part of a wider process that includes context, internal policy and practical follow-up.\n\n**Next step:** Explore campaign reporting and risk insights on the /services page.",
+      "headings": [
+        "Metrics are signals, not the full story",
+        "Email opens have limitations",
+        "Link clicks can be automated",
+        "Look at multiple indicators",
+        "Use the report to ask better questions",
+        "Keep the human context",
+        "Make reporting actionable with Phause"
+      ]
+    },
+    {
+      "slug": "turn-phishing-campaign-results-into-learning",
+      "title": "Turn Phishing Campaign Results into Better Learning",
+      "seoTitle": "Turn Phishing Campaign Results into Better Learning | Phause",
+      "metaDescription": "Learn how to use phishing simulation reports and employee engagement patterns to organise targeted, respectful security-awareness training.",
+      "excerpt": "Learn how to use phishing simulation reports and employee engagement patterns to organise targeted, respectful security-awareness training.",
+      "_excerptNote": "Source provides no separate excerpt; meta description used. Replace if you prefer.",
+      "category": "Security Awareness",
+      "readingTime": "5 minutes",
+      "featuredImageAlt": "Security-awareness manager reviewing a campaign report and planning a follow-up training session.",
+      "featuredImage": null,
+      "status": "PUBLISHED",
+      "contentHtml": "<h2>The campaign is a beginning, not the finish line</h2>\n<p>A phishing simulation can produce useful information, but the value of the exercise depends on what the organisation does next. Reports can help identify message patterns, audience questions and topics that deserve more attention.</p>\n<p>The next step should be practical, proportionate and connected to the learning objective.</p>\n<h2>Start with the pattern</h2>\n<p>Look across the campaign rather than focusing on one employee. Which message types led to more interaction? Were there departments that would benefit from clearer guidance? Did employees use the reporting route? Did technical factors affect the event data?</p>\n<p>Review the available tracking signals carefully. Opens and clicks can be affected by email privacy features and automated security scanners, so do not interpret one metric in isolation.</p>\n<h2>Select a focused learning response</h2>\n<p>A useful follow-up does not need to be complicated. Examples include:</p>\n<ul><li>A short reminder about checking the sender and the request.</li><li>Guidance on hovering over or verifying unexpected links.</li><li>A team discussion about payment-change and sensitive-information requests.</li><li>A demonstration of how to report suspicious messages.</li><li>A training module that addresses the learning objective of the campaign.</li></ul>\n<p>Avoid overwhelming employees with too many topics at once. Choose the guidance that best matches the pattern you observed.</p>\n<h2>Make it easy to complete</h2>\n<p>Training should have a clear purpose and a reasonable expectation. Tell employees what they are meant to learn and where to go if they have questions. Where appropriate, record enrolment and completion so programme owners can understand whether the follow-up activity took place.</p>\n<h2>Measure progress over time</h2>\n<p>Repeat simulations thoughtfully and compare trends across similar exercises. Use consistent definitions and take changes in audience, template, timing and tracking setup into account. Look for broader improvement, including employee reporting behaviour and familiarity with the correct response process.</p>\n<h2>Use results respectfully</h2>\n<p>Employees should not be publicly ranked or embarrassed. Share individual details only with authorised people who need them, and use the findings to improve guidance and processes. A simulation is a learning tool, not a complete evaluation of a person's performance.</p>\n<h2>Connect reporting and training with Phause</h2>\n<p>Phause brings campaign reporting, risk indicators and training administration together to help teams organise the follow-up process. Use campaign findings to choose a learning topic, manage the relevant module record and review completion history where available.</p>\n<p><strong>Next step:</strong> Visit <a href=\"/services\">/services</a> to explore Phause reporting and training administration.</p>\n<p>PHAUSE | WEBSITE CONTENT LIBRARY |</p>",
+      "contentMarkdown": "## The campaign is a beginning, not the finish line\n\nA phishing simulation can produce useful information, but the value of the exercise depends on what the organisation does next. Reports can help identify message patterns, audience questions and topics that deserve more attention.\n\nThe next step should be practical, proportionate and connected to the learning objective.\n\n## Start with the pattern\n\nLook across the campaign rather than focusing on one employee. Which message types led to more interaction? Were there departments that would benefit from clearer guidance? Did employees use the reporting route? Did technical factors affect the event data?\n\nReview the available tracking signals carefully. Opens and clicks can be affected by email privacy features and automated security scanners, so do not interpret one metric in isolation.\n\n## Select a focused learning response\n\nA useful follow-up does not need to be complicated. Examples include:\n\n- A short reminder about checking the sender and the request.\n\n- Guidance on hovering over or verifying unexpected links.\n\n- A team discussion about payment-change and sensitive-information requests.\n\n- A demonstration of how to report suspicious messages.\n\n- A training module that addresses the learning objective of the campaign.\n\nAvoid overwhelming employees with too many topics at once. Choose the guidance that best matches the pattern you observed.\n\n## Make it easy to complete\n\nTraining should have a clear purpose and a reasonable expectation. Tell employees what they are meant to learn and where to go if they have questions. Where appropriate, record enrolment and completion so programme owners can understand whether the follow-up activity took place.\n\n## Measure progress over time\n\nRepeat simulations thoughtfully and compare trends across similar exercises. Use consistent definitions and take changes in audience, template, timing and tracking setup into account. Look for broader improvement, including employee reporting behaviour and familiarity with the correct response process.\n\n## Use results respectfully\n\nEmployees should not be publicly ranked or embarrassed. Share individual details only with authorised people who need them, and use the findings to improve guidance and processes. A simulation is a learning tool, not a complete evaluation of a person's performance.\n\n## Connect reporting and training with Phause\n\nPhause brings campaign reporting, risk indicators and training administration together to help teams organise the follow-up process. Use campaign findings to choose a learning topic, manage the relevant module record and review completion history where available.\n\n**Next step:** Visit /services to explore Phause reporting and training administration.\n\nPHAUSE | WEBSITE CONTENT LIBRARY |",
+      "headings": [
+        "The campaign is a beginning, not the finish line",
+        "Start with the pattern",
+        "Select a focused learning response",
+        "Make it easy to complete",
+        "Measure progress over time",
+        "Use results respectfully",
+        "Connect reporting and training with Phause"
+      ]
+    }
+  ],
+  "forms": {
+    "contact": {
+      "slug": "contact-form",
+      "title": "Send an Enquiry",
+      "intro": "Complete the form below and the Phause team can review your message.",
+      "fields": [
+        {
+          "label": "Full name",
+          "required": true,
+          "note": "required",
+          "suggestedKey": "name",
+          "type": "text"
+        },
+        {
+          "label": "Work email",
+          "required": true,
+          "note": "required",
+          "suggestedKey": "email",
+          "type": "email"
+        },
+        {
+          "label": "Company or organisation",
+          "required": false,
+          "note": "optional",
+          "suggestedKey": "company",
+          "type": "text"
+        },
+        {
+          "label": "Phone number",
+          "required": false,
+          "note": "optional, only if the team can process it appropriately",
+          "suggestedKey": "phone",
+          "type": "tel"
+        },
+        {
+          "label": "Enquiry type",
+          "required": null,
+          "note": "General question / Product walkthrough / Pricing and plans / Account support / Partnership",
+          "type": "select",
+          "options": [
+            "General question",
+            "Product walkthrough",
+            "Pricing and plans",
+            "Account support",
+            "Partnership"
+          ],
+          "suggestedKey": "category"
+        },
+        {
+          "label": "Message",
+          "required": true,
+          "note": "required",
+          "suggestedKey": "message",
+          "type": "textarea"
+        }
+      ],
+      "messagePlaceholder": "Tell us a little about your organisation, your current security-awareness process and what you would like to learn about Phause.",
+      "submitButton": "Send Enquiry",
+      "privacyNote": "Please do not include passwords, verification codes, payment-card details, sensitive employee data or confidential security information in this form. Information submitted here will be handled according to the published Privacy Policy.",
+      "successMessage": "Thank you. Your enquiry has been submitted. The Phause team can review your message and follow up using the contact details you provided.",
+      "errorMessage": "We could not submit your enquiry just now. Please review the fields and try again.",
+      "_note": "contact-form already exists and is read by /contact and /api/contact. Keep existing field keys; update labels, placeholder, options and copy only. suggestedKey values mirror the Lead model fields."
+    }
+  },
+  "docs": {
+    "seo": {
+      "title": "Phause Documentation | Customer Guides & Help",
+      "description": "Learn how to set up your Phause organisation, manage employees and templates, configure campaigns, interpret reports and administer training.",
+      "primaryKeywordTheme": null,
+      "secondaryThemes": null,
+      "pageGoal": "Replace the current endpoint-agent, CI/CD, policy and SIEM instructions with customer guidance for the phishing-simulation product."
+    },
+    "hero": {
+      "type": "hero",
+      "eyebrow": "PHAUSE HELP CENTRE",
+      "title": "Learn Phause, step by step.",
+      "description": "Find practical guidance for setting up your organisation, preparing employees, creating phishing templates, running campaigns, reviewing tracking events and using reports and training records.",
+      "searchPlaceholder": "Search guides, features and answers…"
+    },
+    "navigation": [
+      {
+        "category": "Get started",
+        "articles": [
+          {
+            "title": "Create an organisation account",
+            "slug": "create-an-organisation-account",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Verify your email address",
+            "slug": "verify-your-email-address",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Complete organisation setup",
+            "slug": "complete-organisation-setup",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Record programme authorisation",
+            "slug": "record-programme-authorisation",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Understand roles and permissions",
+            "slug": "understand-roles-and-permissions",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      },
+      {
+        "category": "Manage your audience",
+        "articles": [
+          {
+            "title": "Add an employee record",
+            "slug": "add-an-employee-record",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Organise employees by department",
+            "slug": "organise-employees-by-department",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Understand consent and campaign eligibility",
+            "slug": "understand-consent-and-campaign-eligibility",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Import employee records",
+            "slug": "import-employee-records",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": "publish only after the current import workflow is verified"
+          }
+        ]
+      },
+      {
+        "category": "Templates",
+        "articles": [
+          {
+            "title": "Browse the template library",
+            "slug": "browse-the-template-library",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Create a phishing email template",
+            "slug": "create-a-phishing-email-template",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Preview a template",
+            "slug": "preview-a-template",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Understand lure types, categories and difficulty",
+            "slug": "understand-lure-types-categories-and-difficulty",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Use tracking placeholders correctly",
+            "slug": "use-tracking-placeholders-correctly",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      },
+      {
+        "category": "Campaigns",
+        "articles": [
+          {
+            "title": "Create a campaign from a saved template",
+            "slug": "create-a-campaign-from-a-saved-template",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Select an audience",
+            "slug": "select-an-audience",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Target a department segment",
+            "slug": "target-a-department-segment",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Use sample-percentage targeting",
+            "slug": "use-sample-percentage-targeting",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Schedule a campaign",
+            "slug": "schedule-a-campaign",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Dispatch and review campaign status",
+            "slug": "dispatch-and-review-campaign-status",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Cancel or retry a campaign where permitted",
+            "slug": "cancel-or-retry-a-campaign-where-permitted",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      },
+      {
+        "category": "Tracking and events",
+        "articles": [
+          {
+            "title": "Understand campaign event types",
+            "slug": "understand-campaign-event-types",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Review event details",
+            "slug": "review-event-details",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Interpret opens and clicks carefully",
+            "slug": "interpret-opens-and-clicks-carefully",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Understand automated link scanning and email privacy effects",
+            "slug": "understand-automated-link-scanning-and-email-privacy-effects",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      },
+      {
+        "category": "Reports and risk insights",
+        "articles": [
+          {
+            "title": "Generate a campaign report",
+            "slug": "generate-a-campaign-report",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Read campaign engagement metrics",
+            "slug": "read-campaign-engagement-metrics",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Download report files",
+            "slug": "download-report-files",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Understand risk indicators and trends",
+            "slug": "understand-risk-indicators-and-trends",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Review department-level patterns",
+            "slug": "review-department-level-patterns",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      },
+      {
+        "category": "Training",
+        "articles": [
+          {
+            "title": "Create a training module record",
+            "slug": "create-a-training-module-record",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Add supported video content references",
+            "slug": "add-supported-video-content-references",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Review employee enrolments",
+            "slug": "review-employee-enrolments",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Record training completion",
+            "slug": "record-training-completion",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Review training history",
+            "slug": "review-training-history",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      },
+      {
+        "category": "Account and billing",
+        "articles": [
+          {
+            "title": "Update your profile",
+            "slug": "update-your-profile",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Change your password",
+            "slug": "change-your-password",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Review your current plan",
+            "slug": "review-your-current-plan",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          },
+          {
+            "title": "Understand subscription checkout and cancellation options",
+            "slug": "understand-subscription-checkout-and-cancellation-options",
+            "status": "DRAFT",
+            "bodyProvided": false,
+            "_condition": null
+          }
+        ]
+      }
+    ],
+    "quickStart": {
+      "title": "Your first Phause campaign: a practical checklist",
+      "slug": "first-campaign-checklist",
+      "category": "Get started",
+      "status": "PUBLISHED",
+      "sections": [
+        {
+          "heading": "Before you begin",
+          "steps": [
+            "Confirm you have authority to run the exercise and document the approved scope.",
+            "Verify the organisation setup and required authorisation record.",
+            "Add the employee records that are in scope.",
+            "Review consent and eligibility.",
+            "Confirm that the email delivery service is configured and tested."
+          ]
+        },
+        {
+          "heading": "Create the template",
+          "steps": [
+            "Open Templates.",
+            "Create or select a phishing email template.",
+            "Add the message name, subject, HTML body and text body.",
+            "Choose the lure type, category and difficulty.",
+            "Preview and save the template."
+          ]
+        },
+        {
+          "heading": "Configure the campaign",
+          "steps": [
+            "Open Campaigns and choose the saved template.",
+            "Enter a clear campaign name.",
+            "Select all eligible employees, a department segment or a sample percentage.",
+            "Configure delivery timing.",
+            "Review the campaign details and scope.",
+            "Dispatch or schedule the campaign according to the approved plan."
+          ]
+        },
+        {
+          "heading": "Review and follow up",
+          "steps": [
+            "Check campaign status and delivery events.",
+            "Review tracking signals with the known limitations in mind.",
+            "Generate the available campaign report.",
+            "Review risk indicators and trends.",
+            "Organise relevant training or follow-up communications."
+          ]
+        }
+      ]
+    },
+    "closingNote": "If a screen or workflow differs from this guide, use the labels and instructions shown in your current account. Features and limits may vary by plan, role and product version. Contact the Phause team with the page name and a description of the issue; do not include passwords, authentication codes or sensitive employee data.",
+    "replacementNote": "Remove the old /docs copy about endpoint agents, Kubernetes deployment, CI/CD scanning, endpoint policies, SIEM webhooks and incident containment. Those instructions do not describe the phishing-simulation customer workflow reviewed for this content pack."
+  },
+  "navigation": {
+    "_status": "PROPOSAL - source does not give an exact menu; it says update navigation/footer and recommends the label \"Platform or Features\" for /services. Needs your approval.",
+    "header": [
+      {
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "label": "Platform",
+        "href": "/services"
+      },
+      {
+        "label": "How It Works",
+        "href": "/how-it-works"
+      },
+      {
+        "label": "Solutions",
+        "href": "/solutions"
+      },
+      {
+        "label": "About Us",
+        "href": "/about"
+      },
+      {
+        "label": "Resources",
+        "href": "/blog"
+      },
+      {
+        "label": "Docs",
+        "href": "/docs"
+      },
+      {
+        "label": "Pricing",
+        "href": "/subscription"
+      },
+      {
+        "label": "Contact Us",
+        "href": "/contact"
+      }
+    ],
+    "cta": {
+      "login": {
+        "label": "Sign In",
+        "href": "/login"
+      },
+      "register": {
+        "label": "Create an Account",
+        "href": "/registration"
+      }
+    },
+    "_notes": [
+      "Source global CTAs: Create an Account / Explore the Platform / Request a Product Walkthrough / Sign In.",
+      "/resources page is created, but the Resources nav item points at /blog until you decide whether /resources replaces /blog.",
+      "Do not change existing hrefs that other code depends on without checking the nav module."
+    ]
+  },
+  "seo": [
+    {
+      "route": "/",
+      "slug": "home",
+      "title": "Phause | Phishing Simulation & Security Awareness",
+      "description": "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with Phause campaign management, reporting and training tools."
+    },
+    {
+      "route": "/services",
+      "slug": "services",
+      "title": "Phause Platform | Phishing Campaigns, Reporting & Awareness",
+      "description": "Explore Phause features for employee management, phishing email templates, campaign planning, interaction tracking, reports, risk insights and training administration."
+    },
+    {
+      "route": "/how-it-works",
+      "slug": "how-it-works",
+      "title": "How Phause Works | From Phishing Simulation to Awareness",
+      "description": "See how Phause helps your team prepare employees, build phishing simulations, configure campaigns, review interactions and plan follow-up awareness training."
+    },
+    {
+      "route": "/solutions",
+      "slug": "solutions",
+      "title": "Phause Use Cases | Phishing Awareness for Modern Teams",
+      "description": "See how security leaders, IT administrators, awareness managers and growing organisations use Phause to plan simulations, review engagement and organise follow-up learning."
+    },
+    {
+      "route": "/about",
+      "slug": "about",
+      "title": "About Phause | Building Better Phishing Awareness",
+      "description": "Learn about Phause and our focus on helping organisations practise phishing awareness, understand simulation results and organise meaningful follow-up learning."
+    },
+    {
+      "route": "/subscription",
+      "slug": "subscription",
+      "title": "Phause Pricing | Plans for Phishing Awareness Programmes",
+      "description": "Explore Phause subscription options and compare the campaign, employee and reporting capacity available for your organisation."
+    },
+    {
+      "route": "/resources",
+      "slug": "resources",
+      "title": "Phause Resources | Phishing Awareness Guides & Insights",
+      "description": "Explore practical resources on phishing simulations, responsible campaign planning, employee awareness, reporting and follow-up training."
+    },
+    {
+      "route": "/faq",
+      "slug": "faq",
+      "title": "Phause FAQs | Phishing Simulation & Awareness",
+      "description": "Get answers about Phause accounts, employee eligibility, phishing templates, campaigns, tracking, reporting, risk insights, training and responsible use."
+    },
+    {
+      "route": "/contact",
+      "slug": "contact",
+      "title": "Contact Phause | Ask About Phishing Simulation",
+      "description": "Contact the Phause team to ask about the platform, request a product walkthrough or discuss your organisation's phishing-awareness programme."
+    },
+    {
+      "route": "/security-policy",
+      "slug": "security-policy",
+      "title": "Phause Security & Trust | Responsible Platform Operations",
+      "description": "Learn how Phause approaches responsible phishing simulations, access to programme information and clear customer guidance."
+    },
+    {
+      "route": "/privacy-policy",
+      "slug": "privacy-policy",
+      "title": "Phause Privacy Policy",
+      "description": "Read how Phause collects, uses, stores and protects personal information when customers use the website and platform."
+    },
+    {
+      "route": "/cookie-policy",
+      "slug": "cookie-policy",
+      "title": "Phause Cookie Policy",
+      "description": "Learn which cookies and similar technologies Phause uses and how website visitors can manage their preferences."
+    },
+    {
+      "route": "/terms-of-service",
+      "slug": "terms-of-service",
+      "title": "Phause Terms of Service",
+      "description": "Review the terms that govern access to and use of the Phause website and phishing simulation platform."
+    },
+    {
+      "route": "/responsible-disclosure",
+      "slug": "responsible-disclosure",
+      "title": "Phause Responsible Disclosure Policy",
+      "description": "Learn how to report a potential security issue affecting Phause in a responsible and coordinated way."
+    },
+    {
+      "route": "/docs",
+      "slug": "docs",
+      "title": "Phause Documentation | Customer Guides & Help",
+      "description": "Learn how to set up your Phause organisation, manage employees and templates, configure campaigns, interpret reports and administer training."
+    },
+    {
+      "route": "/blog",
+      "slug": "blog",
+      "title": "Phause Resources | Phishing Awareness Guides & Insights",
+      "description": "Explore practical resources on phishing simulations, responsible campaign planning, employee awareness, reporting and follow-up training.",
+      "_derived": "Resources SEO reused for /blog if /blog stays the resources hub."
+    }
+  ],
+  "imageBriefs": [
+    {
+      "section": "Home hero",
+      "recommendedVisual": "Product dashboard screenshot or polished interface composition",
+      "altText": "Phause dashboard showing phishing campaign management and awareness reporting"
+    },
+    {
+      "section": "Home challenge",
+      "recommendedVisual": "Team reviewing a suspicious email in a security-awareness session",
+      "altText": "Security team discussing how to recognise a suspicious email"
+    },
+    {
+      "section": "Platform employee feature",
+      "recommendedVisual": "Employee directory UI with dummy records",
+      "altText": "Phause employee directory showing employee records and department organisation"
+    },
+    {
+      "section": "Templates feature",
+      "recommendedVisual": "Template editor and message preview",
+      "altText": "Phause phishing email template editor with message preview"
+    },
+    {
+      "section": "Campaign feature",
+      "recommendedVisual": "Campaign setup screen",
+      "altText": "Phause campaign setup screen showing target audience and schedule"
+    },
+    {
+      "section": "Tracking feature",
+      "recommendedVisual": "Tracking events table with masked data",
+      "altText": "Phause campaign tracking view showing interaction events and timestamps"
+    },
+    {
+      "section": "Reports feature",
+      "recommendedVisual": "Report page with demo data labelled as sample",
+      "altText": "Phause campaign report showing engagement summary and trend information"
+    },
+    {
+      "section": "Risk insights feature",
+      "recommendedVisual": "Risk trend and department chart",
+      "altText": "Phause risk insights dashboard showing awareness trends by department"
+    },
+    {
+      "section": "Training feature",
+      "recommendedVisual": "Training module and enrolment interface",
+      "altText": "Phause training administration screen showing learning modules and completion records"
+    },
+    {
+      "section": "How it works",
+      "recommendedVisual": "Five-step process diagram",
+      "altText": "Five stages of a phishing-awareness programme in Phause"
+    },
+    {
+      "section": "About",
+      "recommendedVisual": "Real team/product working image, only if approved",
+      "altText": "Phause team working on security-awareness programme development"
+    },
+    {
+      "section": "Contact",
+      "recommendedVisual": "Calm product/support visual; do not show fake offices",
+      "altText": "Phause contact page for product enquiries"
+    }
+  ],
+  "editorial": {
+    "audience": [
+      "CISOs and information-security leaders who need a repeatable awareness programme.",
+      "Security-awareness managers who plan simulations and follow-up learning.",
+      "IT administrators who manage employee records, templates and campaign operations.",
+      "Risk, compliance and governance stakeholders who need organised programme evidence.",
+      "Small and mid-sized organisations that want a structured starting point for phishing awareness."
+    ],
+    "brandVoice": [
+      "Confident, not alarmist: explain risks without using fear or exaggerated claims.",
+      "Practical, not abstract: show what the customer can do inside the product.",
+      "Respectful of employees: discuss learning opportunities, not blame or shame.",
+      "Specific, not inflated: do not use unsupported percentages, response-time claims or certification language.",
+      "Professional and approachable: use plain English and explain technical terms briefly."
+    ],
+    "preferredAndAvoidedWords": [
+      "Use: phishing simulation, security awareness, employee readiness, campaign, authorised exercise, engagement signal, campaign report, follow-up training, programme visibility, risk indicator, responsible simulation.",
+      "Avoid: bulletproof, zero risk, guaranteed prevention, instant threat neutralisation, AI-powered security engine, 24/7 SOC, endpoint protection, cloud firewall, breach-proof, 100% safe."
+    ],
+    "visualDirection": "Use a premium B2B SaaS aesthetic that is consistent with the existing dark navy and cyan/teal Phause brand. Product imagery should be the centre of the visual story. Use authentic screen captures from the current product, with synthetic sample data and no employee personal information.",
+    "imageRequirements": [
+      "Hero: 16:9 or wide landscape, ideally 1600 × 900 px or larger.",
+      "Feature cards: consistent 4:3 or 3:2 crops, ideally 1200 px wide.",
+      "Blog thumbnails: one consistent aspect ratio, ideally 1200 × 675 px.",
+      "Use WebP or optimised AVIF where the CMS supports it.",
+      "Keep critical UI labels legible at the rendered size.",
+      "Do not embed real employee names, email addresses, IP addresses or campaign tokens in screenshots.",
+      "Do not use stock photographs that imply a real Phause office, SOC floor or customer organisation.",
+      "Use captions only when they add context."
+    ],
+    "seoGuidance": [
+      "One clear H1 per page.",
+      "Use a concise, unique SEO title and description for every route.",
+      "Keep the primary keyword natural; do not repeat it unnaturally.",
+      "Use descriptive image alt text that explains the image's purpose. Do not stuff keywords.",
+      "Keep URL slugs stable and lowercase.",
+      "Use canonical URLs on the production domain once phause.com is live.",
+      "Ensure internal links point to actual routes.",
+      "Submit the final sitemap after the routes and canonical domain are confirmed."
+    ],
+    "trustPagesBrief": "These pages are important to a production SaaS website, but they should not be filled with guessed policy statements. The following copy gives you a professional page structure and carefully worded introductory text. Complete each marked company/legal field using approved information before publishing. Have the final Privacy Policy, Terms and Cookie Policy reviewed by qualified counsel for the jurisdictions in which Phause operates."
+  },
+  "doNotPublish": {
+    "unverifiedClaims": [
+      "Customer logos, testimonials, case studies or user counts.",
+      "Security certifications, audit claims or regulatory compliance guarantees.",
+      "Uptime, response-time or guaranteed support commitments.",
+      "Office locations, phone numbers, social profiles or named staff details.",
+      "Exact plan prices, trial lengths, refund promises or discounts.",
+      "Integration logos or partner names not verified in the current product."
+    ]
+  }
+}

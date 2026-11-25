@@ -1,6 +1,7 @@
 import { PrismaClient, Role, UserStatus } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { defaultFooterSeed, defaultNavigationSeed, homeHeroSeed, liveSiteDefaults } from "../src/features/cms/seed-defaults";
+import { applyPhauseContentPack } from "./phause-content-seed";
 
 const defaultFaqs = [
 	{
@@ -298,6 +299,7 @@ async function main() {
 	await ensureBlogPosts();
 	await ensureBootstrapAdmin();
 	await ensureCmsDefaults();
+	await applyPhauseContentPack(prisma);
 }
 
 main()
