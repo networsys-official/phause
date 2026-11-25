@@ -198,11 +198,11 @@ function TrustStrip({ items: cmsItems }: { items?: Array<Record<string, unknown>
         trend: TrendingUp,
     };
     const fallbackItems = [
-        { icon: BadgeCheck, label: "SOC 2 Type II Certified" },
-        { icon: Lock, label: "Zero-Trust Architecture" },
-        { icon: Globe, label: "40+ Countries Served" },
-        { icon: Headset, label: "24/7 Human Support" },
-        { icon: TrendingUp, label: "99.98% Uptime SLA" },
+        { icon: BadgeCheck, label: "Authorised phishing simulations" },
+        { icon: Lock, label: "Role-based programme access" },
+        { icon: Globe, label: "Organisation-wide employee management" },
+        { icon: Headset, label: "Product guidance and account support" },
+        { icon: TrendingUp, label: "Campaign reporting and follow-up learning" },
     ];
     const items = Array.isArray(cmsItems) && cmsItems.length > 0
         ? cmsItems
@@ -916,8 +916,7 @@ function RequestDemo() {
 function FAQ({ items: cmsItems }: { items?: Array<Record<string, unknown>> }) {
     const fallbackFaqs = [
         { q: "Can I switch plans after subscribing?", a: "Absolutely. Upgrades take effect instantly and are prorated to the day. Downgrades apply at the start of your next billing cycle." },
-        { q: "What happens after my 14-day trial ends?", a: "We ask for a payment method. If you do not add one, your account can gracefully downgrade to the free tier." },
-        { q: "Is there a minimum contract length?", a: "Monthly plans are month-to-month with zero lock-in. Yearly plans are paid upfront with a discount." },
+        { q: "How do plan changes take effect?", a: "Plan changes follow the billing and subscription rules displayed in your account. Review the current plan terms before confirming a change." },
     ];
     const faqs = Array.isArray(cmsItems) && cmsItems.length > 0
         ? cmsItems
@@ -1006,20 +1005,11 @@ function GuaranteeBanner() {
                         </motion.div>
                         <div className="md:col-span-2 text-center md:text-left">
                             <h3 className="text-2xl md:text-3xl font-extrabold mb-3">
-                                The Phause <span className="text-gradient">60-Day Pledge</span>
+                                Plan for a repeatable programme
                             </h3>
                             <p className="text-slate-400 leading-relaxed mb-5">
-                                If we don&apos;t detect a live attack simulation that your previous vendor
-                                caught, or if any critical alert slips past our SOC in your first 60
-                                days — your first year is free. In writing. In the contract.
+                                Review the employee and campaign limits, reporting options and current plan terms shown in your account before choosing a subscription.
                             </p>
-                            <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                                {["Contractually Guaranteed", "No Fine Print", "Zero Questions Asked"].map((t) => (
-                                    <span key={t} className="px-4 py-1.5 rounded-full text-xs font-bold bg-phause-cyan/10 text-phause-cyan border border-phause-cyan/25">
-                                        {t}
-                                    </span>
-                                ))}
-                            </div>
                         </div>
                     </div>
                 </motion.div>
@@ -1030,9 +1020,9 @@ function GuaranteeBanner() {
 
 /* ══════════════════ FINAL CTA ══════════════════ */
 function FinalCTA({ cta }: { cta?: Record<string, unknown> }) {
-    const heading = String(cta?.heading ?? "Still unsure? Talk to a human.");
-    const description = String(cta?.description ?? "Our solutions engineers will map your environment to the right tier in a free 30-minute call.");
-    const buttonText = String(cta?.buttonText ?? "Book a Free Consultation");
+    const heading = String(cta?.heading ?? "Need help choosing?");
+    const description = String(cta?.description ?? "Share your expected team size, campaign frequency and reporting needs with the Phause team.");
+    const buttonText = String(cta?.buttonText ?? "Contact the Team");
     const buttonLink = String(cta?.buttonLink ?? "/contact");
 
     return (

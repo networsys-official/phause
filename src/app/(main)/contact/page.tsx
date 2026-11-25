@@ -332,6 +332,8 @@ function EnquiryForm() {
         icon: iconMap[field.key as keyof typeof iconMap] ?? User,
     }));
 
+    const contactCopy = (contactBlocks.find((block) => String(block.type ?? "").toLowerCase() === "form")?.props ?? {}) as Record<string, unknown>;
+
     return (
         <section className="relative py-28 overflow-hidden">
             <div className="absolute top-20 left-1/4 w-[500px] h-[500px] rounded-full bg-phause-cyan/8 blur-[150px]" />
@@ -339,7 +341,7 @@ function EnquiryForm() {
                 <SectionHeading
                     tag="Get In Touch"
                     title={<>We reply fast. <span className="text-gradient">Really fast.</span></>}
-                    subtitle="Fill out the enquiry form and a dedicated security consultant will reach out within 2 business hours."
+                    subtitle={String(contactCopy.intro ?? "Fill out the enquiry form and a dedicated security consultant will reach out within 2 business hours.")}
                 />
 
                 <div className="grid lg:grid-cols-5 gap-10 items-stretch">
@@ -404,8 +406,7 @@ function EnquiryForm() {
                                         </motion.div>
                                         <h3 className="text-2xl font-extrabold mb-3">Enquiry Received!</h3>
                                         <p className="text-slate-400 max-w-sm mb-8">
-                                            Thanks, {form.name.split(" ")[0]}. A security consultant will
-                                            contact you at <span className="text-phause-cyan">{form.email}</span> within 2 business hours.
+                                            {String(contactCopy.successMessage ?? "Thank you. Your enquiry has been submitted.")}
                                         </p>
                                         <motion.button
                                             whileHover={{ scale: 1.05 }}
@@ -429,7 +430,7 @@ function EnquiryForm() {
                                     >
                                         <h3 className="text-2xl font-extrabold mb-3">Unable to send enquiry</h3>
                                         <p className="text-slate-400 max-w-sm mb-8">
-                                            Your enquiry was not saved. Please try again.
+                                            {String(contactCopy.errorMessage ?? "We could not submit your enquiry just now. Please review the fields and try again.")}
                                         </p>
                                         <motion.button
                                             type="button"
@@ -549,14 +550,14 @@ function EnquiryForm() {
                                                 </>
                                             ) : (
                                                 <>
-                                                    Send Enquiry <Send className="w-5 h-5" />
+                                                    {String(contactCopy.submitButton ?? "Send Enquiry")} <Send className="w-5 h-5" />
                                                 </>
                                             )}
                                         </motion.button>
 
                                         <p className="text-xs text-slate-500 text-center flex items-center justify-center gap-1.5">
                                             <Sparkles className="w-3.5 h-3.5 text-phause-cyan/60" />
-                                            Your message is transmitted over TLS 1.3 and never shared with third parties.
+                                            {String(contactCopy.privacyNote ?? "Please do not include passwords or sensitive employee data in this form.")}
                                         </p>
                                     </motion.form>
                                 )}

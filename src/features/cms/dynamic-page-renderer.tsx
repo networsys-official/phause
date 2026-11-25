@@ -1,6 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { DynamicForm } from "@/components/cms/DynamicForm";
+import { parsePublicFormFields } from "@/features/cms/public-form";
+import { prisma } from "@/infrastructure/database/prisma";
+
 export type DynamicCmsBlock = {
   id?: string;
   type: string;
@@ -73,7 +77,12 @@ function renderFeatureList(block: DynamicCmsBlock) {
           <article key={`${block.id}-${index}`} className="rounded-2xl border border-white/10 bg-slate-900/80 p-6">
             <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-300">{index + 1}</div>
             <h3 className="mb-2 text-xl font-bold text-white">{getString(entry.title, "Feature")}</h3>
-            <p className="text-slate-300">{getString(entry.description, "")}</p>
+            <p className="text-slate-300">{getString(entry.description, getString(entry.headline, ""))}</p>
+            {getString(entry.whyItMatters) ? <p className="mt-3 text-sm text-cyan-200"><strong>Why it matters:</strong> {getString(entry.whyItMatters)}</p> : null}
+            {getString(entry.interpretationNote) ? <p className="mt-3 text-sm text-amber-200">{getString(entry.interpretationNote)}</p> : null}
+            {getString(entry.outcome) ? <p className="mt-3 text-sm text-emerald-200"><strong>Outcome:</strong> {getString(entry.outcome)}</p> : null}
+            {Array.isArray(entry.checklist) ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-300">{entry.checklist.map((item, itemIndex) => <li key={itemIndex}>{String(item)}</li>)}</ul> : null}
+            {Array.isArray(entry.workflows) ? <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-300">{entry.workflows.map((item, itemIndex) => <li key={itemIndex}>{String(item)}</li>)}</ul> : null}
           </article>
         );
       })}
@@ -240,31 +249,33 @@ function renderContactBlock(block: DynamicCmsBlock) {
   );
 }
 
-function renderFormBlock(block: DynamicCmsBlock) {
+export function renderFormBlock(block: DynamicCmsBlock, publishedForms: ReadonlyMap<string, { name: string; fields: unknown }>) {
+  const formSlug = getString(block.props.formSlug);
+  if (formSlug) {
+    const form = publishedForms.get(formSlug);
+    if (!form) return null;
+    try {
+      return (
+        <section key={block.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-8">
+          <DynamicForm slug={formSlug} name={form.name} fields={parsePublicFormFields(form.fields)} />
+        </section>
+      );
+    } catch {
+      return null;
+    }
+  }
+
   const fields = Array.isArray(block.props.fields) ? block.props.fields : [];
-  return (
-    <section key={block.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-8">
-      <h2 className="mb-4 text-2xl font-bold text-white">{getString(block.props.title, "Form")}</h2>
-      <form className="grid gap-4 md:grid-cols-2">
-        {fields.map((field, index) => {
-          const entry = field as Record<string, unknown>;
-          return (
-            <label key={`${block.id}-${index}`} className="block text-sm text-slate-300">
-              <span className="mb-2 block">{getString(entry.label, "Field")}</span>
-              <input
-                type={getString(entry.type, "text")}
-                placeholder={getString(entry.placeholder, "")}
-                className="w-full rounded-2xl border border-white/10 bg-slate-950/70 px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-cyan-400"
-              />
-            </label>
-          );
-        })}
-        <div className="md:col-span-2">
-          <button type="submit" className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950">Submit</button>
-        </div>
-      </form>
-    </section>
-  );
+  try {
+    return (
+      <section key={block.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-8">
+        <h2 className="mb-4 text-2xl font-bold text-white">{getString(block.props.title, "Form")}</h2>
+        <DynamicForm slug={getString(block.props.slug, getString(block.props.formSlug, ""))} name={getString(block.props.title, "Form")} fields={parsePublicFormFields(fields)} />
+      </section>
+    );
+  } catch {
+    return null;
+  }
 }
 
 function renderRichTextBlock(block: DynamicCmsBlock) {
@@ -283,15 +294,47 @@ function renderCtaBlock(block: DynamicCmsBlock) {
   );
 }
 
-export function DynamicPageRenderer({ page }: { page: DynamicCmsPage }) {
+function renderCustomSection(block: DynamicCmsBlock) {
+  const props = block.props;
+  const description = Array.isArray(props.description) ? props.description : [getString(props.description)];
+  const items = Array.isArray(props.items) ? props.items : [];
+  return (
+    <section key={block.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-8 md:p-12">
+      {getString(props.eyebrow) ? <p className="mb-3 text-xs uppercase tracking-[0.28em] text-cyan-300">{getString(props.eyebrow)}</p> : null}
+      {getString(props.title) ? <h2 className="text-3xl font-black text-white">{getString(props.title)}</h2> : null}
+      <div className="mt-4 space-y-3">{description.filter(Boolean).map((text, index) => <p key={index} className="max-w-3xl text-slate-300">{String(text)}</p>)}</div>
+      {items.length ? <div className="mt-6 grid gap-4 md:grid-cols-3">{items.map((item, index) => { const entry = item as Record<string, unknown>; return <article key={index} className="rounded-2xl border border-cyan-500/20 bg-slate-950/60 p-5"><h3 className="font-bold text-white">{getString(entry.title, `Item ${index + 1}`)}</h3><p className="mt-2 text-sm text-slate-300">{getString(entry.description)}</p></article>; })}</div> : null}
+      {getString(props.buttonText) ? <Link href={getString(props.buttonLink, getString(props.href, "/contact"))} className="mt-6 inline-flex rounded-full bg-cyan-400 px-5 py-3 font-semibold text-slate-950">{getString(props.buttonText)}</Link> : null}
+    </section>
+  );
+}
+
+export async function DynamicPageRenderer({ page }: { page: DynamicCmsPage }) {
   const blocks = [...(page.blocks ?? [])].sort((a, b) => a.order - b.order);
+  const formSlugs = [...new Set(blocks
+    .filter((block) => block.type.toLowerCase() === "form" && typeof block.props.formSlug === "string")
+    .map((block) => String(block.props.formSlug).trim())
+    .filter(Boolean))];
+
+  const publishedForms = new Map<string, { name: string; fields: unknown }>();
+  if (formSlugs.length) {
+    try {
+      const forms = await prisma.form.findMany({
+        where: { slug: { in: formSlugs }, status: "PUBLISHED", deletedAt: null },
+      });
+      for (const form of forms) publishedForms.set(form.slug, { name: form.name, fields: form.fields });
+    } catch {
+      // Missing database or form data: fail closed and render no formSlug blocks.
+    }
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-6 pb-20 pt-28 text-white">
       {blocks.map((block) => {
         const blockKey = block.id ?? `${page.slug}-${block.type}-${block.order}`;
+        const blockType = block.type.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-        switch (block.type) {
+        switch (blockType) {
           case "hero":
             return <div key={blockKey}>{renderTitleBlock(block)}</div>;
           case "features":
@@ -313,12 +356,14 @@ export function DynamicPageRenderer({ page }: { page: DynamicCmsPage }) {
           case "contact":
             return <div key={blockKey}>{renderContactBlock(block)}</div>;
           case "form":
-            return <div key={blockKey}>{renderFormBlock(block)}</div>;
-          case "richText":
+            return <div key={blockKey}>{renderFormBlock(block, publishedForms)}</div>;
+          case "richtext":
             return <div key={blockKey}>{renderRichTextBlock(block)}</div>;
           case "cta":
-          case "ctaButton":
+          case "ctabutton":
             return <div key={blockKey}>{renderCtaBlock(block)}</div>;
+          case "customsection":
+            return <div key={blockKey}>{renderCustomSection(block)}</div>;
           default:
             return <div key={blockKey}>{renderTitleBlock(block)}</div>;
         }

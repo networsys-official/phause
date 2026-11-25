@@ -328,7 +328,7 @@ function WhatWeDo({ items = [
   {
     icon: Award,
     title: "Compliance & Governance Automation",
-    desc: "We automate evidence collection and control mapping for SOC 2, ISO 27001, HIPAA, and GDPR requirements.",
+    desc: "Our content and programme guidance are designed around responsible phishing-awareness operations; publish certifications only after verification.",
   },
 ] }: { items?: Array<{ icon: React.ElementType; title: string; desc: string }> }) {
 
@@ -744,7 +744,7 @@ function CTABanner() {
               The next chapter could be <span className="text-gradient">yours</span>
             </h2>
             <p className="text-slate-400 text-lg max-w-xl mx-auto mb-8">
-              Join 500+ organizations who trust Phause with their most valuable asset — trust itself.
+              Explore how Phause can support a more consistent, responsible phishing-awareness programme.
             </p>
             <motion.a
               href="/#register"
@@ -752,7 +752,7 @@ function CTABanner() {
               whileTap={{ scale: 0.95 }}
               className="inline-flex items-center gap-2 px-10 py-4 rounded-full bg-gradient-to-r from-phause-cyan to-phause-teal text-phause-dark font-bold text-lg shadow-[0_0_50px_rgba(0,216,201,0.5)]"
             >
-              Start Free Trial <ArrowRight className="w-5 h-5" />
+              Create an Account <ArrowRight className="w-5 h-5" />
             </motion.a>
           </div>
         </motion.div>

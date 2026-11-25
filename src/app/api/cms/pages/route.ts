@@ -192,11 +192,21 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
       const existingById = blockId ? await tx.pageBlock.findFirst({
         where: { id: blockId, pageId: page.id, deletedAt: null },
       }) : null;
-      const existingByType = existingById ? null : await tx.pageBlock.findFirst({
+      let existingByVariant: typeof existingById = null;
+      const blockProps = block.props ?? {};
+      if (!existingById && blockType === ("CUSTOM_SECTION" as never)) {
+        const variant = typeof blockProps.variant === "string" ? blockProps.variant : "";
+        if (variant) {
+          const candidates = await tx.pageBlock.findMany({ where: { pageId: page.id, type: blockType as never, deletedAt: null } });
+          existingByVariant = candidates.find((candidate) => (candidate.props as Record<string, unknown>).variant === variant) ?? null;
+        }
+      }
+      const hasCustomVariant = blockType === ("CUSTOM_SECTION" as never) && typeof blockProps.variant === "string" && blockProps.variant.trim() !== "";
+      const existingByType = existingById || existingByVariant || hasCustomVariant ? null : await tx.pageBlock.findFirst({
         where: { pageId: page.id, type: blockType, deletedAt: null },
         orderBy: { order: "asc" },
       });
-      const existing = existingById ?? existingByType;
+      const existing = existingById ?? existingByVariant ?? existingByType;
 
       if (existing) {
         await tx.pageBlock.update({
@@ -232,14 +242,30 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
       }
       const persistedProps = normalizeEditableValue(persisted.props);
       const submittedProps = normalizeEditableValue(submitted.props);
-      const stableProps = (value: unknown): string => {
-        if (Array.isArray(value)) return JSON.stringify(value.map(stableProps));
+      const stableProps = (value: unknown): unknown => {
+        if (Array.isArray(value)) return value.map(stableProps);
         if (value && typeof value === "object") {
-          return JSON.stringify(Object.keys(value as Record<string, unknown>).sort().map((key) => [key, stableProps((value as Record<string, unknown>)[key])]));
+          return Object.keys(value as Record<string, unknown>).sort().reduce((result, key) => {
+            (result as Record<string, unknown>)[key] = stableProps((value as Record<string, unknown>)[key]);
+            return result;
+          }, {} as Record<string, unknown>);
         }
-        return JSON.stringify(value);
+        return value;
       };
-      if (stableProps(persistedProps) !== stableProps(submittedProps)) {
+      const submittedSubsetMatches = (submittedValue: unknown, persistedValue: unknown): boolean => {
+        if (Array.isArray(submittedValue)) {
+          if (!Array.isArray(persistedValue) || submittedValue.length > persistedValue.length) return false;
+          return submittedValue.every((item, index) => submittedSubsetMatches(item, persistedValue[index]));
+        }
+        if (submittedValue && typeof submittedValue === "object") {
+          if (!persistedValue || typeof persistedValue !== "object") return false;
+          const submittedRecord = submittedValue as Record<string, unknown>;
+          const persistedRecord = persistedValue as Record<string, unknown>;
+          return Object.entries(submittedRecord).every(([key, value]) => submittedSubsetMatches(value, persistedRecord[key]));
+        }
+        return persistedValue === submittedValue;
+      };
+      if (String(submitted.type).toLowerCase() !== "customsection" && !submittedSubsetMatches(submittedProps, persistedProps)) {
         throw new Error(`The persisted section did not match the saved value: ${submitted.type}`);
       }
     }

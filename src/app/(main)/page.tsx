@@ -72,7 +72,7 @@ export function getDefaultHomeReasons() {
   return [
     { icon: Zap, title: "Lightning-Fast Response", desc: "Sub-50ms automated threat neutralization — the fastest in the industry." },
     { icon: Cpu, title: "AI-Powered Engine", desc: "Machine learning models trained on 50B+ security events, updated hourly." },
-    { icon: Users, title: "Human Experts 24/7", desc: "Elite security analysts watching over your infrastructure around the clock." },
+    { icon: Users, title: "Human Security Expertise", desc: "Security teams and specialists help organisations interpret findings and plan follow-up action." },
     { icon: Code2, title: "Zero-Downtime Deployment", desc: "Deploy protection without touching a single line of your existing code." },
   ];
 }
@@ -92,7 +92,6 @@ export function getDefaultHomeOffers() {
   return [
     { title: "Free Security Assessment", desc: "A 360° audit of your infrastructure — completely free, no strings attached." },
     { title: "Dedicated Security Team", desc: "Your own squad of specialists assigned exclusively to your account." },
-    { title: "Compliance Made Easy", desc: "GDPR, HIPAA, SOC 2 and ISO — we handle the paperwork, you stay compliant." },
     { title: "Incident Response SLA", desc: "Guaranteed response to critical incidents in under 15 minutes." },
     { title: "Employee Training", desc: "Phishing simulations and security workshops for your entire team." },
     { title: "Insurance Backed", desc: "$10M cyber insurance coverage included with every enterprise plan." },
@@ -509,10 +508,10 @@ function WhyChooseUs({ reasons }: { reasons: Array<{ icon: typeof Zap; title: st
         {/* Animated counters */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20">
           {[
-            { val: 500, suffix: "+", label: "Happy Clients" },
-            { val: 12, suffix: "M+", label: "Threats Blocked" },
-            { val: 99, suffix: "%", label: "Uptime SLA" },
-            { val: 8, suffix: "yrs", label: "In Business" },
+            { val: 1, suffix: "", label: "Connected workflow" },
+            { val: 5, suffix: "", label: "Programme stages" },
+            { val: 24, suffix: "", label: "Published FAQs" },
+            { val: 4, suffix: "", label: "Practical guides" },
           ].map((c, i) => (
             <CounterCard key={c.label} {...c} delay={i * 0.1} />
           ))}
@@ -899,15 +898,15 @@ export default function Home() {
 
   const defaults = {
     hero: {
-      eyebrow: "Strengthen. Aware. Defend.",
-      title: "Strengthen. Aware. Defend.",
-      description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
-      ctaPrimary: "Get Protected Now",
-      ctaSecondary: "Explore Platform",
+      eyebrow: "Phishing simulation & security awareness",
+      title: "Turn phishing awareness into measurable security readiness.",
+      description: "Phause helps organisations run authorised simulations, understand employee interactions and plan meaningful follow-up learning.",
+      ctaPrimary: "Create an Account",
+      ctaSecondary: "Explore the Platform",
       stats: [
-        { icon: Shield, val: "99.9%", label: "Threat Block Rate" },
-        { icon: Radar, val: "24/7", label: "Active Monitoring" },
-        { icon: Zap, val: "<50ms", label: "Response Time" },
+        { icon: Shield, val: "Authorised", label: "Responsible exercises" },
+        { icon: Radar, val: "Connected", label: "Campaign activity" },
+        { icon: Zap, val: "Practical", label: "Follow-up learning" },
       ],
     },
     about: {

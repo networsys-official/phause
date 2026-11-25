@@ -21,7 +21,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
   const [footer, setFooter] = useState({
     title: "Phause",
     description:
-      "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+      "Phause helps organisations run authorised phishing simulations, understand employee interactions and strengthen security awareness through reporting and follow-up training.",
     copyright: "Strengthen. Aware. Defend.",
     links: FALLBACK_FOOTER_LINKS,
   });

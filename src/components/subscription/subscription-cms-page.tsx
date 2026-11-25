@@ -54,7 +54,7 @@ const fallbackPayload: SubscriptionPayload = {
   page: { title: "Subscription", slug: "subscription", metaTitle: "Phause | Pricing & Plans", metaDescription: "Five tiers. One platform. Zero compromises.", ogImage: null, active: true, sectionOrder: ["hero", "trust", "pricing", "comparison", "faq", "testimonials", "cta"] },
   hero: { badgeText: "Pricing & Plans", badgeIcon: "sparkles", badgeVisible: true, heading: "Security that scales with you", highlightedWord: "scales", subtitle: "Five tiers. One platform. Zero compromises.", backgroundImage: null, ctaPrimaryText: "Choose a plan", ctaPrimaryUrl: "#pricing", ctaSecondaryText: "Talk to us", ctaSecondaryUrl: "/contact", visible: true },
   trustItems: [
-    { id: "fallback-1", icon: "badge", title: "SOC 2 Type II Certified", visible: true },
+    { id: "fallback-1", icon: "badge", title: "Phishing programme reporting", visible: true },
     { id: "fallback-2", icon: "lock", title: "Zero-Trust Architecture", visible: true },
     { id: "fallback-3", icon: "globe", title: "40+ Countries Served", visible: true },
   ],

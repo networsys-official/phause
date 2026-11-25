@@ -330,7 +330,7 @@ const defaultPages = [
             { id: "about-capability-cloud", icon: "cloud", title: "Cloud Security Posture Management", description: "We continuously audit AWS, Azure, and GCP environments against CIS and vendor-specific benchmarks." },
             { id: "about-capability-apps", icon: "code", title: "Application & API Security Testing", description: "We embed security into your software development lifecycle using static and dynamic analysis on every commit." },
             { id: "about-capability-soc", icon: "users", title: "Security Operations Center (SOC) as a Service", description: "Our analysts watch your telemetry around the clock and integrate directly with your existing SIEM and EDR stack." },
-            { id: "about-capability-compliance", icon: "award", title: "Compliance & Governance Automation", description: "We automate evidence collection and control mapping for SOC 2, ISO 27001, HIPAA, and GDPR requirements." },
+            { id: "about-capability-compliance", icon: "award", title: "Responsible Programme Administration", description: "Organise authorised simulations and follow-up learning through a clear, practical programme workflow." },
           ],
         },
       },
@@ -638,7 +638,7 @@ const defaultPages = [
         order: 1,
         props: {
           items: [
-            { icon: "badge", title: "SOC 2 Type II Certified", displayOrder: 0 },
+            { icon: "badge", title: "Phishing programme reporting", displayOrder: 0 },
             { icon: "lock", title: "Zero-Trust Architecture", displayOrder: 1 },
             { icon: "globe", title: "40+ Countries Served", displayOrder: 2 },
             { icon: "headset", title: "24/7 Human Support", displayOrder: 3 },

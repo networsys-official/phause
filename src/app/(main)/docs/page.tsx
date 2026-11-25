@@ -37,227 +37,43 @@ type Doc = {
 /* Use `backticks` inside any text to render inline code. */
 const DOCS: Doc[] = [
   {
-    slug: "quick-start",
-    title: "Quick Start",
+    slug: "first-campaign-checklist",
+    title: "Your first Phause campaign: a practical checklist",
     intro:
-      "Welcome to the Phause documentation. This page gets you from a new account to your first detected threat in about ten minutes.",
+      "Set up an authorised campaign, prepare employees, create a template and review the results.",
     blocks: [
-      { type: "h2", id: "what-youll-learn", text: "What you'll learn" },
+      { type: "h2", id: "before-you-begin", text: "Before you begin" },
       {
         type: "list",
         items: [
-          "How to create a workspace and invite your team",
-          "How to install the Phause agent on your first endpoint",
-          "How to read your first alert in the dashboard",
+          "Confirm approval and scope.",
+          "Verify organisation setup and authorisation.",
+          "Add employee records.",
+          "Review eligibility.",
+          "Configure and test email delivery.",
         ],
       },
-      { type: "h2", id: "create-workspace", text: "Step 1: Create a workspace" },
-      {
-        type: "p",
-        text: "Sign in at the Phause console and select `New workspace`. A workspace holds your endpoints, policies and alerts. Most teams use one workspace per environment.",
-      },
-      {
-        type: "note",
-        text: "Your 14-day trial starts when the workspace is created. No payment method is needed until day 15.",
-      },
-      { type: "h2", id: "install-agent", text: "Step 2: Install the agent" },
-      {
-        type: "p",
-        text: "Copy your workspace key from `Settings → Keys`, then run the installer on the endpoint you want to protect.",
-      },
-      {
-        type: "code",
-        lang: "bash",
-        code: "curl -sSL https://get.phause.io/install.sh | sudo PHAUSE_KEY=<your-workspace-key> bash",
-      },
-      { type: "h2", id: "first-alert", text: "Step 3: Review your first alert" },
-      {
-        type: "p",
-        text: "Within a minute the endpoint appears under `Endpoints`. Open `Alerts` to see anything the agent has flagged, along with the recommended response.",
-      },
-      {
-        type: "deepdive",
-        title: "Prefer an automated rollout?",
-        body: "You can deploy the agent with your existing tooling. See the Kubernetes and CI/CD guides in the sidebar for ready-made manifests and pipeline steps.",
-      },
-    ],
-  },
-  {
-    slug: "install-agent",
-    title: "Install the Phause Agent",
-    intro:
-      "The Phause agent is a lightweight service that reports telemetry from a device, server, container or cloud workload.",
-    blocks: [
-      { type: "h2", id: "requirements", text: "Requirements" },
+      { type: "h2", id: "create-the-template", text: "Create the template" },
       {
         type: "list",
         items: [
-          "Linux (kernel 4.18+), Windows 10/Server 2016+, or macOS 12+",
-          "Outbound HTTPS access to `ingest.phause.io` on port 443",
-          "Administrator or root privileges",
+          "Open Templates.",
+          "Select or create a phishing email template.",
+          "Add subject and message content.",
+          "Choose lure type, category and difficulty.",
+          "Preview and save.",
         ],
       },
-      { type: "h2", id: "linux", text: "Step 1: Install on Linux" },
-      {
-        type: "code",
-        lang: "bash",
-        code: "curl -sSL https://get.phause.io/install.sh | sudo PHAUSE_KEY=<key> bash\nsudo systemctl status phause-agent",
-      },
-      { type: "h2", id: "windows", text: "Step 2: Install on Windows" },
-      {
-        type: "code",
-        lang: "powershell",
-        code: 'iwr https://get.phause.io/install.ps1 -OutFile install.ps1\n.\\install.ps1 -Key "<key>"',
-      },
-      { type: "h2", id: "verify", text: "Step 3: Verify the connection" },
-      {
-        type: "p",
-        text: "The endpoint should show as `Connected` in the console within 60 seconds. If it doesn't, check your firewall rules for the ingest hostname above.",
-      },
-      {
-        type: "deepdive",
-        title: "How endpoints are counted",
-        body: "An endpoint is any device, server, container or cloud workload running the agent. Ephemeral workloads such as CI runners are averaged over the month so burst builds don't inflate your bill.",
-      },
-    ],
-  },
-  {
-    slug: "deploy-kubernetes",
-    title: "Deploy on Kubernetes",
-    intro:
-      "Run the agent as a DaemonSet so every node, and every workload on it, is protected automatically.",
-    blocks: [
-      { type: "h2", id: "add-the-chart", text: "Step 1: Add the Helm chart" },
-      {
-        type: "code",
-        lang: "bash",
-        code: "helm repo add phause https://charts.phause.io\nhelm repo update",
-      },
-      { type: "h2", id: "install-chart", text: "Step 2: Install the chart" },
-      {
-        type: "code",
-        lang: "bash",
-        code: "helm install phause phause/agent \\\n  --namespace phause --create-namespace \\\n  --set workspaceKey=<key>",
-      },
-      { type: "h2", id: "confirm", text: "Step 3: Confirm the rollout" },
-      {
-        type: "p",
-        text: "Run `kubectl -n phause get pods`. You should see one agent pod per node in the `Running` state.",
-      },
-      {
-        type: "note",
-        text: "Store the workspace key in a Kubernetes Secret instead of passing it on the command line in production.",
-      },
-    ],
-  },
-  {
-    slug: "add-to-ci",
-    title: "Add Phause to CI/CD",
-    intro:
-      "Scan every build before it ships. The CLI fails the pipeline when it finds issues above your chosen severity.",
-    blocks: [
-      { type: "h2", id: "install-cli", text: "Step 1: Install the CLI" },
-      { type: "code", lang: "bash", code: "npm install --save-dev @phause/cli" },
-      { type: "h2", id: "add-step", text: "Step 2: Add a pipeline step" },
-      {
-        type: "code",
-        lang: "yaml",
-        code: "- name: Phause scan\n  run: npx phause scan --fail-on high\n  env:\n    PHAUSE_KEY: ${{ secrets.PHAUSE_KEY }}",
-      },
-      {
-        type: "deepdive",
-        title: "Choosing a severity threshold",
-        body: "Start with `--fail-on critical` while your team triages the backlog, then tighten to `high` once the baseline is clean.",
-      },
-    ],
-  },
-  {
-    slug: "configure-policies",
-    title: "Configure Policies",
-    intro:
-      "Policies decide what Phause watches for and how it responds. Start from a template and adjust.",
-    blocks: [
-      { type: "h2", id: "templates", text: "Start from a template" },
-      {
-        type: "p",
-        text: "Go to `Policies → New policy` and pick a template such as `Baseline`, `Strict` or `Compliance`. You can assign a policy to a group of endpoints or to the whole workspace.",
-      },
-      { type: "h2", id: "response-actions", text: "Choose response actions" },
+      { type: "h2", id: "configure-the-campaign", text: "Configure the campaign" },
       {
         type: "list",
         items: [
-          "Alert only: notify your team, take no action",
-          "Isolate: cut the endpoint off from the network",
-          "Terminate: stop the offending process",
+          "Choose the saved template.",
+          "Enter a campaign name.",
+          "Select the target audience.",
+          "Configure delivery timing.",
+          "Review and dispatch or schedule.",
         ],
-      },
-      {
-        type: "note",
-        text: "Test new policies on a small group before applying them everywhere.",
-      },
-    ],
-  },
-  {
-    slug: "connect-siem",
-    title: "Connect Your SIEM",
-    intro:
-      "Forward Phause alerts to the tools your team already uses so nothing lives in a silo.",
-    blocks: [
-      { type: "h2", id: "webhook", text: "Send alerts with a webhook" },
-      {
-        type: "code",
-        lang: "json",
-        code: '{\n  "url": "https://siem.example.com/hooks/phause",\n  "secret": "<shared-secret>",\n  "events": ["alert.created", "alert.resolved"]\n}',
-      },
-      { type: "h2", id: "verify-signature", text: "Verify the signature" },
-      {
-        type: "p",
-        text: "Every request includes an `X-Phause-Signature` header. Compute an HMAC of the raw body with your shared secret and compare it before trusting the payload.",
-      },
-    ],
-  },
-  {
-    slug: "detections-overview",
-    title: "How Detections Work",
-    intro:
-      "Phause combines behavioral analysis with curated threat intelligence to spot attacks early.",
-    blocks: [
-      { type: "h2", id: "signals", text: "What the agent collects" },
-      {
-        type: "list",
-        items: [
-          "Process starts and command lines",
-          "Network connections and DNS queries",
-          "File changes in sensitive locations",
-        ],
-      },
-      { type: "h2", id: "scoring", text: "How alerts are scored" },
-      {
-        type: "p",
-        text: "Each event is scored for severity and confidence. Alerts are grouped into a single incident when they share a process tree or a target.",
-      },
-    ],
-  },
-  {
-    slug: "incident-response",
-    title: "Respond to an Incident",
-    intro:
-      "When an alert fires, work through the same short checklist every time.",
-    blocks: [
-      { type: "h2", id: "triage", text: "Step 1: Triage" },
-      {
-        type: "p",
-        text: "Open the incident and read the timeline. Confirm which endpoints are affected and whether the activity is expected.",
-      },
-      { type: "h2", id: "contain", text: "Step 2: Contain" },
-      {
-        type: "p",
-        text: "Use `Isolate endpoint` to stop lateral movement while you investigate. The agent keeps reporting while isolated.",
-      },
-      { type: "h2", id: "recover", text: "Step 3: Recover" },
-      {
-        type: "p",
-        text: "Remove the threat, restore the endpoint from a known-good state, then release isolation and mark the incident `Resolved`.",
       },
     ],
   },
@@ -274,38 +90,7 @@ type NavSection = { label: string; items: NavItem[] };
 const NAV: NavSection[] = [
   {
     label: "Get started",
-    items: [
-      { kind: "page", slug: "quick-start" },
-      {
-        kind: "group",
-        id: "installation",
-        title: "Installation",
-        slugs: ["install-agent", "deploy-kubernetes", "add-to-ci"],
-      },
-      {
-        kind: "group",
-        id: "setup",
-        title: "Setup",
-        slugs: ["configure-policies", "connect-siem"],
-      },
-    ],
-  },
-  {
-    label: "Learn Phause",
-    items: [
-      {
-        kind: "group",
-        id: "detections",
-        title: "Detections",
-        slugs: ["detections-overview"],
-      },
-      {
-        kind: "group",
-        id: "response",
-        title: "Incident response",
-        slugs: ["incident-response"],
-      },
-    ],
+    items: [{ kind: "page", slug: "first-campaign-checklist" }],
   },
 ];
 
@@ -688,6 +473,7 @@ export default function DocsPage() {
           : null;
         const items = Array.isArray(block?.props?.items) ? block.props.items : [];
         setCmsDocs(items as Array<Record<string, unknown>>);
+        setDocsClosingNote(typeof block?.props?.closingNote === "string" ? block.props.closingNote : "");
       })
       .catch(() => setCmsDocs([]));
   }, []);
@@ -707,6 +493,7 @@ export default function DocsPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [pageCopied, setPageCopied] = useState(false);
   const [activeHeading, setActiveHeading] = useState<string>("");
+  const [docsClosingNote, setDocsClosingNote] = useState("");
 
   const doc = DOC_MAP[active] ?? DOCS[0];
   const loc = findLocation(active);
@@ -811,12 +598,15 @@ export default function DocsPage() {
           <div className="rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-5">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-300">CMS docs</p>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {cmsDocs.map((docItem, index) => (
-                <div key={`${docItem.id ?? docItem.title ?? index}`} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
-                  <div className="font-semibold text-white">{String(docItem.title ?? "Documentation item")}</div>
-                  <div className="mt-2 text-sm text-slate-300">{String(docItem.description ?? docItem.intro ?? "")}</div>
-                </div>
-              ))}
+              {cmsDocs.map((docItem, index) => {
+                const articles = Array.isArray(docItem.articles) ? docItem.articles as Array<Record<string, unknown>> : [];
+                return (
+                  <div key={`${docItem.category ?? docItem.title ?? index}`} className="rounded-xl border border-white/10 bg-slate-950/50 p-4">
+                    <div className="font-semibold text-white">{String(docItem.category ?? docItem.title ?? "Documentation")}</div>
+                    {articles.length ? <ul className="mt-3 space-y-1">{articles.map((article, articleIndex) => <li key={String(article.slug ?? articleIndex)} className="text-sm text-slate-300"><span>{String(article.title ?? "Article")}</span>{article.status === "DRAFT" ? <span className="ml-2 text-xs text-slate-500">Draft</span> : null}</li>)}</ul> : <div className="mt-2 text-sm text-slate-300">{String(docItem.description ?? docItem.intro ?? docItem.title ?? "")}</div>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -1063,6 +853,8 @@ export default function DocsPage() {
         onClose={() => setSearchOpen(false)}
         onSelect={select}
       />
+
+      {docsClosingNote ? <p className="mx-auto max-w-6xl px-6 pb-10 text-center text-sm text-slate-500">{docsClosingNote}</p> : null}
     </section>
   );
 }
