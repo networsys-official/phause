@@ -1,7 +1,12 @@
+import React from "react";
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { buildPage, getBlockProp, normalizeEditableBlockProps, serializeContactDetails, toBlockPayload } from "@/features/cms/page-builder";
+import { renderFormBlock } from "@/features/cms/dynamic-page-renderer";
+
 import { normalizeServiceRecord } from "@/app/api/cms/services/route";
+import { cmsPageCreateUpdateSchema } from "@/features/cms/cms-page-contract";
 
 vi.mock("@/auth", () => ({ auth: async () => ({ user: { role: "ADMIN" } }) }));
 
@@ -182,5 +187,39 @@ describe("page builder", () => {
 
     expect(normalized.image).toBe("data:image/png;base64,abc123");
     expect(normalized.description).toBe("This is a service description.");
+  });
+
+  it("validates published-form blocks while keeping embedded forms valid", () => {
+    expect(cmsPageCreateUpdateSchema.safeParse({
+      title: "Custom",
+      slug: "custom",
+      status: "PUBLISHED",
+      blocks: [{ type: "form", props: { formSlug: "partner-enquiry" } }],
+    }).success).toBe(true);
+
+    expect(cmsPageCreateUpdateSchema.safeParse({
+      title: "Custom",
+      slug: "custom",
+      status: "PUBLISHED",
+      blocks: [{ type: "form", props: { fields: [{ label: "Email" }] } }],
+    }).success).toBe(true);
+
+    expect(cmsPageCreateUpdateSchema.safeParse({
+      title: "Custom",
+      slug: "custom",
+      status: "PUBLISHED",
+      blocks: [{ type: "form", props: { formSlug: "Bad Slug" } }],
+    }).success).toBe(false);
+  });
+
+  it("renders nothing for missing or unpublished formSlug blocks", () => {
+    const missing = renderFormBlock({ id: "form-missing", type: "FORM", order: 0, props: { formSlug: "missing" } }, new Map());
+    expect(render(React.createElement(React.Fragment, null, missing)).container.textContent).toBe("");
+
+    const unpublished = renderFormBlock({ id: "form-draft", type: "form", order: 0, props: { formSlug: "draft-form" } }, new Map([[
+      "draft-form",
+      { name: "Draft", fields: [] },
+    ]]));
+    expect(unpublished).not.toBeNull();
   });
 });

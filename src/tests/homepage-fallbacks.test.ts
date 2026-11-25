@@ -43,7 +43,7 @@ describe("homepage fallback content", () => {
     expect(titles).toEqual([
       "Lightning-Fast Response",
       "AI-Powered Engine",
-      "Human Experts 24/7",
+      "Human Security Expertise",
       "Zero-Downtime Deployment",
     ]);
     expect(new Set(titles).size).toBe(titles.length);
