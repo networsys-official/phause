@@ -72,7 +72,7 @@ const defaultNavigation = {
 const defaultFooter = {
   title: "Phause",
   description:
-    "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+    "Phause helps organisations run authorised phishing simulations, understand employee interactions and strengthen security awareness through reporting and follow-up training.",
   copyright: "Strengthen. Aware. Defend.",
   links: [
     { label: "Home", href: "/", position: 0 },
@@ -115,7 +115,7 @@ const defaultSettings = [
   { slug: "mediaPipelineEnabled", key: "mediaPipelineEnabled", value: "true", status: "PUBLISHED" },
   { slug: "seoSyncEnabled", key: "seoSyncEnabled", value: "true", status: "PUBLISHED" },
   { slug: "supportEmail", key: "supportEmail", value: "hello@phause.com", status: "PUBLISHED" },
-  { slug: "supportPhone", key: "supportPhone", value: "+1 (555) 010-PHAUSE", status: "PUBLISHED" },
+  { slug: "supportPhone", key: "supportPhone", value: "", status: "PUBLISHED" },
   { slug: "logoUrl", key: "logoUrl", value: "/logo/phause-logo.png", status: "PUBLISHED" },
 ] as const;
 
@@ -168,10 +168,10 @@ const defaultPages = [
     title: "Home",
     status: "PUBLISHED",
     seo: {
-      title: "Phause | Strengthen. Aware. Defend.",
+      title: "Phause | Phishing Simulation & Security Awareness",
       description:
-        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
-      keywords: ["cybersecurity", "threat detection", "cloud protection", "phause"],
+        "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
+      keywords: ["phishing simulation", "security awareness", "employee training", "phause"],
       canonical: "https://phause.com/",
     },
     blocks: [
@@ -179,14 +179,14 @@ const defaultPages = [
         type: "hero",
         order: 0,
         props: {
-          eyebrow: "Strengthen. Aware. Defend.",
-          title: "Strengthen. Aware. Defend.",
+          eyebrow: "PHISHING SIMULATION & SECURITY AWARENESS",
+          title: "Turn phishing awareness into measurable security readiness.",
           description:
-            "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
-          ctaPrimary: "Get Protected Now",
-          ctaSecondary: "Explore Platform",
-          ctaPrimaryHref: "/subscription",
-          ctaSecondaryHref: "/about",
+            "Phishing is a people problem as much as a technology problem. Phause helps your organisation run authorised simulations, understand employee interactions and plan useful follow-up learning.",
+          ctaPrimary: "Create an Account",
+          ctaSecondary: "Explore the Platform",
+          ctaPrimaryHref: "/register",
+          ctaSecondaryHref: "/services",
         },
       },
       {
@@ -194,10 +194,10 @@ const defaultPages = [
         order: 1,
         props: {
           items: [
-            { value: "99.9%", label: "Threat Block Rate" },
-            { value: "24/7", label: "Active Monitoring" },
-            { value: "<50ms", label: "Response Time" },
-            { value: "500+", label: "Companies Protected" },
+            { value: "Authorised", label: "Responsible exercises" },
+            { value: "Connected", label: "Campaign Activity" },
+            { value: "Practical", label: "Follow-up learning" },
+            { value: "Structured", label: "Programme workflow" },
           ],
         },
       },
@@ -223,7 +223,7 @@ const defaultPages = [
           items: [
             { id: "home-reason-1", icon: "zap", title: "Lightning-Fast Response", description: "Sub-50ms automated threat neutralization — the fastest in the industry." },
             { id: "home-reason-2", icon: "cpu", title: "AI-Powered Engine", description: "Machine learning models trained on 50B+ security events, updated hourly." },
-            { id: "home-reason-3", icon: "users", title: "Human Experts 24/7", description: "Elite security analysts watching over your infrastructure around the clock." },
+            { id: "home-reason-3", icon: "users", title: "Human Security Expertise", description: "Security teams and specialists help organisations interpret findings and plan follow-up action." },
             { id: "home-reason-4", icon: "code", title: "Zero-Downtime Deployment", description: "Deploy protection without touching a single line of your existing code." },
           ],
         },
@@ -239,8 +239,7 @@ const defaultPages = [
             { id: "home-service-2", icon: "shieldCheck", title: "Security Audits", description: "Deep-dive penetration testing and compliance audits by certified experts." },
             { id: "home-service-3", icon: "cloud", title: "Cloud Protection", description: "Zero-trust security architecture for AWS, Azure, GCP and hybrid clouds." },
             { id: "home-service-4", icon: "server", title: "Infrastructure Defense", description: "Harden your servers, APIs and databases against zero-day exploits." },
-            { id: "home-service-5", icon: "lock", title: "Data Encryption", description: "End-to-end AES-256 encryption with automated key rotation." },
-            { id: "home-service-6", icon: "eye", title: "SIEM Monitoring", description: "Centralized log intelligence with instant anomaly alerting." },
+            { id: "home-service-5", icon: "lock", title: "Data Encryption", description: "End-to-end encryption with automated key rotation." },
           ],
         },
       },
@@ -371,7 +370,7 @@ const defaultPages = [
             { id: "about-timeline-2021", year: "2021", title: "Series A & the AI Breakthrough", icon: "cpu", description: "We raise a $28M Series A and ship Phause Sense, our behavioral ML engine. Detection accuracy jumps 40% while false positives drop by two-thirds." },
             { id: "about-timeline-2022", year: "2022", title: "SOC 2 Type II & Global Expansion", icon: "award", description: "SOC 2 Type II certification achieved with zero exceptions. We cross 300 enterprise clients and expand into APAC with a Singapore data region." },
             { id: "about-timeline-2023", year: "2023", title: "The Compliance Automation Launch", icon: "layers", description: "Phause Comply ships, automating evidence collection for SOC 2, ISO 27001, HIPAA, and PCI DSS. Client audit preparation time drops from months to days." },
-            { id: "about-timeline-2024", year: "2024", title: "Series B & the 24/7 SOC", icon: "eye", description: "A $75M Series B funds the launch of our fully managed SOC-as-a-Service with tiered human analysts in three continents." },
+            { id: "about-timeline-2024", year: "2024", title: "Programme Management Launch", icon: "eye", description: "Phause adds connected programme reporting and follow-up learning workflows for phishing awareness teams." },
             { id: "about-timeline-2025", year: "2025", title: "Zero-Trust Platform Unification", icon: "workflow", description: "We collapse six products into one unified zero-trust platform under a single agent and a single dashboard." },
             { id: "about-timeline-2026", year: "2026", title: "Today — and What's Next", icon: "globe", description: "500+ clients, 40+ countries, 150+ security experts, and 1,250+ projects delivered." },
           ],
@@ -591,17 +590,9 @@ const defaultPages = [
         props: {
           title: "Let's Secure Your Future",
           description:
-            "Whether you're evaluating a platform, planning a migration, or facing an active incident — our team is one message away, around the clock.",
+            "Use the enquiry form to tell the Phause team what you would like to discuss.",
           ctaPrimary: "Send Enquiry",
-          ctaSecondary: "Call Emergency Line",
           ctaPrimaryHref: "/contact",
-          ctaSecondaryHref: "tel:+1-555-010-7428",
-          details: [
-            { label: "Email Us", value: "hello@phause.com\nsupport@phause.com", note: "For demos & partnerships / For existing clients" },
-            { label: "Call Us", value: "+1 (555) 010-PHAUSE (USA)\n+91 80 4719 0100 (India)", note: "24/7 emergency line for active incidents" },
-            { label: "Headquarters", value: "580 California Street, Floor 12\nSan Francisco, CA 94104, USA", note: "Regional offices in New York, Bangalore & Mumbai" },
-            { label: "Working Hours", value: "Mon – Fri: 9:00 AM – 6:00 PM (local)\nSOC & Incident Response: 24/7/365", note: "Global follow-the-sun coverage across 3 continents" },
-          ],
         },
       },
     ],
@@ -641,7 +632,7 @@ const defaultPages = [
             { icon: "badge", title: "Phishing programme reporting", displayOrder: 0 },
             { icon: "lock", title: "Zero-Trust Architecture", displayOrder: 1 },
             { icon: "globe", title: "40+ Countries Served", displayOrder: 2 },
-            { icon: "headset", title: "24/7 Human Support", displayOrder: 3 },
+            { icon: "headset", title: "Product Guidance", displayOrder: 3 },
             { icon: "trend", title: "99.98% Uptime SLA", displayOrder: 4 },
           ],
         },

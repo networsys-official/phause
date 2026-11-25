@@ -18,7 +18,7 @@ import {
   getDefaultHomeReasons,
   getDefaultHomeServices,
   getDefaultHomeSteps,
-} from "../app/(main)/page";
+} from "../features/cms/home-fallbacks";
 import { normalizeEditableSectionItems } from "../components/cms/content-editors";
 
 describe("homepage fallback content", () => {
@@ -60,7 +60,6 @@ describe("homepage fallback content", () => {
       "Cloud Protection",
       "Infrastructure Defense",
       "Data Encryption",
-      "SIEM Monitoring",
     ]);
     expect(new Set(serviceTitles).size).toBe(serviceTitles.length);
     expect(new Set(offerTitles).size).toBe(offerTitles.length);

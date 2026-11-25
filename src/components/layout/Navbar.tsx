@@ -112,7 +112,7 @@ export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "
             </Link>
           </motion.div>
 
-          <div className="hidden items-center gap-8 lg:flex">
+          <div className="hidden min-w-0 items-center gap-2 xl:flex">
             {navLinks.map((link, i) => (
               <motion.div
                 key={`${link.label}-${i}`}
@@ -124,7 +124,7 @@ export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "
               >
                 <Link
                   href={link.href}
-                  className={`group relative text-sm font-medium transition-colors ${isActiveRoute(link.href) ? "text-phause-cyan" : "text-slate-300 hover:text-phause-cyan"}`}
+                  className={`group relative whitespace-nowrap text-xs 2xl:text-sm font-medium transition-colors ${isActiveRoute(link.href) ? "text-phause-cyan" : "text-slate-300 hover:text-phause-cyan"}`}
                 >
                   {link.label}
                   <span className={`absolute -bottom-1 left-0 h-[2px] bg-phause-cyan transition-all duration-300 ${isActiveRoute(link.href) ? "w-full" : "w-0 group-hover:w-full"}`} />
@@ -179,7 +179,7 @@ export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "
 
           <button
             onClick={() => setOpen(!open)}
-            className="p-2 text-phause-cyan lg:hidden"
+            className="p-2 text-phause-cyan xl:hidden"
             aria-label="Toggle menu"
           >
             {open ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
@@ -192,7 +192,7 @@ export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="glass mx-4 mt-3 overflow-hidden rounded-2xl lg:hidden"
+              className="glass mx-4 mt-3 overflow-hidden rounded-2xl"
             >
               <div className="flex flex-col gap-5 p-6">
                 {navLinks.map((link) => (

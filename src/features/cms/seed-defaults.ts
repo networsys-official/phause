@@ -10,10 +10,10 @@ export const siteMetadataSchema = z.object({
 
 export const liveSiteDefaults = siteMetadataSchema.parse({
   title: "Phause | Strengthen. Aware. Defend.",
-  description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+  description: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
   canonical: "https://phause.com",
   ogTitle: "Phause | Strengthen. Aware. Defend.",
-  ogDescription: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+  ogDescription: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
 });
 
 export const homeHeroSeed = {

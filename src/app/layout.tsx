@@ -17,14 +17,14 @@ export async function generateMetadata(): Promise<Metadata> {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://phause.com"),
   title,
   description:
-    "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+    "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
   keywords: [
     "phishing simulation", "security awareness training", "phishing awareness",
     "employee security", "phause", "phishing campaign reporting",
   ],
   openGraph: {
     title,
-    description: "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+    description: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
     url: "https://phause.com",
     siteName: settings.siteName,
     images: ["/logo.png"],

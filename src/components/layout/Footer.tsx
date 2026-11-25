@@ -17,7 +17,7 @@ const SOCIALS = [
   { icon: InstagramIcon, href: "https://www.instagram.com", label: "Instagram" },
 ];
 
-export default function Footer({ initialSupportEmail = "hello@phause.com", initialSupportPhone = "+1 (555) 010-PHAUSE", initialLogoUrl = "/logo/phause-logo.png", initialBrandName = "Phause" }: { initialSupportEmail?: string; initialSupportPhone?: string; initialLogoUrl?: string; initialBrandName?: string } = {}) {
+export default function Footer({ initialSupportEmail = "hello@phause.com", initialSupportPhone = "", initialLogoUrl = "/logo/phause-logo.png", initialBrandName = "Phause" }: { initialSupportEmail?: string; initialSupportPhone?: string; initialLogoUrl?: string; initialBrandName?: string } = {}) {
   const [footer, setFooter] = useState({
     title: "Phause",
     description:
@@ -27,7 +27,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
   });
   const [supportEmail, setSupportEmail] = useState(initialSupportEmail);
   const [supportPhone, setSupportPhone] = useState(initialSupportPhone);
-  const [locationLabel, setLocationLabel] = useState("San Francisco, CA");
+  const [locationLabel, setLocationLabel] = useState("");
   const [logoUrl, setLogoUrl] = useState(initialLogoUrl);
   const currentYear = new Date().getFullYear();
 
@@ -143,8 +143,8 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
             <h4 className="mb-5 text-lg font-bold">Contact</h4>
             <div className="mt-6 space-y-2 text-sm text-slate-400">
               <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-phause-cyan" /> {supportEmail}</p>
-              <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-phause-cyan" /> {supportPhone}</p>
-              <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-phause-cyan" /> {locationLabel}</p>
+              {supportPhone ? <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-phause-cyan" /> {supportPhone}</p> : null}
+              {locationLabel ? <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-phause-cyan" /> {locationLabel}</p> : null}
             </div>
           </div>
         </div>

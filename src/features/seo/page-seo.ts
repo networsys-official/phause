@@ -16,7 +16,7 @@ export function buildSiteSeo(input: PageSeoInput) {
     title: input.title ?? "Phause | Strengthen. Aware. Defend.",
     description:
       input.description ??
-      "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+      "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
     keywords: input.keywords ?? ["cybersecurity", "threat detection", "cloud protection", "phause"],
     canonical,
     robots: "index,follow",
@@ -24,7 +24,7 @@ export function buildSiteSeo(input: PageSeoInput) {
       title: input.title ?? "Phause | Strengthen. Aware. Defend.",
       description:
         input.description ??
-        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+        "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
       image: `${baseUrl}/logo.png`,
     },
     twitter: {
@@ -32,7 +32,7 @@ export function buildSiteSeo(input: PageSeoInput) {
       title: input.title ?? "Phause | Strengthen. Aware. Defend.",
       description:
         input.description ??
-        "Phause delivers enterprise-grade cybersecurity solutions — threat detection, security audits, cloud protection and 24/7 monitoring to keep your business safe.",
+        "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
     },
   };
 }

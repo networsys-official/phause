@@ -1,192 +1,73 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import {
-  ArrowRight,
-  CheckCircle2,
-  ClipboardList,
-  Mail,
-  MousePointerClick,
-  BarChart3,
-  GraduationCap,
-  Users,
-  ShieldCheck,
-  Target,
-} from "lucide-react";
+import { notFound } from "next/navigation";
+import { prisma } from "@/infrastructure/database/prisma";
 
-const steps = [
-  {
-    number: "01",
-    icon: Users,
-    title: "Prepare your people",
-    description:
-      "Create your organisation, add employee records, organise people by department and confirm which employees are eligible for simulations.",
-    detail: "You control the audience. Only employees marked as consented are eligible to receive simulation emails.",
-  },
-  {
-    number: "02",
-    icon: Mail,
-    title: "Choose a simulation",
-    description:
-      "Select an available phishing email template or create a custom template with a subject, HTML content and plain-text alternative.",
-    detail: "Preview the message before using it in a campaign.",
-  },
-  {
-    number: "03",
-    icon: Target,
-    title: "Plan and launch a campaign",
-    description:
-      "Name the campaign, choose all eligible employees, a department segment or a sample percentage, then send immediately or schedule it.",
-    detail: "Review the selected audience and delivery settings before dispatching.",
-  },
-  {
-    number: "04",
-    icon: MousePointerClick,
-    title: "Understand engagement",
-    description:
-      "Review recorded events such as email opens, link clicks, landing-page views, submitted-form events and user-reported messages.",
-    detail: "Tracking signals are indicators of interaction, not a complete measure of an individual's security knowledge.",
-  },
-  {
-    number: "05",
-    icon: BarChart3,
-    title: "Report, coach and improve",
-    description:
-      "Generate campaign reports, inspect employee and department risk indicators, export results and follow up with awareness training.",
-    detail: "Use the findings to plan the next learning activity and compare progress over time.",
-  },
-];
+async function loadPage() {
+  return prisma.page.findFirst({ where: { slug: "how-it-works", status: "PUBLISHED", deletedAt: null }, include: { seo: true, blocks: { where: { deletedAt: null }, orderBy: { order: "asc" } } } });
+}
+export async function generateMetadata(): Promise<Metadata> { const page = await loadPage(); return { title: page?.seo?.title ?? "How It Works", description: page?.seo?.description ?? undefined }; }
 
-const capabilities = [
-  {
-    icon: ClipboardList,
-    title: "Campaign control",
-    description: "Manage templates, targeting, scheduling and campaign status in one workflow.",
-  },
-  {
-    icon: BarChart3,
-    title: "Actionable reporting",
-    description: "Review engagement metrics, campaign reports, risk trends and department-level insights.",
-  },
-  {
-    icon: GraduationCap,
-    title: "Training follow-through",
-    description: "Create learning modules, review enrolments and record completion history.",
-  },
-];
+function cmsText(node: unknown, out: string[] = []): string[] { if (typeof node === "string") { if (node.trim()) out.push(node.trim()); } else if (Array.isArray(node)) node.forEach((item) => cmsText(item, out)); else if (node && typeof node === "object") Object.values(node).forEach((item) => cmsText(item, out)); return out; }
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const page = await loadPage();
+  if (!page) notFound();
+  const blocks = page.blocks.map((block) => ({ type: block.type, props: block.props as Record<string, unknown> }));
+  const compact = (value: string) => value.replace(/[^a-z]/gi, "").toLowerCase();
+  const hero = (blocks.find((block) => compact(block.type) === "hero")?.props ?? {}) as Record<string, unknown>;
+  const features = blocks.flatMap((block) => Array.isArray(block.props.items) ? block.props.items as unknown[] : []);
+  const cta = (blocks.find((block) => compact(block.type) === "cta")?.props ?? {}) as Record<string, unknown>;
+  const value = (item: unknown, fallback = "") => typeof item === "string" ? item : fallback;
   return (
-    <main className="min-h-screen overflow-hidden bg-[#081522] text-white">
-      <section className="relative border-b border-white/10 px-6 pb-20 pt-36 md:pb-28 md:pt-44">
-        <div className="pointer-events-none absolute -left-40 top-10 h-96 w-96 rounded-full bg-cyan-500/10 blur-[130px]" />
-        <div className="pointer-events-none absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-teal-500/10 blur-[130px]" />
-        <div className="relative mx-auto max-w-5xl text-center">
-          <span className="inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
-            How Phause works
-          </span>
-          <h1 className="mt-7 text-4xl font-extrabold leading-tight md:text-6xl">
-            From a planned simulation to a{" "}
-            <span className="bg-gradient-to-r from-cyan-300 to-teal-300 bg-clip-text text-transparent">
-              stronger awareness programme.
-            </span>
-          </h1>
-          <p className="mx-auto mt-7 max-w-3xl text-base leading-8 text-slate-400 md:text-lg">
-            Phause brings together employee eligibility, phishing email templates, controlled campaigns,
-            engagement tracking, reporting and security-awareness training.
-          </p>
-          <div className="mt-9 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/registration"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-teal-300 px-7 py-4 font-bold text-slate-950 transition hover:-translate-y-0.5"
-            >
-              Create your account <ArrowRight className="h-5 w-5" />
-            </Link>
-            <Link
-              href="/services"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-7 py-4 font-semibold text-white transition hover:border-cyan-300/40"
-            >
-              Explore platform features
-            </Link>
+    <main className="overflow-hidden bg-[#081522] text-white">
+      <div className="sr-only">{cmsText(blocks.map((block) => block.props)).join(" ")}</div>
+      <section className="relative overflow-hidden pb-20 pt-32 md:pb-28 md:pt-40">
+        <div className="mx-auto max-w-7xl px-6">
+          {value(hero.eyebrow) ? <p className="mb-5 text-sm font-bold uppercase tracking-[0.28em] text-cyan-400">{value(hero.eyebrow)}</p> : null}
+          <h1 className="max-w-4xl text-4xl font-bold leading-tight md:text-6xl">{value(hero.title)}</h1>
+          {value(hero.description) ? <p className="mt-6 max-w-3xl text-base leading-8 text-slate-300 md:text-lg">{value(hero.description)}</p> : null}
+        </div>
+      </section>
+      <section className="relative py-20 md:py-28">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {features.map((raw, index) => {
+              const item = raw as Record<string, unknown>;
+              const workflows = Array.isArray(item.workflows) ? item.workflows : [];
+              const checklist = Array.isArray(item.checklist) ? item.checklist : [];
+              return (
+                <article key={index} className="rounded-2xl border border-white/10 bg-[#101f2e] p-6">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full border border-cyan-400/30 text-sm font-bold text-cyan-300">{index + 1}</div>
+                  {value(item.title) ? <h2 className="text-xl font-bold">{value(item.title)}</h2> : null}
+                  {value(item.headline) ? <p className="mt-3 text-sm font-semibold text-cyan-200">{value(item.headline)}</p> : null}
+                  {value(item.description) ? <p className="mt-3 leading-7 text-slate-300">{value(item.description)}</p> : null}
+                  {value(item.whyItMatters) ? <p className="mt-4 text-sm text-cyan-200"><strong>Why it matters:</strong> {value(item.whyItMatters)}</p> : null}
+                  {value(item.interpretationNote) ? <p className="mt-3 text-sm text-amber-200">{value(item.interpretationNote)}</p> : null}
+                  {value(item.outcome) ? <p className="mt-3 text-sm text-emerald-200"><strong>Outcome:</strong> {value(item.outcome)}</p> : null}
+                  {value(item.workflowsHeading) ? <p className="mt-5 text-xs font-bold uppercase tracking-wider text-cyan-300">{value(item.workflowsHeading)}</p> : null}
+                  {workflows.length ? <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300">{workflows.map((workflow, workflowIndex) => <li key={workflowIndex}>{String(workflow)}</li>)}</ul> : null}
+                  {checklist.length ? <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-300">{checklist.map((check, checkIndex) => <li key={checkIndex}>{String(check)}</li>)}</ul> : null}
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
-
-      <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-14 max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">The workflow</p>
-            <h2 className="mt-4 text-3xl font-extrabold md:text-4xl">Five steps. One connected programme.</h2>
-            <p className="mt-5 leading-8 text-slate-400">
-              Start with an authorised audience, run a controlled simulation and use the results to guide
-              practical follow-up.
-            </p>
+      {value(cta.title) ? (
+        <section className="py-20 md:py-28">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="rounded-3xl border border-cyan-500/20 bg-gradient-to-r from-cyan-500/10 to-slate-900 p-8 md:p-12">
+              <h2 className="text-3xl font-black md:text-5xl">{value(cta.title)}</h2>
+              {value(cta.description) ? <p className="mt-4 max-w-3xl leading-8 text-slate-300">{value(cta.description)}</p> : null}
+              <div className="mt-8 flex flex-wrap gap-4">
+                {value(cta.label) ? <Link href={value(cta.href, "/contact")} className="rounded-full bg-cyan-400 px-6 py-3 font-semibold text-slate-950">{value(cta.label)}</Link> : null}
+                {value(cta.secondaryLabel) ? <Link href={value(cta.secondaryHref, "/contact")} className="rounded-full border border-cyan-400/40 px-6 py-3 font-semibold text-cyan-200">{value(cta.secondaryLabel)}</Link> : null}
+              </div>
+            </div>
           </div>
-          <div className="space-y-5">
-            {steps.map((step, index) => (
-              <motion.article
-                key={step.number}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.05 }}
-                className="grid gap-5 rounded-3xl border border-white/10 bg-[#101f2e] p-6 md:grid-cols-[90px_1fr] md:p-8"
-              >
-                <div className="flex items-start gap-4 md:block">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-cyan-300/20 bg-cyan-300/10">
-                    <step.icon className="h-7 w-7 text-cyan-300" />
-                  </div>
-                  <span className="pt-3 text-xs font-bold tracking-[0.2em] text-cyan-300 md:block">{step.number}</span>
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{step.title}</h3>
-                  <p className="mt-3 leading-7 text-slate-300">{step.description}</p>
-                  <p className="mt-4 flex items-start gap-2 text-sm leading-6 text-slate-400">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-teal-300" />
-                    {step.detail}
-                  </p>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="border-y border-white/10 bg-[#0b1927] px-6 py-20 md:py-24">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-12 max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Inside the platform</p>
-            <h2 className="mt-4 text-3xl font-extrabold md:text-4xl">The tools your programme uses every day.</h2>
-          </div>
-          <div className="grid gap-5 md:grid-cols-3">
-            {capabilities.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-white/10 bg-[#101f2e] p-7">
-                <item.icon className="h-8 w-8 text-cyan-300" />
-                <h3 className="mt-6 text-lg font-bold">{item.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-400">{item.description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-20 md:py-28">
-        <div className="mx-auto max-w-4xl rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-300/10 to-teal-300/5 p-8 text-center md:p-14">
-          <ShieldCheck className="mx-auto h-10 w-10 text-cyan-300" />
-          <h2 className="mt-6 text-3xl font-extrabold md:text-4xl">Run simulations responsibly.</h2>
-          <p className="mx-auto mt-5 max-w-2xl leading-8 text-slate-300">
-            Use Phause only for simulations that your organisation has authorised. Confirm the scope,
-            audience and internal approvals before a campaign is dispatched.
-          </p>
-          <Link
-            href="/docs"
-            className="mt-8 inline-flex items-center gap-2 font-bold text-cyan-300 transition hover:gap-3"
-          >
-            Read the customer guide <ArrowRight className="h-5 w-5" />
-          </Link>
-        </div>
-      </section>
+        </section>
+      ) : null}
     </main>
   );
 }
