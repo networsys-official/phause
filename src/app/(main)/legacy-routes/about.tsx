@@ -240,7 +240,7 @@ function AboutUs({
                 <p className="text-xs text-phause-cyan flex items-center gap-1.5">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute h-full w-full rounded-full bg-phause-cyan opacity-75" />
-                    <span className="relative rounded-full h-2 w-2 bg-phause-cyan" />
+                    <span className="relative h-full w-full rounded-full bg-phause-cyan" />
                   </span>
                   Operational — 40+ regions
                 </p>
@@ -278,10 +278,10 @@ function AboutUs({
             className="grid grid-cols-2 gap-4"
           >
             {[
-              { icon: Fingerprint, label: "Zero-Trust Native" },
-              { icon: Layers, label: "Full-Stack Coverage" },
-              { icon: GitBranch, label: "120+ CVE Disclosures" },
-              { icon: Handshake, label: "Community First" },
+              { icon: Fingerprint, label: "Authorised Simulations" },
+              { icon: Layers, label: "Connected Campaign Reporting" },
+              { icon: GitBranch, label: "Follow-up Learning" },
+              { icon: Handshake, label: "Responsible exercise planning" },
             ].map((item, index) => (
               <div
                 key={`${item.label}-${index}`}
@@ -444,34 +444,24 @@ function Counters() {
 /* ══════════════════ WHY CHOOSE US ══════════════════ */
 function WhyChooseUs({ reasons = [
     {
-      icon: Zap,
-      title: "Response Speed That Breaks Records",
-      desc: "Our median time-to-containment is 47 milliseconds for automated playbooks and under 15 minutes for human-led incident response.",
+      icon: Eye,
+      title: "Purposeful Practice",
+      desc: "Phishing simulations should support a clear learning objective and appropriate organisational authorisation.",
     },
     {
       icon: Cpu,
-      title: "AI Trained on Real-World Battle Data",
-      desc: "Most security AI is trained on lab data. Ours learns from the live telemetry of hundreds of organizations.",
+      title: "Context for Campaign Activity",
+      desc: "Interaction events and campaign metrics should be interpreted carefully rather than treated as a complete measure of employee knowledge.",
     },
     {
-      icon: Eye,
-      title: "Radical Transparency — No Black Boxes",
-      desc: "Every detection, automated action, and analyst decision is visible in real time through our client dashboard.",
+      icon: Users,
+      title: "Constructive Follow-Through",
+      desc: "Campaign findings should guide relevant awareness activity, training and future programme improvements.",
     },
     {
       icon: Lock,
-      title: "Zero-Trust Architecture, Zero Excuses",
-      desc: "We practice what we deploy. Phause's internal infrastructure runs on least-privilege principles and hardware-backed key management.",
-    },
-    {
-      icon: HeartHandshake,
-      title: "We Treat Your Business Like Our Own",
-      desc: "Every client gets a named security team, a direct escalation line to senior analysts, and tailored threat briefings.",
-    },
-    {
-      icon: TrendingUp,
-      title: "Security That Scales With You",
-      desc: "From startups to global enterprises, we deploy the same architecture and the same rigor.",
+      title: "Responsible Use",
+      desc: "Employee-level results should be handled confidentially and used to support improvement, not embarrassment.",
     },
   ] }: { reasons?: Array<{ icon: React.ElementType; title: string; desc: string }> }) {
 

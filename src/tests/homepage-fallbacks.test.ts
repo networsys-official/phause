@@ -36,33 +36,31 @@ describe("homepage fallback content", () => {
     expect(new Set(numbers).size).toBe(numbers.length);
   });
 
-  it("generates enterprise-grade fallback reason titles for the homepage", () => {
+  it("generates phishing-awareness fallback reason titles for the homepage", () => {
     const reasons = getDefaultHomeReasons();
     const titles = reasons.map((reason) => reason.title);
 
     expect(titles).toEqual([
-      "Lightning-Fast Response",
-      "AI-Powered Engine",
-      "Human Security Expertise",
-      "Zero-Downtime Deployment",
+      "A clearer programme workflow",
+      "More controlled campaign planning",
+      "More useful reporting conversations",
+      "Follow-through that supports learning",
     ]);
     expect(new Set(titles).size).toBe(titles.length);
   });
 
-  it("generates enterprise-grade fallback service, offer, and step titles", () => {
+  it("generates neutral fallback service, offer, and step titles", () => {
     const serviceTitles = getDefaultHomeServices().map((item) => item.title);
-    const offerTitles = getDefaultHomeOffers().map((item) => item.title);
+    const offerTitles = getDefaultHomeOffers();
     const stepTitles = getDefaultHomeSteps().map((item) => item.title);
 
     expect(serviceTitles).toEqual([
-      "Threat Detection",
-      "Security Audits",
-      "Cloud Protection",
-      "Infrastructure Defense",
-      "Data Encryption",
+      "Employee Management",
+      "Phishing Templates",
+      "Campaign Management",
+      "Reporting and Risk Insights",
     ]);
-    expect(new Set(serviceTitles).size).toBe(serviceTitles.length);
-    expect(new Set(offerTitles).size).toBe(offerTitles.length);
+    expect(offerTitles).toEqual([]);
     expect(new Set(stepTitles).size).toBe(stepTitles.length);
   });
 
@@ -72,16 +70,16 @@ describe("homepage fallback content", () => {
 
   it("uses saved section metadata as a real dynamic section when no item array exists", () => {
     const items = extractCmsSectionItems({
-      title: "Ready to become unhackable?",
-      subtitle: "A battle-tested methodology refined over thousands of deployments.",
-      description: "Built for resilient operations.",
+      title: "Plan. Simulate. Learn. Improve.",
+      subtitle: "A practical phishing-awareness programme cycle.",
+      description: "Build an authorised exercise around a clear learning objective.",
     }, []);
 
     expect(items).toEqual([
       {
-        title: "Ready to become unhackable?",
-        subtitle: "A battle-tested methodology refined over thousands of deployments.",
-        description: "Built for resilient operations.",
+        title: "Plan. Simulate. Learn. Improve.",
+        subtitle: "A practical phishing-awareness programme cycle.",
+        description: "Build an authorised exercise around a clear learning objective.",
       },
     ]);
   });
@@ -102,13 +100,13 @@ describe("homepage fallback content", () => {
 
   it("normalizes list-based CMS section data so all home-page cards remain editable", () => {
     const items = normalizeEditableSectionItems("homeReasons", [
-      { id: "reason-1", icon: "zap", title: "Lightning fast", description: "Sub-50ms response" },
-      { id: "faq-1", question: "How fast?", answer: "Very fast" },
+      { id: "reason-1", icon: "shield", title: "Clear programme workflow", description: "Connected campaign management" },
+      { id: "faq-1", question: "How are results used?", answer: "To plan relevant follow-up learning" },
     ]);
 
     expect(items).toMatchObject([
-      { id: "reason-1", title: "Lightning fast", description: "Sub-50ms response", icon: "zap" },
-      { id: "faq-1", question: "How fast?", answer: "Very fast" },
+      { id: "reason-1", title: "Clear programme workflow", description: "Connected campaign management", icon: "shield" },
+      { id: "faq-1", question: "How are results used?", answer: "To plan relevant follow-up learning" },
     ]);
   });
 

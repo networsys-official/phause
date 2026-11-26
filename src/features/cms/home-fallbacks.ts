@@ -20,38 +20,31 @@ export function extractCmsSectionItems(block: Record<string, unknown> | null | u
 
 export function getDefaultHomeReasons() {
   return [
-    { title: "Lightning-Fast Response", desc: "Sub-50ms automated threat neutralization — the fastest in the industry." },
-    { title: "AI-Powered Engine", desc: "Machine learning models trained on 50B+ security events, updated hourly." },
-    { title: "Human Security Expertise", desc: "Security teams and specialists help organisations interpret findings and plan follow-up action." },
-    { title: "Zero-Downtime Deployment", desc: "Deploy protection without touching a single line of your existing code." },
+    { title: "A clearer programme workflow", desc: "Bring employee preparation, templates, campaigns, tracking, reports and training administration into one connected process." },
+    { title: "More controlled campaign planning", desc: "Choose eligible recipients, target a department segment or use a sample percentage, and review the settings before delivery." },
+    { title: "More useful reporting conversations", desc: "Use campaign metrics and risk indicators to identify patterns and explain the next awareness step to stakeholders." },
+    { title: "Follow-through that supports learning", desc: "Keep training modules, enrolments and completion records connected to your wider awareness activity." },
   ];
 }
 
 export function getDefaultHomeServices() {
   return [
-    { title: "Threat Detection", desc: "Real-time AI scanning across all endpoints, networks and cloud assets." },
-    { title: "Security Audits", desc: "Deep-dive penetration testing and compliance audits by certified experts." },
-    { title: "Cloud Protection", desc: "Zero-trust security architecture for AWS, Azure, GCP and hybrid clouds." },
-    { title: "Infrastructure Defense", desc: "Harden your servers, APIs and databases against zero-day exploits." },
-    { title: "Data Encryption", desc: "End-to-end AES-256 encryption with automated key rotation." },
+    { title: "Employee Management", desc: "Organise employee records and review eligibility and consent before simulation activity." },
+    { title: "Phishing Templates", desc: "Use saved templates or create and preview a message for a learning objective." },
+    { title: "Campaign Management", desc: "Configure the audience, delivery method and schedule in a structured workflow." },
+    { title: "Reporting and Risk Insights", desc: "Review recorded campaign activity and use findings to plan follow-up awareness." },
   ];
 }
 
 export function getDefaultHomeOffers() {
-  return [
-    { title: "Free Security Assessment", desc: "A 360° audit of your infrastructure — completely free, no strings attached." },
-    { title: "Dedicated Security Team", desc: "Your own squad of specialists assigned exclusively to your account." },
-    { title: "Incident Response SLA", desc: "Guaranteed response to critical incidents in under 15 minutes." },
-    { title: "Employee Training", desc: "Phishing simulations and security workshops for your entire team." },
-    { title: "Insurance Backed", desc: "$10M cyber insurance coverage included with every enterprise plan." },
-  ];
+  return [];
 }
 
 export function getDefaultHomeSteps() {
   return [
-    { title: "Discover", desc: "We map every asset, vulnerability and attack surface in your environment." },
-    { title: "Strategize", desc: "A custom defense blueprint built for your architecture and risk profile." },
-    { title: "Deploy", desc: "Protection rolls out in hours — no downtime, no disruption to your team." },
-    { title: "Evolve", desc: "Continuous learning and adaptation keeps you ahead of emerging threats." },
+    { title: "Prepare", desc: "Set up employee records and confirm which employees are authorised and eligible." },
+    { title: "Choose", desc: "Select a saved template or create a message that matches the learning objective." },
+    { title: "Configure", desc: "Choose the target audience and delivery approach, then review the campaign settings." },
+    { title: "Learn", desc: "Review campaign activity and use reports and training records to plan the next step." },
   ];
 }

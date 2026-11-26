@@ -8,6 +8,7 @@ import {
   Shield, ShieldCheck, Zap, Globe, Lock, Eye, Radar, Server,
   Cloud, Code2, Users, Award, ArrowRight, ChevronDown,
   CheckCircle2, Star, Quote, Cpu, Workflow, Rocket, LucideIcon,
+  Mail, ChartNoAxesColumnIncreasing,
 } from "lucide-react";
 import { useCallback } from "react";
 import { getBlockProp } from "@/features/cms/page-builder";
@@ -70,38 +71,32 @@ export function extractCmsSectionItems(
 
 export function getDefaultHomeReasons() {
   return [
-    { icon: Zap, title: "Lightning-Fast Response", desc: "Sub-50ms automated threat neutralization — the fastest in the industry." },
-    { icon: Cpu, title: "AI-Powered Engine", desc: "Machine learning models trained on 50B+ security events, updated hourly." },
-    { icon: Users, title: "Human Security Expertise", desc: "Security teams and specialists help organisations interpret findings and plan follow-up action." },
-    { icon: Code2, title: "Zero-Downtime Deployment", desc: "Deploy protection without touching a single line of your existing code." },
+    { icon: Zap, title: "A clearer programme workflow", desc: "Bring employee preparation, templates, campaigns, tracking, reports and training administration into one connected process." },
+    { icon: Cpu, title: "More controlled campaign planning", desc: "Choose eligible recipients, target a department segment or use a sample percentage and review the settings before delivery." },
+    { icon: Users, title: "More useful reporting conversations", desc: "Use campaign metrics and risk indicators to explain patterns and the next awareness step to stakeholders." },
+    { icon: Code2, title: "Follow-through that supports learning", desc: "Keep training modules, enrolments and completion records connected to your wider awareness activity." },
   ];
 }
 
 export function getDefaultHomeServices() {
   return [
-    { icon: Radar, title: "Threat Detection", desc: "Real-time AI scanning across all endpoints, networks and cloud assets." },
-    { icon: ShieldCheck, title: "Security Audits", desc: "Deep-dive penetration testing and compliance audits by certified experts." },
-    { icon: Cloud, title: "Cloud Protection", desc: "Zero-trust security architecture for AWS, Azure, GCP and hybrid clouds." },
-    { icon: Server, title: "Infrastructure Defense", desc: "Harden your servers, APIs and databases against zero-day exploits." },
+    { icon: Users, title: "Employee Management", desc: "Organise employee records and review eligibility and consent before simulation activity." },
+    { icon: Mail, title: "Phishing Templates", desc: "Use saved templates or create and preview a message for a learning objective." },
+    { icon: Radar, title: "Campaign Management", desc: "Configure the audience, delivery method and schedule in a structured workflow." },
+    { icon: ChartNoAxesColumnIncreasing, title: "Reporting and Risk Insights", desc: "Review recorded campaign activity and use findings to plan follow-up awareness." },
   ];
 }
 
 export function getDefaultHomeOffers() {
-  return [
-    { title: "Free Security Assessment", desc: "A 360° audit of your infrastructure — completely free, no strings attached." },
-    { title: "Dedicated Security Team", desc: "Your own squad of specialists assigned exclusively to your account." },
-    { title: "Incident Response SLA", desc: "Guaranteed response to critical incidents in under 15 minutes." },
-    { title: "Employee Training", desc: "Phishing simulations and security workshops for your entire team." },
-    { title: "Insurance Backed", desc: "$10M cyber insurance coverage included with every enterprise plan." },
-  ];
+  return [];
 }
 
 export function getDefaultHomeSteps() {
   return [
-    { icon: Eye, title: "Discover", desc: "We map every asset, vulnerability and attack surface in your environment." },
-    { icon: Workflow, title: "Strategize", desc: "A custom defense blueprint built for your architecture and risk profile." },
-    { icon: Shield, title: "Deploy", desc: "Protection rolls out in hours — no downtime, no disruption to your team." },
-    { icon: Rocket, title: "Evolve", desc: "Continuous learning and adaptation keeps you ahead of emerging threats." },
+    { icon: Eye, title: "Prepare", desc: "Set up employee records and confirm which employees are authorised and eligible." },
+    { icon: Workflow, title: "Choose", desc: "Select a saved template or create a message that matches the learning objective." },
+    { icon: Shield, title: "Configure", desc: "Choose the target audience and delivery approach, then review the campaign settings." },
+    { icon: Rocket, title: "Learn", desc: "Review campaign activity and use reports and training records to plan the next step." },
   ];
 }
 
@@ -919,29 +914,13 @@ export default function Home() {
         { icon: Cpu, text: "AI-assisted defense" },
       ],
     },
-    philosophy: [
-      { icon: Shield, title: "Proactive Defense", desc: "We don't wait for attacks. We hunt threats before they strike, turning vulnerability into strength." },
-      { icon: Eye, title: "Radical Transparency", desc: "Real-time visibility into every security event. No hidden logs, no surprises — complete clarity." },
-      { icon: Lock, title: "Privacy by Design", desc: "Your data is sacred. We build every system with encryption and privacy as the foundation, not an afterthought." },
-    ],
+    philosophy: [],
     reasons: getDefaultHomeReasons(),
     services: getDefaultHomeServices(),
     offers: getDefaultHomeOffers(),
     steps: getDefaultHomeSteps(),
-    testimonials: [
-      { name: "Nina Brooks", role: "CISO, Northstar Labs", text: "Phause gave our team a security posture we could trust and explain to leadership without friction.", stars: 5 },
-      { name: "Martin Lee", role: "VP Infrastructure, Aster Grid", text: "The combination of rapid response and clear reporting made the difference during our busiest quarter.", stars: 5 },
-      { name: "Aisha Rawal", role: "Director, Vertex Ops", text: "We finally had visibility across cloud and identity risk without a thousand dashboards and no signal.", stars: 5 },
-      { name: "Omar Silva", role: "COO, Harbor Systems", text: "Their analysts acted like part of our team from day one and rebuilt trust across the whole security stack.", stars: 5 },
-      { name: "Ella Chen", role: "Security Lead, Lume Health", text: "The platform gave us speed, coverage, and confidence at a time when our environment was expanding quickly.", stars: 5 },
-    ],
-    faqs: [
-      { q: "Who is Phause built for?", a: "Phause is designed for modern organizations that need clear visibility, faster response, and stronger security without slowing delivery." },
-      { q: "How fast can we deploy?", a: "Most onboarding and control rollouts can begin within days, with phased implementation aligned to operational risk and business priorities." },
-      { q: "Do you support cloud and hybrid environments?", a: "Yes. Our security model is designed for multi-cloud, hybrid, and distributed environments across modern infrastructure stacks." },
-      { q: "What happens during an incident response?", a: "We coordinate triage, containment, evidence capture, and remediation with clear communication to your leadership and operations teams." },
-      { q: "Can we customize the plan?", a: "Absolutely. We tailor coverage, support, and controls to the scale, compliance obligations, and risk profile of your organization." },
-    ],
+    testimonials: [],
+    faqs: [],
     cta: {
       title: "See smarter security in action.",
       description: "Discover how Phause can help your team detect threats, simplify operations, and choose the right protection for your needs.",
