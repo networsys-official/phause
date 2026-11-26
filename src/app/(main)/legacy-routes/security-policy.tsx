@@ -9,7 +9,7 @@ export default function SecurityPolicyPage() {
           and confidential data from unauthorized access, misuse, and disruption.
         </p>
         <div className="mt-8 space-y-5 text-sm leading-7 text-slate-300">
-          <p><strong className="text-white">Control model:</strong> zero-trust architecture, least-privilege access, continuous verification, and layered monitoring across our environment.</p>
+          <p><strong className="text-white">Control model:</strong> role-based access, least-privilege permissions, approved configuration and operational monitoring.</p>
           <p><strong className="text-white">Operational practices:</strong> automated detection, patching, secure architecture review, and a tested incident response program.</p>
           <p><strong className="text-white">Commitment:</strong> we continually strengthen our detection and protection controls to maintain an enterprise-grade security posture.</p>
         </div>

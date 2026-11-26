@@ -7,6 +7,8 @@ export const ROUTES = {
   home: "/",
   about: "/about",
   services: "/services",
+  howItWorks: "/how-it-works",
+  solutions: "/solutions",
   blog: "/blog",
   docs: "/docs",
   subscription: "/subscription",
@@ -19,11 +21,13 @@ export const ROUTES = {
 /** Navigation links shown in the Navbar */
 export const NAV_LINKS: { label: string; href: string }[] = [
   { label: "Home", href: ROUTES.home },
+  { label: "Platform", href: ROUTES.services },
+  { label: "How It Works", href: ROUTES.howItWorks },
+  { label: "Solutions", href: ROUTES.solutions },
   { label: "About Us", href: ROUTES.about },
-  { label: "Services", href: ROUTES.services },
-  { label: "Blog", href: ROUTES.blog },
+  { label: "Resources", href: ROUTES.blog },
   { label: "Docs", href: ROUTES.docs },
-  { label: "Subscription", href: ROUTES.subscription },
+  { label: "Pricing", href: ROUTES.subscription },
   { label: "Contact Us", href: ROUTES.contact },
 ];
 
@@ -76,6 +80,8 @@ const VALID_ROUTE_PATHS = new Set([
   "/",
   "/about",
   "/services",
+  "/how-it-works",
+  "/solutions",
   "/blog",
   "/docs",
   "/subscription",

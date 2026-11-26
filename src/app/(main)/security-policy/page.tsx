@@ -1,19 +1,8 @@
-export default function SecurityPolicyPage() {
-  return (
-    <main className="mx-auto max-w-4xl px-6 py-24 text-slate-100">
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-8 sm:p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Security Policy</p>
-        <h1 className="mt-4 text-4xl font-bold text-white">Security Policy</h1>
-        <p className="mt-6 text-base leading-7 text-slate-300">
-          Phause designs, operates, and continuously reviews its security controls to protect customer environments, internal systems,
-          and confidential data from unauthorized access, misuse, and disruption.
-        </p>
-        <div className="mt-8 space-y-5 text-sm leading-7 text-slate-300">
-          <p><strong className="text-white">Control model:</strong> zero-trust architecture, least-privilege access, continuous verification, and layered monitoring across our environment.</p>
-          <p><strong className="text-white">Operational practices:</strong> automated detection, patching, secure architecture review, and a tested incident response program.</p>
-          <p><strong className="text-white">Commitment:</strong> we continually strengthen our detection and protection controls to maintain an enterprise-grade security posture.</p>
-        </div>
-      </div>
-    </main>
-  );
-}
+import type { Metadata } from "next";
+import { prisma } from "@/infrastructure/database/prisma";
+import { normalizeBlockType } from "@/features/cms/cms-service";
+import { DynamicPageRenderer } from "@/features/cms/dynamic-page-renderer";
+
+async function loadPage() { return prisma.page.findFirst({ where: { slug: "security-policy", status: "PUBLISHED", deletedAt: null }, include: { seo: true, blocks: { where: { deletedAt: null }, orderBy: { order: "asc" } } } }); }
+export async function generateMetadata(): Promise<Metadata> { const page = await loadPage(); return { title: page?.seo?.title ?? "Security Policy", description: page?.seo?.description ?? undefined }; }
+export default async function SecurityPolicyPage() { const page = await loadPage(); if (!page) return null; return <DynamicPageRenderer page={{ id: page.id, slug: page.slug, title: page.title, status: page.status, seo: page.seo ?? undefined, blocks: page.blocks.map((block) => ({ id: block.id, type: normalizeBlockType(block.type), order: block.order, props: block.props as Record<string, unknown> })) }} />; }

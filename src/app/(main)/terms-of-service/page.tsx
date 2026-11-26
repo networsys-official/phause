@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+import { prisma } from "@/infrastructure/database/prisma";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await prisma.seo.findFirst({ where: { slug: "terms-of-service", status: "PUBLISHED", deletedAt: null } });
+  return { title: seo?.title ?? "Terms of Service", description: seo?.description ?? undefined };
+}
+
 export default function TermsOfServicePage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-24 text-slate-100">

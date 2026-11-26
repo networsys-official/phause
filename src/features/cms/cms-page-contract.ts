@@ -22,7 +22,20 @@ export const cmsPageCreateUpdateSchema = z.object({
     title: z.string().trim().max(60, "Page title should be 60 characters or fewer.").nullable().optional(),
     description: z.string().trim().max(160, "Description should be 160 characters or fewer.").nullable().optional(),
   }).optional(),
-  blocks: z.array(z.object({ id: z.string().optional(), type: z.string(), order: z.number().int().optional(), props: z.record(z.string(), z.unknown()).optional() })).optional().default([]),
+  blocks: z.array(z.object({
+    id: z.string().optional(),
+    type: z.string(),
+    order: z.number().int().optional(),
+    props: z.record(z.string(), z.unknown()).optional().default({}).superRefine((props, ctx) => {
+      if (props && typeof props.formSlug === "string" && props.formSlug.trim() && !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(props.formSlug.trim())) {
+        ctx.addIssue({ code: "custom", message: "Form block formSlug must be a valid slug." });
+      }
+    }),
+  }).superRefine((block, ctx) => {
+    if (block.type.trim().toLowerCase() === "form" && typeof block.props?.formSlug !== "undefined" && typeof block.props.formSlug !== "string") {
+      ctx.addIssue({ code: "custom", message: "Form block formSlug must be a string." });
+    }
+  })).optional().default([]),
 });
 
 export const cmsPageBlockResponseSchema = z.object({

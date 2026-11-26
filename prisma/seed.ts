@@ -2,6 +2,7 @@ import { PrismaClient, Role, UserStatus } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { defaultFooterSeed, defaultNavigationSeed, homeHeroSeed, liveSiteDefaults } from "../src/features/cms/seed-defaults";
 import { applyPhauseContentPack } from "./phause-content-seed";
+import { applyContentPatches } from "../src/features/cms/content-patches";
 
 const defaultFaqs = [
 	{
@@ -74,7 +75,6 @@ const defaultBlogPosts = [
 
 const prisma = new PrismaClient();
 
-const DEFAULT_ADMIN_EMAIL = "phause@gmail.com";
 const DEFAULT_PAGE_SLUGS = [
 	"home",
 	"about",
@@ -85,43 +85,36 @@ const DEFAULT_PAGE_SLUGS = [
 	"contact",
 ] as const;
 
+const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
+const SEED_ADMIN_FORCE_PASSWORD = process.env.SEED_ADMIN_FORCE_PASSWORD === "1";
+
 async function ensureBootstrapAdmin() {
-	const password = process.env.BOOTSTRAP_ADMIN_PASSWORD;
-
-	if (!password) {
-		console.warn(
-			"BOOTSTRAP_ADMIN_PASSWORD is not set; skipping admin bootstrap."
-		);
+	if (!SEED_ADMIN_EMAIL || !SEED_ADMIN_PASSWORD) {
+		console.log("Seed admin skipped: SEED_ADMIN_EMAIL or SEED_ADMIN_PASSWORD is missing.");
 		return;
 	}
 
-	const existing = await prisma.user.findUnique({
-		where: { email: DEFAULT_ADMIN_EMAIL },
-	});
+	const existing = await prisma.user.findUnique({ where: { email: SEED_ADMIN_EMAIL } });
+	const passwordHash = SEED_ADMIN_FORCE_PASSWORD || !existing
+		? await bcrypt.hash(SEED_ADMIN_PASSWORD, 12)
+		: undefined;
 
-	if (existing) {
-		if (
-			existing.role !== Role.SUPER_ADMIN ||
-			existing.status !== UserStatus.ACTIVE
-		) {
-			await prisma.user.update({
-				where: { id: existing.id },
-				data: {
-					role: Role.SUPER_ADMIN,
-					status: UserStatus.ACTIVE,
-				},
-			});
-		}
-		return;
-	}
-
-	const passwordHash = await bcrypt.hash(password, 12);
-
-	await prisma.user.create({
-		data: {
+	await prisma.user.upsert({
+		where: { email: SEED_ADMIN_EMAIL },
+		update: {
+			role: Role.SUPER_ADMIN,
+			status: UserStatus.ACTIVE,
+			emailVerified: existing?.emailVerified ? existing.emailVerified : new Date(),
+			failedLoginAttempts: 0,
+			lockedUntil: null,
+			...(passwordHash ? { passwordHash } : {}),
+		},
+		create: {
 			name: "Phause Admin",
-			email: DEFAULT_ADMIN_EMAIL,
-			passwordHash,
+			email: SEED_ADMIN_EMAIL,
+			emailVerified: new Date(),
+			passwordHash: await bcrypt.hash(SEED_ADMIN_PASSWORD, 12),
 			role: Role.SUPER_ADMIN,
 			status: UserStatus.ACTIVE,
 		},
@@ -191,15 +184,7 @@ async function ensureBlogPosts() {
 	for (const post of defaultBlogPosts) {
 		const media = await prisma.media.upsert({
 			where: { slug: `${post.slug}-featured` },
-			update: {
-				title: post.title,
-				filename: `${post.slug}.jpg`,
-				mimeType: "image/jpeg",
-				url: post.image,
-				altText: post.imageAlt,
-				size: 0,
-				status: "PUBLISHED",
-			},
+			update: {},
 			create: {
 				slug: `${post.slug}-featured`,
 				title: post.title,
@@ -214,16 +199,7 @@ async function ensureBlogPosts() {
 
 		await prisma.post.upsert({
 			where: { slug: post.slug },
-			update: {
-				title: post.title,
-				excerpt: post.excerpt,
-				body: post.body,
-				imageAlt: post.imageAlt,
-				status: "PUBLISHED",
-				featuredImageId: media.id,
-				thumbnailImageId: media.id,
-				ogImageId: media.id,
-			},
+			update: {},
 			create: {
 				slug: post.slug,
 				title: post.title,
@@ -300,6 +276,7 @@ async function main() {
 	await ensureBootstrapAdmin();
 	await ensureCmsDefaults();
 	await applyPhauseContentPack(prisma);
+	await applyContentPatches();
 }
 
 main()

@@ -88,7 +88,11 @@ export const pageBlockRegistry = {
   richText: (props: Record<string, unknown>) => ({ content: props.content ?? "" }),
   video: (props: Record<string, unknown>) => ({ src: props.src ?? "", poster: props.poster ?? "" }),
   contact: (props: Record<string, unknown>) => ({ title: props.title ?? "Contact", description: props.description ?? "", details: props.details ?? [] }),
-  form: (props: Record<string, unknown>) => ({ formId: props.formId ?? "", fields: props.fields ?? [] }),
+  form: (props: Record<string, unknown>) => ({
+    ...(typeof props.formSlug === "string" ? { formSlug: props.formSlug } : {}),
+    ...(typeof props.formId === "undefined" ? {} : { formId: props.formId }),
+    ...(Array.isArray(props.fields) ? { fields: props.fields } : { fields: [] }),
+  }),
   customSection: (props: Record<string, unknown>) => ({ ...props }),
 } as const;
 

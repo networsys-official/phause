@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import type { CmsSaveResponse } from "@/features/cms/cms-page-contract";
 import { PageMenuFields, type PageMenuDraft } from "@/components/cms/PageMenuFields";
 import { PageForm, type PageFormValue } from "@/components/cms/PageForm";
+import { FormCreateEditor } from "@/components/cms/FormCreateEditor";
 
 type PageRecord = {
   id: string;
@@ -187,6 +188,7 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
   const [pageVersion, setPageVersion] = useState(page.version ?? 1);
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [conflictReloadAvailable, setConflictReloadAvailable] = useState(false);
+  const [publishedForms, setPublishedForms] = useState<Array<{ slug: string; name: string }>>([]);
   const [draft, setDraft] = useState<PageMenuDraft>({
     showInHeader: page.showInHeader ?? false,
     headerLabel: page.headerLabel ?? page.title,
@@ -208,6 +210,14 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    let mounted = true;
+    fetch("/api/cms/forms").then((response) => response.json()).then((payload) => {
+      if (mounted && Array.isArray(payload.forms)) setPublishedForms(payload.forms.filter((form: { status?: string }) => form.status === "PUBLISHED").map((form: { slug: string; name: string }) => ({ slug: form.slug, name: form.name })));
+    }).catch(() => undefined);
+    return () => { mounted = false; };
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -489,6 +499,12 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
     }
   };
 
+  const addFormBlock = (formSlug: string) => {
+    if (!formSlug) return;
+    setSections((current) => [...current, { id: `form-${Date.now()}`, type: "form", order: current.length, props: { formSlug, title: "", position: current.length, visibility: true } }]);
+    setHasUnsavedChanges(true);
+  };
+
   const leaveWithoutSaving = () => {
     setHasUnsavedChanges(false);
     setShowLeaveDialog(false);
@@ -523,6 +539,10 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           <div>
             <h2 className="text-xl font-bold text-white">Page sections</h2>
             <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
+              <option value="">Add Form block</option>
+              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
+            </select>
           </div>
           <button
             type="button"
@@ -739,6 +759,10 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           <div>
             <h2 className="text-xl font-bold text-white">Page sections</h2>
             <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
+              <option value="">Add Form block</option>
+              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
+            </select>
           </div>
           <button
             type="button"
@@ -955,6 +979,10 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           <div>
             <h2 className="text-xl font-bold text-white">Page sections</h2>
             <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
+              <option value="">Add Form block</option>
+              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
+            </select>
           </div>
           <button
             type="button"
@@ -1171,6 +1199,10 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
           <div>
             <h2 className="text-xl font-bold text-white">Page sections</h2>
             <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
+            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
+              <option value="">Add Form block</option>
+              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
+            </select>
           </div>
           <button
             type="button"
@@ -1675,6 +1707,20 @@ export function SettingsEditor({ settings }: { settings: Array<{ id: string; key
   );
 }
 
-export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[] }> }) {
-  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Forms</h2><div className="mt-4 space-y-2">{forms.map((form) => <div key={form.id} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3"><div className="font-semibold text-white">{form.name}</div><div className="text-xs text-slate-400">/{form.slug} · {form.status} · {form.fields.length} fields</div></div>)}</div></div>;
+export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[]; usedOn?: string[] }> }) {
+  const searchParams = useSearchParams();
+  const [view, setView] = useState(searchParams.get("view") === "create" ? "create" : "list");
+  useEffect(() => { setView(searchParams.get("view") === "create" ? "create" : "list"); }, [searchParams]);
+  if (view === "create") return <FormCreateEditor existingSlugs={forms.map((form) => form.slug)} />;
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+    <div className="flex items-center justify-between"><h2 className="text-xl font-bold text-white">Forms</h2><button type="button" onClick={() => setView("create")} className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Create form</button></div>
+    <div className="mt-4 space-y-2">{forms.map((form) => <div key={form.id} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3">
+      <div className="font-semibold text-white">{form.name}</div>
+      <div className="text-xs text-slate-400">/{form.slug} · {form.status} · {form.fields.length} fields</div>
+      {form.status === "PUBLISHED" ? <>
+        <div className="mt-1 text-xs text-cyan-200">Used on: {form.usedOn?.length ? form.usedOn.join(", ") : "none"}</div>
+        <div className="mt-2 flex gap-2"><span className="text-xs text-cyan-200">/forms/{form.slug}</span><button type="button" onClick={() => void navigator.clipboard?.writeText(`${window.location.origin}/forms/${form.slug}`)} className="rounded-lg border border-cyan-400/30 px-2 py-1 text-xs text-cyan-200">Copy link</button><a href={`/forms/${form.slug}`} className="rounded-lg border border-white/15 px-2 py-1 text-xs text-white">Open</a></div>
+      </> : <div className="mt-1 text-xs text-slate-400">Publish to get a public link</div>}
+    </div>)}</div>
+  </div>;
 }

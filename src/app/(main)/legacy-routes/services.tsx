@@ -49,8 +49,6 @@ const defaultHeroProps = {
     description: undefined as string | undefined,
 }
 
-const defaultItemCollection = [] as Array<Record<string, unknown>>
-
 function normalizeCmsBlockType(value: string) {
     return String(value).replace(/[_-]+/g, "").toLowerCase();
 }
@@ -268,7 +266,7 @@ export default function ServicesPage() {
             .catch(() => setCmsFaqs([]));
     }, []);
 
-    const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : defaultItemCollection;
+    const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];
     const heroBlock = findCmsBlock(pageBlocks, "servicesHero", "hero")?.props as Record<string, unknown> | undefined;
     const servicesBlock = findCmsBlock(pageBlocks, "servicesFeatures", "services")?.props as Record<string, unknown> | undefined;
     const processBlock = findCmsBlock(pageBlocks, "servicesProcess")?.props as Record<string, unknown> | undefined;
@@ -278,9 +276,9 @@ export default function ServicesPage() {
     const faqBlock = findCmsBlock(pageBlocks, "servicesFaq", "faq")?.props as Record<string, unknown> | undefined;
 
     const hero = {
-        eyebrow: getBlockProp(heroBlock ?? defaultHeroProps, "eyebrow", defaultHeroProps.eyebrow ?? ""),
-        title: getBlockProp(heroBlock ?? defaultHeroProps, "title", defaultHeroProps.title ?? ""),
-        description: getBlockProp(heroBlock ?? defaultHeroProps, "description", defaultHeroProps.description ?? ""),
+        eyebrow: getBlockProp(heroBlock ?? {}, "eyebrow", ""),
+        title: getBlockProp(heroBlock ?? {}, "title", ""),
+        description: getBlockProp(heroBlock ?? {}, "description", ""),
     };
 
     const cmsServicesMapped = toArray(servicesBlock?.items ?? []).map((item, index) => {

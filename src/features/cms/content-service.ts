@@ -2,49 +2,40 @@ import { prisma } from "@/infrastructure/database/prisma";
 import { slugToHref } from "@/features/cms/cms-service";
 import { logger } from "@/shared/lib/logger";
 
-const DEFAULT_ADMIN_EMAIL = "phause@gmail.com";
-const BOOTSTRAP_ADMIN_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD;
+const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
+const SEED_ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
+const SEED_ADMIN_FORCE_PASSWORD = process.env.SEED_ADMIN_FORCE_PASSWORD === "1";
 
 export async function bootstrapAdminUser() {
-  const hasSuperAdmin = await prisma.user.findFirst({
-    where: { role: "SUPER_ADMIN" },
-  });
-
-  if (!BOOTSTRAP_ADMIN_PASSWORD) {
-    if (!hasSuperAdmin) {
-      logger.warn("No super administrator account exists.");
-    }
+  if (!SEED_ADMIN_EMAIL || !SEED_ADMIN_PASSWORD) {
+    logger.info("Seed admin skipped: SEED_ADMIN_EMAIL or SEED_ADMIN_PASSWORD is missing.");
     return;
   }
 
-  const existing = await prisma.user.findUnique({
-    where: { email: DEFAULT_ADMIN_EMAIL },
-  });
-
-  if (!existing) {
+  const existing = await prisma.user.findUnique({ where: { email: SEED_ADMIN_EMAIL } });
+  if (existing) {
+    const data: Record<string, unknown> = { role: "SUPER_ADMIN", status: "ACTIVE", failedLoginAttempts: 0, lockedUntil: null };
+    if (!existing.emailVerified) data.emailVerified = new Date();
+    if (SEED_ADMIN_FORCE_PASSWORD) {
+      const { default: bcrypt } = await import("bcrypt");
+      data.passwordHash = await bcrypt.hash(SEED_ADMIN_PASSWORD, 12);
+    }
+    await prisma.user.update({ where: { id: existing.id }, data: data as never });
+  } else {
     const { default: bcrypt } = await import("bcrypt");
-    const passwordHash = await bcrypt.hash(BOOTSTRAP_ADMIN_PASSWORD, 12);
-
     await prisma.user.create({
       data: {
         name: "Phause Admin",
-        email: DEFAULT_ADMIN_EMAIL,
-        passwordHash,
-        role: "SUPER_ADMIN",
-        status: "ACTIVE",
-      },
-    });
-  } else if (existing.role !== "SUPER_ADMIN" || existing.status !== "ACTIVE") {
-    await prisma.user.update({
-      where: { id: existing.id },
-      data: {
+        email: SEED_ADMIN_EMAIL,
+        emailVerified: new Date(),
+        passwordHash: await bcrypt.hash(SEED_ADMIN_PASSWORD, 12),
         role: "SUPER_ADMIN",
         status: "ACTIVE",
       },
     });
   }
 
-  logger.info("✅ Default admin ensured");
+  logger.info("✅ Seed admin ensured");
 
   const freshSuperAdmin = await prisma.user.findFirst({
     where: { role: "SUPER_ADMIN" },

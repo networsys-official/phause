@@ -753,8 +753,8 @@ export default function ContactPage() {
     const contactBlock = (pageBlocks.find((block) => String((block.type ?? "")).toLowerCase() === "contact")?.props as Record<string, unknown>) ?? {};
     const hero = {
         eyebrow: getBlockProp(contactBlock, "eyebrow", ""),
-        title: getBlockProp(contactBlock, "title", "Let's Secure Your Future"),
-        description: getBlockProp(contactBlock, "description", "Whether you're evaluating a platform, planning a migration, or facing an active incident — our team is one message away, around the clock."),
+        title: getBlockProp(contactBlock, "title", ""),
+        description: getBlockProp(contactBlock, "description", ""),
     };
 
     return (

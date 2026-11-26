@@ -121,6 +121,7 @@ async function resolveMediaId(mediaRef: { id?: string; url?: string; altText?: s
 export async function GET() {
   try {
     const posts = await prisma.post.findMany({
+      where: { status: "PUBLISHED", deletedAt: null },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,

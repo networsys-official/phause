@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+import { prisma } from "@/infrastructure/database/prisma";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const seo = await prisma.seo.findFirst({ where: { slug: "responsible-disclosure", status: "PUBLISHED", deletedAt: null } });
+  return { title: seo?.title ?? "Responsible Disclosure", description: seo?.description ?? undefined };
+}
+
 export default function ResponsibleDisclosurePage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-24 text-slate-100">

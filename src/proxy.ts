@@ -20,6 +20,7 @@ export async function proxy(request: NextRequest) {
   if (process.env.NODE_ENV === "production" && process.env.NEXT_PHASE !== "phase-production-build" && !process.env.AUTH_SECRET) {
     throw new Error("AUTH_SECRET is required for authentication.");
   }
+
   
 
   const token = await getToken({

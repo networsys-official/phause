@@ -771,9 +771,9 @@ export default function AboutPage() {
   return (
     <>
       <PageHero
-        eyebrow={getBlockProp(heroBlock, "eyebrow", "Who We Are")}
-        title={getBlockProp(heroBlock, "title", "The Team Behind the Shield")}
-        description={getBlockProp(heroBlock, "description", "From a two-person research lab to a global cybersecurity force — this is the story, the mission, and the machine behind Phause.")}
+        eyebrow={getBlockProp(heroBlock, "eyebrow", "")}
+        title={getBlockProp(heroBlock, "title", "")}
+        description={getBlockProp(heroBlock, "description", "")}
       />
       <AboutUs
         tag={getBlockProp(heroBlock, "eyebrow", "About Us")}

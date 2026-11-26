@@ -20,13 +20,13 @@ describe("content patch runner", () => {
     await prisma.$disconnect();
   });
 
-  it("corrects only exact old defaults and is safe to apply twice", async () => {
+  it("never overwrites CMS content and is safe to apply twice", async () => {
     await applyContentPatches();
 
     const defaultPage = await prisma.page.findUnique({ where: { slug: "patch-default" }, include: { blocks: true } });
     const editedPage = await prisma.page.findUnique({ where: { slug: "patch-edited" }, include: { blocks: true } });
 
-    expect(defaultPage?.blocks[0]?.props).toEqual({ title: "Strengthen. Aware. Defend." });
+    expect(defaultPage?.blocks[0]?.props).toEqual({ title: "Strengthen. Aware.Defend." });
     expect(editedPage?.blocks[0]?.props).toEqual({ title: "My custom hero" });
 
     await applyContentPatches();
@@ -34,7 +34,7 @@ describe("content patch runner", () => {
     const defaultAfterSecondRun = await prisma.page.findUnique({ where: { slug: "patch-default" }, include: { blocks: true } });
     const editedAfterSecondRun = await prisma.page.findUnique({ where: { slug: "patch-edited" }, include: { blocks: true } });
 
-    expect(defaultAfterSecondRun?.blocks[0]?.props).toEqual({ title: "Strengthen. Aware. Defend." });
+    expect(defaultAfterSecondRun?.blocks[0]?.props).toEqual({ title: "Strengthen. Aware.Defend." });
     expect(editedAfterSecondRun?.blocks[0]?.props).toEqual({ title: "My custom hero" });
   });
 });

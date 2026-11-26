@@ -8,7 +8,7 @@ export const publicSettingDefaults = {
   mediaPipelineEnabled: true,
   seoSyncEnabled: true,
   supportEmail: "hello@phause.com",
-  supportPhone: "+1 (555) 010-PHAUSE",
+  supportPhone: "",
   logoUrl: "/logo/phause-logo.png",
 } as const;
 

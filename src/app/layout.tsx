@@ -12,7 +12,7 @@ const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublishedSettings();
-  const title = `${settings.siteName} | ${liveSiteDefaults.title.includes(" | ") ? liveSiteDefaults.title.split(" | ").slice(1).join(" | ") : "Strengthen. Aware. Defend."}`;
+  const title = settings.siteName;
   return {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://phause.com"),
   title,
