@@ -156,17 +156,9 @@ type ContactField = {
     options?: string[];
 };
 
-const defaultContactFields: ContactField[] = [
-    { key: "name", label: "Full Name", type: "text", placeholder: "Jane Cooper", required: true },
-    { key: "email", label: "Work Email", type: "email", placeholder: "jane@company.com", required: true },
-    { key: "phone", label: "Phone Number", type: "tel", placeholder: "+1 (555) 000-0000" },
-    { key: "company", label: "Company", type: "text", placeholder: "Acme Corp" },
-    { key: "subject", label: "Subject", type: "select", placeholder: "General Enquiry", required: true, options: enquirySubjects },
-    { key: "message", label: "Message", type: "textarea", placeholder: "Tell us about your infrastructure, current security stack, and what you're trying to achieve…", required: true },
-];
 
 function EnquiryForm() {
-    const [formFields, setFormFields] = useState<ContactField[]>(defaultContactFields);
+    const [formFields, setFormFields] = useState<ContactField[]>([]);
     const [page, setPage] = useState<Record<string, unknown> | null>(null);
     const [form, setForm] = useState({
         name: "", email: "", phone: "", company: "",
@@ -211,7 +203,7 @@ function EnquiryForm() {
                         required: Boolean(field.required),
                         options: Array.isArray(field.options) ? field.options.map((option) => String(option)) : undefined,
                       }))
-                    : [...defaultContactFields];
+                    : [];
 
                 setFormFields(nextFields);
                 const nextSubject = nextFields.find((field) => field.key === "subject")?.options?.[0] ?? enquirySubjects[0];
@@ -724,8 +716,7 @@ function EmergencyStrip() {
                                     Facing an <span className="text-red-400">active breach?</span>
                                 </h3>
                                 <p className="text-slate-400 text-sm max-w-md">
-                                    Skip the form. Our incident response team answers the emergency
-                                    line in under 60 seconds, 24/7/365.
+                                    Skip the form. Our incident response team is available through approved support channels.
                                 </p>
                             </div>
                         </div>

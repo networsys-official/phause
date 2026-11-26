@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma, PageBlockType, ContentStatus, AuditAction } from "@prisma/client";
 import contentPack from "./data/phause-content.json";
 
-export const PHAUSE_CONTENT_MARKER = "contentPack:phause-v1";
+export const PHAUSE_CONTENT_MARKER = "contentPack:phause-v2";
 
 type Pack = typeof contentPack;
 type Tx = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
@@ -53,6 +53,7 @@ async function seedPages(tx: Tx, pack: Pack) {
     await tx.$executeRawUnsafe("SELECT 1").catch(() => undefined);
 
     const existing = await tx.page.findUnique({ where: { slug }, include: { blocks: { where: { deletedAt: null } } } });
+    const existingHero = slug === "home" ? existing?.blocks.find((block) => block.type === "HERO") : undefined;
     const title = slug === "subscription" ? "Subscription" : slug === "security-policy" ? "Security & Trust" : pageData.slug === "faq" ? "FAQ" : String(pageData.slug).split("-").map((part: string) => part[0]?.toUpperCase() + part.slice(1)).join(" ");
 
     const desiredStatus = publicPageStatus(slug, pageData.status);
@@ -63,7 +64,7 @@ async function seedPages(tx: Tx, pack: Pack) {
     if (slug === "security-policy") {
       const blocks = pageData.blocks as Array<Record<string, any>>;
       await tx.pageBlock.updateMany({
-        where: { pageId: page.id, deletedAt: null, NOT: { type: "CUSTOM_SECTION", order: 1 } },
+        where: { pageId: page.id, deletedAt: null },
         data: { deletedAt: new Date() },
       });
       for (const [index, block] of blocks.entries()) {
@@ -73,7 +74,7 @@ async function seedPages(tx: Tx, pack: Pack) {
       if (slug === "home") {
         const existingPositionOne = existing?.blocks.find((block) => block.type === "CUSTOM_SECTION" && ((block.props as Record<string, any>).position === undefined || Number((block.props as Record<string, any>).position) === 1));
         await tx.pageBlock.updateMany({
-          where: { pageId: page.id, deletedAt: null, ...(existingPositionOne ? { NOT: { id: existingPositionOne.id } } : {}) },
+          where: { pageId: page.id, deletedAt: null, ...(existingPositionOne ? { NOT: { id: { in: existingHero ? [existingHero.id, existingPositionOne.id] : [existingPositionOne.id] } } } : existingHero ? { NOT: { id: existingHero.id } } : {}) },
           data: { deletedAt: new Date() },
         });
 
@@ -122,6 +123,11 @@ async function seedPages(tx: Tx, pack: Pack) {
 
         if (slug === "home" && block.type === "hero") {
           props = { ...props, eyebrow: block.eyebrow, title: block.title, description: block.description, ctaPrimary: block.buttonText, ctaPrimaryHref: block.buttonLink, ctaSecondary: block.secondaryButtonText, ctaSecondaryHref: block.secondaryButtonLink, imageAlt: block.imageAlt };
+          if (existingHero) {
+            await tx.pageBlock.update({ where: { id: existingHero.id }, data: { order: index, props: cleanProps(props), deletedAt: null, version: { increment: 1 } } });
+            await audit(tx, "PageBlock", existingHero.id, "UPDATE", { pack: PHAUSE_CONTENT_MARKER, oldProps: existingHero.props, newProps: props, slug }, { pageId: page.id });
+            continue;
+          }
         }
 
         await tx.pageBlock.create({ data: { pageId: page.id, type: blockType(block.type), order: index, props: cleanProps(props), version: 1 } });
@@ -198,10 +204,11 @@ async function seedPosts(tx: Tx, pack: Pack) {
     });
 
     const existing = await tx.post.findUnique({ where: { slug }, include: { categories: true } });
+    const cleanedHtml = typeof post.contentHtml === "string" ? post.contentHtml.replace(/<p>PHAUSE\s*\|\s*WEBSITE CONTENT LIBRARY\s*\|<\/p>/gi, "").replace(/PHAUSE\s*\|\s*WEBSITE CONTENT LIBRARY\s*\|/gi, "") : post.contentHtml;
     const saved = await tx.post.upsert({
       where: { slug },
-      update: { title: post.title, excerpt: post.metaDescription ?? post.excerpt, body: post.contentHtml, imageAlt: post.featuredImageAlt ?? null, status: "PUBLISHED", deletedAt: null, publishedAt: new Date(), seoId: seo.id, featuredImageId: null, thumbnailImageId: null, ogImageId: null, version: { increment: 1 }, categories: { set: [{ id: category.id }] } },
-      create: { slug, title: post.title, excerpt: post.metaDescription ?? post.excerpt, body: post.contentHtml, imageAlt: post.featuredImageAlt ?? null, status: "PUBLISHED", publishedAt: new Date(), seoId: seo.id, version: 1, categories: { connect: [{ id: category.id }] } },
+      update: { title: post.title, excerpt: post.metaDescription ?? post.excerpt, body: cleanedHtml, imageAlt: post.featuredImageAlt ?? null, status: "PUBLISHED", deletedAt: null, publishedAt: new Date(), seoId: seo.id, featuredImageId: null, thumbnailImageId: null, ogImageId: null, version: { increment: 1 }, categories: { set: [{ id: category.id }] } },
+      create: { slug, title: post.title, excerpt: post.metaDescription ?? post.excerpt, body: cleanedHtml, imageAlt: post.featuredImageAlt ?? null, status: "PUBLISHED", publishedAt: new Date(), seoId: seo.id, version: 1, categories: { connect: [{ id: category.id }] } },
     });
     await audit(tx, "Post", saved.id, existing ? "UPDATE" : "CREATE", { old: existing ? { title: existing.title, excerpt: existing.excerpt, body: existing.body } : null, category: categoryName, readingTime: post.readingTime, seoTitle: post.seoTitle }, { postId: saved.id });
   }
@@ -297,6 +304,23 @@ async function seedDocs(tx: Tx, pack: Pack) {
   await audit(tx, "Page", page.id, "UPDATE", { old: existing ? { status: existing.status, blockCount: existing.blocks.length } : null, docs: true }, { pageId: page.id });
 }
 
+async function seedSupportAndLocation(tx: Tx) {
+  await tx.setting.upsert({
+    where: { key: "supportPhone" },
+    update: { value: "", status: "PUBLISHED", deletedAt: null },
+    create: { slug: "supportPhone", key: "supportPhone", value: "", status: "PUBLISHED", publishedAt: new Date(), version: 1 },
+  });
+  await tx.footerLink.updateMany({
+    where: { OR: [
+      { href: { startsWith: "tel:" } },
+      { href: { contains: "maps", mode: "insensitive" } },
+      { label: { contains: "San Francisco", mode: "insensitive" } },
+      { label: { contains: "location", mode: "insensitive" } },
+    ] },
+    data: { deletedAt: new Date() },
+  });
+}
+
 export async function applyPhauseContentPack(prisma: PrismaClient, options: { dryRun?: boolean; force?: boolean } = {}) {
   const dryRun = options.dryRun ?? process.env.PHAUSE_CONTENT_DRY_RUN === "1";
   const force = options.force ?? process.env.PHAUSE_CONTENT_FORCE === "1";
@@ -319,6 +343,7 @@ export async function applyPhauseContentPack(prisma: PrismaClient, options: { dr
     await seedFooter(tx as unknown as Tx, contentPack);
     await seedNavigation(tx as unknown as Tx);
     await seedDocs(tx as unknown as Tx, contentPack);
+    await seedSupportAndLocation(tx as unknown as Tx);
 
     await tx.setting.upsert({
       where: { key: PHAUSE_CONTENT_MARKER },

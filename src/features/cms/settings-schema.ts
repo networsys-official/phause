@@ -41,9 +41,11 @@ export function validateSettingValue(key: string, value: string): string | null 
     return normalized && typeof Intl !== "undefined" ? null : "Choose a valid timezone.";
   }
   if (key === "supportEmail") {
+    if (!normalized) return null;
     return z.string().email("Enter a valid email address.").safeParse(normalized).success ? null : "Enter a valid email address.";
   }
   if (key === "supportPhone") {
+    if (!normalized) return null;
     return /^[+()\d\s-]{5,40}$/.test(normalized) ? null : "Enter a valid phone number.";
   }
   if (key === "logoUrl") {

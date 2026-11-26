@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -6,13 +5,13 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CalendarDays, Clock3, Search } from "lucide-react";
 import { getBlockProp } from "@/features/cms/page-builder";
-import { blogCategories, blogPosts } from "@/lib/blog";
+import { blogCategories } from "@/lib/blog";
 
 export default function BlogPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [page, setPage] = useState<Record<string, unknown> | null>(null);
-  const [posts, setPosts] = useState(blogPosts);
+  const [posts, setPosts] = useState<any[]>([]);
 
   useEffect(() => {
     fetch("/api/cms/pages?slug=blog")
@@ -43,7 +42,7 @@ export default function BlogPage() {
           );
         }
       })
-      .catch(() => setPosts(blogPosts));
+      .catch(() => setPosts([]));
   }, []);
 
   const pageBlocks = Array.isArray(page?.blocks) ? (page.blocks as Array<Record<string, unknown>>) : [];

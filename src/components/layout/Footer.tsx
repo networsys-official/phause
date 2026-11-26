@@ -9,7 +9,7 @@ import Logo from "../../../public/logo/phause-logo.png";
 import { FacebookIcon } from "@/components/icons/lucide-facebook";
 import { InstagramIcon } from "@/components/icons/lucide-instagram";
 import { LinkedinIcon } from "@/components/icons/lucide-linkedin";
-import { FALLBACK_FOOTER_LINKS, groupFooterLinks, type FooterCmsLink } from "@/features/cms/footer-groups";
+import { groupFooterLinks, type FooterCmsLink } from "@/features/cms/footer-groups";
 
 const SOCIALS = [
   { icon: FacebookIcon, href: "https://www.facebook.com", label: "Facebook" },
@@ -23,7 +23,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
     description:
       "Phause helps organisations run authorised phishing simulations, understand employee interactions and strengthen security awareness through reporting and follow-up training.",
     copyright: "Strengthen. Aware. Defend.",
-    links: FALLBACK_FOOTER_LINKS,
+    links: [],
   });
   const [supportEmail, setSupportEmail] = useState(initialSupportEmail);
   const [supportPhone, setSupportPhone] = useState(initialSupportPhone);
@@ -34,7 +34,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
   useEffect(() => {
     let active = true;
 
-    fetch("/api/footer")
+    fetch("/api/footer", { cache: "no-store" })
       .then(async (footerResponse) => {
         const footerPayload = await footerResponse.json();
 
@@ -43,7 +43,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
         }
 
         try {
-          const settingsResponse = await fetch("/api/settings");
+          const settingsResponse = await fetch("/api/settings", { cache: "no-store" });
           const settingsPayload = await settingsResponse.json();
           if (settingsPayload?.settings?.supportEmail) setSupportEmail(settingsPayload.settings.supportEmail);
           if (settingsPayload?.settings?.supportPhone) setSupportPhone(settingsPayload.settings.supportPhone);
@@ -53,7 +53,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
         }
 
         if (footerPayload?.footer) {
-          const cmsLinks = Array.isArray(footerPayload.footer.links) && footerPayload.footer.links.length > 0 ? footerPayload.footer.links : FALLBACK_FOOTER_LINKS;
+          const cmsLinks = Array.isArray(footerPayload.footer.links) ? footerPayload.footer.links : [];
           setFooter((current) => ({
             title: footerPayload.footer.title ?? "Phause",
             description: footerPayload.footer.description ?? current.description,
@@ -78,9 +78,7 @@ export default function Footer({ initialSupportEmail = "hello@phause.com", initi
     };
   }, []);
 
-  const footerLinks: FooterCmsLink[] = Array.isArray(footer.links) && footer.links.length > 0
-    ? footer.links
-    : FALLBACK_FOOTER_LINKS;
+  const footerLinks: FooterCmsLink[] = Array.isArray(footer.links) ? footer.links : [];
   const footerGroups = groupFooterLinks(footerLinks);
 
   return (

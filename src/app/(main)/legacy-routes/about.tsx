@@ -216,83 +216,6 @@ function AboutUs({
             })}
           </div>
         </motion.div>
-
-        {/* Visual column */}
-        <motion.div
-          initial={{ opacity: 0, x: 60 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="lg:col-span-2 space-y-6 lg:sticky lg:top-28"
-        >
-          <motion.div
-            animate={{ y: [0, -12, 0] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="glass rounded-3xl p-8 relative overflow-hidden"
-          >
-            <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-phause-cyan/15 blur-[80px]" />
-            <div className="flex items-center gap-3 mb-7">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-phause-cyan to-phause-teal flex items-center justify-center">
-                <ShieldCheck className="w-6 h-6 text-phause-dark" />
-              </div>
-              <div>
-                <p className="font-bold">Global Defense Grid</p>
-                <p className="text-xs text-phause-cyan flex items-center gap-1.5">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute h-full w-full rounded-full bg-phause-cyan opacity-75" />
-                    <span className="relative h-full w-full rounded-full bg-phause-cyan" />
-                  </span>
-                  Operational — 40+ regions
-                </p>
-              </div>
-            </div>
-            {[
-              { label: "Detection Coverage", val: 99.8 },
-              { label: "Automated Containment", val: 97 },
-              { label: "False Positive Rate", val: 99.2 },
-              { label: "Analyst Satisfaction", val: 98 },
-            ].map((row, i) => (
-              <div key={`${row.label}-${i}`} className="mb-5">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-slate-300">{row.label}</span>
-                  <span className="text-phause-cyan font-bold">{row.val}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-phause-border overflow-hidden">
-                  <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-phause-cyan to-cyan-400"
-                    initial={{ width: 0 }}
-                    whileInView={{ width: `${row.val}%` }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 1.2, delay: 0.2 + i * 0.15 }}
-                  />
-                </div>
-              </div>
-            ))}
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="grid grid-cols-2 gap-4"
-          >
-            {[
-              { icon: Fingerprint, label: "Authorised Simulations" },
-              { icon: Layers, label: "Connected Campaign Reporting" },
-              { icon: GitBranch, label: "Follow-up Learning" },
-              { icon: Handshake, label: "Responsible exercise planning" },
-            ].map((item, index) => (
-              <div
-                key={`${item.label}-${index}`}
-                className="glass rounded-2xl p-5 text-center hover:border-phause-cyan/40 transition-colors"
-              >
-                <item.icon className="w-6 h-6 text-phause-cyan mx-auto mb-2" />
-                <p className="text-xs font-semibold">{item.label}</p>
-              </div>
-            ))}
-          </motion.div>
-        </motion.div>
       </div>
     </section>
   );
@@ -563,14 +486,8 @@ function OurCommitment({ commitments = [
 }
 
 /* ══════════════════ TESTIMONIALS ══════════════════ */
-function Testimonials({ testimonials = [
-    { name: "Client A", role: "Role", text: "A testimonial for our security work.", stars: 5 },
-    { name: "Client B", role: "Role", text: "A testimonial for our security work.", stars: 5 },
-    { name: "Client C", role: "Role", text: "A testimonial for our security work.", stars: 5 },
-    { name: "Client D", role: "Role", text: "A testimonial for our security work.", stars: 5 },
-    { name: "Client E", role: "Role", text: "A testimonial for our security work.", stars: 5 },
-    { name: "Client F", role: "Role", text: "A testimonial for our security work.", stars: 5 },
-  ] }: { testimonials?: Array<{ name: string; role: string; text: string; stars: number }> }) {
+function Testimonials({ testimonials = [] }: { testimonials?: Array<{ name: string; role: string; text: string; stars: number }> }) {
+  if (testimonials.length === 0) return null;
   const doubled = [...testimonials, ...testimonials];
 
   return (
@@ -621,11 +538,8 @@ function Testimonials({ testimonials = [
 }
 
 /* ══════════════════ JOURNEY TIMELINE ══════════════════ */
-function JourneyTimeline({ milestones = [
-    { year: "2024", title: "Milestone", icon: Flag, desc: "Milestone summary for the journey." },
-    { year: "2025", title: "Milestone", icon: Rocket, desc: "Milestone summary for the journey." },
-    { year: "2026", title: "Milestone", icon: Shield, desc: "Milestone summary for the journey." },
-  ] }: { milestones?: Array<{ year: string; title: string; icon: React.ElementType; desc: string }> }) {
+function JourneyTimeline({ milestones = [] }: { milestones?: Array<{ year: string; title: string; icon: React.ElementType; desc: string }> }) {
+  if (milestones.length === 0) return null;
   const [activeYear, setActiveYear] = useState(0);
 
   return (
@@ -852,7 +766,7 @@ export default function AboutPage() {
         })
       : undefined;
 
-  const aboutSectionTitle = getBlockProp(heroBlock, "aboutTitle", "Born in a War Room. Built for the Digital Battlefield.");
+  const aboutSectionTitle = getBlockProp(heroBlock, "aboutTitle", "A practical workspace for security awareness.");
 
   return (
     <>
@@ -872,7 +786,6 @@ export default function AboutPage() {
         }))}
       />
       <WhatWeDo items={capabilityItems} />
-      <Counters />
       <WhyChooseUs reasons={valuesItems} />
       <OurCommitment commitments={commitmentsItems} />
       <Testimonials testimonials={testimonialsItems} />

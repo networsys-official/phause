@@ -12,8 +12,11 @@ async function loadPage() {
 function cmsText(node: unknown, out: string[] = []): string[] { if (typeof node === "string") { if (node.trim()) out.push(node.trim()); } else if (Array.isArray(node)) node.forEach((item) => cmsText(item, out)); else if (node && typeof node === "object") Object.values(node).forEach((item) => cmsText(item, out)); return out; }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const seo = await prisma.seo.findFirst({ where: { slug: "home", status: "PUBLISHED", deletedAt: null } });
-  return { title: seo?.title ?? "Phause", description: seo?.description ?? undefined };
+  await prisma.seo.findFirst({ where: { slug: "home", status: "PUBLISHED", deletedAt: null } });
+  return {
+    title: "Phause | Phishing Simulation & Security Awareness",
+    description: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with Phause campaign management, reporting and training tools.",
+  };
 }
 
 export default async function HomePage() {

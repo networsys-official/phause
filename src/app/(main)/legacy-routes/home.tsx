@@ -244,7 +244,7 @@ function Hero({
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-black leading-[1.05] mb-6"
+          className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-[1.05] mb-6 break-words"
         >
           {title}
         </motion.h1>
@@ -285,21 +285,23 @@ function Hero({
           </motion.a>
         </motion.div>
 
-        <div className="grid grid-cols-3 gap-4 md:gap-10 max-w-2xl mx-auto mt-20">
-          {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.8 + i * 0.15 }}
-              className="glass rounded-2xl p-5 hover:border-phause-cyan/40 transition-colors"
-            >
-              <s.icon className="w-6 h-6 text-phause-cyan mx-auto mb-2" />
-              <div className="text-2xl md:text-3xl font-black text-gradient">{s.val}</div>
-              <div className="text-xs md:text-sm text-slate-400 mt-1">{s.label}</div>
-            </motion.div>
-          ))}
-        </div>
+        {stats.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 md:gap-10 max-w-2xl mx-auto mt-12 sm:mt-20">
+            {stats.map((s, i) => (
+              <motion.div
+                key={s.label}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 + i * 0.15 }}
+                className="glass rounded-2xl p-4 sm:p-5 min-w-0 hover:border-phause-cyan/40 transition-colors"
+              >
+                <s.icon className="w-5 h-5 sm:w-6 sm:h-6 text-phause-cyan mx-auto mb-2 shrink-0" />
+                <div className="text-xl sm:text-2xl md:text-3xl font-black text-gradient break-words">{s.val}</div>
+                <div className="text-xs sm:text-sm text-slate-400 mt-1 break-words leading-snug">{s.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </motion.div>
 
       <motion.a
@@ -891,9 +893,9 @@ export default function Home() {
 
   const defaults = {
     hero: {
-      eyebrow: "Phishing simulation & security awareness",
+      eyebrow: "PHISHING SIMULATION & SECURITY AWARENESS",
       title: "Turn phishing awareness into measurable security readiness.",
-      description: "Phause helps organisations run authorised simulations, understand employee interactions and plan meaningful follow-up learning.",
+      description: "Phishing is a people problem as much as a technology problem. Phause helps your organisation run authorised simulations, understand employee interactions and turn campaign findings into practical security-awareness action.",
       ctaPrimary: "Create an Account",
       ctaSecondary: "Explore the Platform",
       stats: [
@@ -995,23 +997,14 @@ export default function Home() {
   const philosophySubtitle = getBlockProp(philosophyBlock ?? {}, "subtitle", "Three core principles guide everything we build, ship, and defend.");
 
   const hero = {
-    eyebrow: getBlockProp(heroBlock, "eyebrow", defaults.hero.eyebrow),
-    title: getBlockProp(heroBlock, "title", defaults.hero.title),
-    description: getBlockProp(heroBlock, "description", defaults.hero.description),
-    ctaPrimary: getBlockProp(heroBlock, "buttonText", getBlockProp(heroBlock, "ctaPrimary", defaults.hero.ctaPrimary)),
-    ctaSecondary: getBlockProp(heroBlock, "secondaryButtonText", getBlockProp(heroBlock, "ctaSecondary", defaults.hero.ctaSecondary)),
-    ctaPrimaryHref: getBlockProp(heroBlock, "buttonLink", getBlockProp(heroBlock, "ctaPrimaryHref", "/subscription")),
-    ctaSecondaryHref: getBlockProp(heroBlock, "secondaryButtonLink", getBlockProp(heroBlock, "ctaSecondaryHref", "/about")),
-    stats: Array.isArray(blockProps("stats")?.items)
-      ? (blockProps("stats").items as Array<Record<string, unknown>>).map((item, index: number) => {
-          const record = typeof item === "object" && item ? item : {};
-          return {
-            icon: [Shield, Radar, Zap, Shield][index % 4] ?? Shield,
-            val: typeof record.value === "string" ? record.value : typeof record.value === "number" ? String(record.value) : defaults.hero.stats[index]?.val ?? "0",
-            label: typeof record.label === "string" ? record.label : defaults.hero.stats[index]?.label ?? "Metric",
-          };
-        })
-      : defaults.hero.stats,
+    eyebrow: getBlockProp(heroBlock, "eyebrow", ""),
+    title: getBlockProp(heroBlock, "title", ""),
+    description: getBlockProp(heroBlock, "description", ""),
+    ctaPrimary: getBlockProp(heroBlock, "buttonText", getBlockProp(heroBlock, "ctaPrimary", "")),
+    ctaSecondary: getBlockProp(heroBlock, "secondaryButtonText", getBlockProp(heroBlock, "ctaSecondary", "")),
+    ctaPrimaryHref: getBlockProp(heroBlock, "buttonLink", getBlockProp(heroBlock, "ctaPrimaryHref", "")),
+    ctaSecondaryHref: getBlockProp(heroBlock, "secondaryButtonLink", getBlockProp(heroBlock, "ctaSecondaryHref", "")),
+    stats: [],
   };
 
   const aboutItems = Array.isArray(aboutSection?.items)

@@ -197,13 +197,6 @@ function TrustStrip({ items: cmsItems }: { items?: Array<Record<string, unknown>
         headset: Headset,
         trend: TrendingUp,
     };
-    const fallbackItems = [
-        { icon: BadgeCheck, label: "Authorised phishing simulations" },
-        { icon: Lock, label: "Role-based programme access" },
-        { icon: Globe, label: "Organisation-wide employee management" },
-        { icon: Headset, label: "Product guidance and account support" },
-        { icon: TrendingUp, label: "Campaign reporting and follow-up learning" },
-    ];
     const items = Array.isArray(cmsItems) && cmsItems.length > 0
         ? cmsItems
             .slice()
@@ -212,7 +205,7 @@ function TrustStrip({ items: cmsItems }: { items?: Array<Record<string, unknown>
                 icon: iconLookup[String(item.icon ?? "badge").toLowerCase()] ?? BadgeCheck,
                 label: String(item.title ?? ""),
             }))
-        : fallbackItems;
+        : [];
 
     return (
         <section className="relative py-10 border-y border-phause-border/50">
@@ -914,16 +907,12 @@ function RequestDemo() {
 
 /* ══════════════════ FAQ ══════════════════ */
 function FAQ({ items: cmsItems }: { items?: Array<Record<string, unknown>> }) {
-    const fallbackFaqs = [
-        { q: "Can I switch plans after subscribing?", a: "Absolutely. Upgrades take effect instantly and are prorated to the day. Downgrades apply at the start of your next billing cycle." },
-        { q: "How do plan changes take effect?", a: "Plan changes follow the billing and subscription rules displayed in your account. Review the current plan terms before confirming a change." },
-    ];
     const faqs = Array.isArray(cmsItems) && cmsItems.length > 0
         ? cmsItems
             .slice()
             .sort((a, b) => Number(a.displayOrder ?? 0) - Number(b.displayOrder ?? 0))
             .map((item) => ({ q: String(item.question ?? ""), a: String(item.answer ?? "") }))
-        : fallbackFaqs;
+        : [];
 
     const [open, setOpen] = useState<number | null>(0);
 

@@ -9,21 +9,21 @@ export const siteMetadataSchema = z.object({
 });
 
 export const liveSiteDefaults = siteMetadataSchema.parse({
-  title: "Phause | Strengthen. Aware. Defend.",
-  description: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
+  title: "Phause | Phishing Simulation & Security Awareness",
+  description: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with Phause campaign management, reporting and training tools.",
   canonical: "https://phause.com",
-  ogTitle: "Phause | Strengthen. Aware. Defend.",
-  ogDescription: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with practical training follow-through.",
+  ogTitle: "Phause | Phishing Simulation & Security Awareness",
+  ogDescription: "Run authorised phishing simulations, understand employee engagement and strengthen security awareness with Phause campaign management, reporting and training tools.",
 });
 
 export const homeHeroSeed = {
-  eyebrow: "Strengthen. Aware. Defend.",
-  title: "Strengthen. Aware. Defend.",
-  description: liveSiteDefaults.description,
-  ctaPrimary: "Get Protected Now",
-  ctaSecondary: "Explore Platform",
-  ctaPrimaryHref: "/subscription",
-  ctaSecondaryHref: "/about",
+  eyebrow: "PHISHING SIMULATION & SECURITY AWARENESS",
+  title: "Turn phishing awareness into measurable security readiness.",
+  description: "Phishing is a people problem as much as a technology problem. Phause helps your organisation run authorised simulations, understand employee interactions and turn campaign findings into practical security-awareness action.",
+  ctaPrimary: "Create an Account",
+  ctaSecondary: "Explore the Platform",
+  ctaPrimaryHref: "/registration",
+  ctaSecondaryHref: "/services",
 };
 
 export const defaultNavigationSeed = {

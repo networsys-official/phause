@@ -887,24 +887,17 @@ export async function getNavigationConfig() {
         dedupedVisibleItems.push(item);
       }
 
-      const requiredItems = defaultNavigation.items.map((item) => ({ ...item, href: slugToHref(item.href) }));
-      const mergedItems = requiredItems.map((required) => {
-        const existing = dedupedVisibleItems.find((item) => item.href === required.href);
-        return existing ? { ...required, label: existing.label, position: existing.position, id: existing.id, pageId: existing.pageId, pageTitle: existing.pageTitle } : required;
-      });
-      const extras = dedupedVisibleItems.filter((item) => !requiredItems.some((required) => required.href === item.href));
-
       return {
         key: navigation.key,
         label: navigation.label,
-        items: [...mergedItems, ...extras].sort((a, b) => a.position - b.position),
+        items: dedupedVisibleItems.sort((a, b) => a.position - b.position),
       };
     }
 
-    return defaultNavigation;
+    return { key: "main", label: "", items: [] };
   } catch (error) {
     if (isMissingCmsTableError(error)) {
-      return defaultNavigation;
+      return { key: "main", label: "", items: [] };
     }
 
     throw error;
@@ -930,16 +923,16 @@ export async function getFooterConfig() {
       });
       return {
         title: footer.title,
-        description: footer.description ?? defaultFooter.description,
-        copyright: footer.copyright ?? defaultFooter.copyright,
+        description: footer.description ?? "",
+        copyright: footer.copyright ?? "",
         links,
       };
     }
 
-    return defaultFooter;
+    return { title: "", description: "", copyright: "", links: [] };
   } catch (error) {
     if (isMissingCmsTableError(error)) {
-      return defaultFooter;
+      return { title: "", description: "", copyright: "", links: [] };
     }
 
     throw error;

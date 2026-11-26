@@ -54,26 +54,19 @@ export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "
   useEffect(() => {
     const loadNavigation = async () => {
       try {
-        const response = await fetch("/api/navigation");
+        const response = await fetch("/api/navigation", { cache: "no-store" });
         const payload = await response.json();
 
-        if (payload?.navigation?.items?.length) {
-          const cmsItems = payload.navigation.items.map((item: { label: string; href: string }) => ({
-            label: item.label,
-            href: item.href,
-          }));
-
-          const mergedItems = NAV_LINKS.map((required) => {
-            const existing = cmsItems.find((item: { label: string; href: string }) => item.href === required.href);
-            return existing ? { ...required, label: existing.label } : required;
-          });
-
-          const extraItems = cmsItems.filter((item: { label: string; href: string }) => !NAV_LINKS.some((required) => required.href === item.href));
-          setNavLinks([...mergedItems, ...extraItems]);
+        if (payload?.navigation?.items) {
+          setNavLinks(payload.navigation.items
+            .filter((item: { status?: string; deletedAt?: string | null }) => item.status !== "DRAFT" && item.status !== "ARCHIVED" && !item.deletedAt)
+            .map((item: { label: string; href: string }) => ({ label: item.label, href: item.href })));
+        } else {
+          setNavLinks([]);
         }
 
         try {
-          const settingsResponse = await fetch("/api/settings");
+          const settingsResponse = await fetch("/api/settings", { cache: "no-store" });
           const settingsPayload = await settingsResponse.json();
           if (settingsPayload?.settings?.siteName) setBrandName(settingsPayload.settings.siteName);
           if (settingsPayload?.settings?.logoUrl) setLogoUrl(settingsPayload.settings.logoUrl);

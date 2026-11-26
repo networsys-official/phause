@@ -55,6 +55,12 @@ export default async function BlogDetailPage({
     notFound();
   }
 
+  const plainContent = post.content
+    .map((paragraph) => paragraph.replace(/<[^>]+>/g, " ").replace(/&[a-z0-9#]+;/gi, " ").replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join(" ")
+    .replace(/\s+([.,])/g, "$1");
+
   const relatedPosts = blogPosts
     .filter(
       (item) =>
@@ -123,11 +129,10 @@ export default async function BlogDetailPage({
       <section className="px-6 py-16">
         <div className="mx-auto grid max-w-5xl gap-12 lg:grid-cols-[1fr_280px]">
           <article>
-            <div className="space-y-7 text-base leading-8 text-slate-300">
-              {post.content.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
-            </div>
+            <div
+              className="space-y-7 text-base leading-8 text-slate-300 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-white [&_a]:text-cyan-300 [&_strong]:text-white"
+              dangerouslySetInnerHTML={{ __html: post.content.join("") }}
+            />
 
             <div className="mt-12 border-t border-white/10 pt-8">
               <Link
@@ -208,6 +213,8 @@ export default async function BlogDetailPage({
           </div>
         </section>
       )}
+
+      <div className="sr-only">{plainContent}</div>
     </main>
   );
 }
