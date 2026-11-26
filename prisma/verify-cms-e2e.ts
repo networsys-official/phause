@@ -6,12 +6,13 @@ const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const envPath = path.join(process.cwd(), ".env");
 const envText = fs.existsSync(envPath) ? fs.readFileSync(envPath, "utf8") : "";
 const env = Object.fromEntries(envText.split(/\r?\n/).map((line) => { const i = line.indexOf("="); return i > 0 ? [line.slice(0, i).trim(), line.slice(i + 1).trim().replace(/^['\"]|['\"]$/g, "")] : ["", ""]; }).filter(([k]) => k));
-const ADMIN_PASSWORD = process.env.BOOTSTRAP_ADMIN_PASSWORD ?? env.BOOTSTRAP_ADMIN_PASSWORD;
-const ADMIN_EMAIL = "phause@gmail.com";
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? env.SEED_ADMIN_PASSWORD;
+const ADMIN_EMAIL = (process.env.SEED_ADMIN_EMAIL ?? env.SEED_ADMIN_EMAIL)?.trim().toLowerCase();
 
 type Row = { content: string; edit: string; live: string; restored: string; errors: string };
 const rows: Row[] = [];
 const unexpectedErrors: string[] = [];
+const browserConsoleErrors: string[] = [];
 
 async function statusFor(context: BrowserContext, method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE", url: string, data?: unknown) {
     const r = await context.request.fetch(BASE + url, { method, failOnStatusCode: false, ...(data !== undefined ? { data } : {}) });
@@ -20,7 +21,7 @@ async function statusFor(context: BrowserContext, method: "GET" | "POST" | "PUT"
 }
 
 async function login(context: BrowserContext) {
-    if (!ADMIN_PASSWORD) throw new Error("BOOTSTRAP_ADMIN_PASSWORD is not set");
+    if (!ADMIN_EMAIL || !ADMIN_PASSWORD) throw new Error("SEED_ADMIN_EMAIL or SEED_ADMIN_PASSWORD is not set");
     const csrf = await context.request.get(BASE + "/api/auth/csrf", { failOnStatusCode: false });
     const csrfBody: any = await csrf.json();
     const res = await context.request.post(BASE + "/api/auth/callback/credentials", { failOnStatusCode: false, form: { csrfToken: csrfBody.csrfToken, email: ADMIN_EMAIL, password: ADMIN_PASSWORD, callbackUrl: BASE + "/studio", json: "true" } });
@@ -89,18 +90,26 @@ async function blogTest(context: BrowserContext) {
 async function seoSettingsTest(context: BrowserContext) {
     const original = await statusFor(context, "GET", "/api/cms/seo"); const so: any = await original.json();
     const home = (so.entries ?? so.items ?? []).find((x: any) => x.slug === "home");
-    const set = await statusFor(context, "PUT", "/api/cms/seo", { slug: "home", title: "E2E SEO title", description: "E2E SEO description", canonical: "https://phause.com/" });
+    const set = await statusFor(context, "PUT", "/api/cms/seo", { id: home?.id, slug: "home", title: "E2E SEO title", description: "E2E SEO description", canonical: "https://phause.com/" });
     await new Promise(r => setTimeout(r, 300)); const html = await (await context.request.get(BASE + "/", { failOnStatusCode: false })).text();
     const seoLive = html.includes("E2E SEO title") && html.includes("E2E SEO description");
-    if (home) await statusFor(context, "PUT", "/api/cms/seo", { slug: "home", title: home.title ?? "", description: home.description ?? "", canonical: home.canonical ?? "https://phause.com/" });
+    if (home) await statusFor(context, "PUT", "/api/cms/seo", { id: home.id, slug: "home", title: home.title ?? "", description: home.description ?? "", canonical: home.canonical ?? "https://phause.com/" });
     rows.push({ content: "SEO", edit: "title/description", live: set.status() === 200 && seoLive ? "PASS" : "FAIL", restored: home ? "PASS" : "PASS", errors: "none" });
 
     const settings = await statusFor(context, "GET", "/api/cms/settings"); const sj: any = await settings.json();
-    const supportEmail = (sj.settings ?? sj.items ?? []).find((x: any) => x.key === "supportEmail")?.value;
-    const supportPhone = (sj.settings ?? sj.items ?? []).find((x: any) => x.key === "supportPhone")?.value;
-    await statusFor(context, "POST", "/api/cms/settings", { settings: [{ key: "supportEmail", value: "e2e@phause.test", status: "PUBLISHED" }, { key: "supportPhone", value: "", status: "PUBLISHED" }] });
+    const supportEmailEntry = (sj.settings ?? sj.items ?? []).find((x: any) => x.key === "supportEmail");
+    const supportPhoneEntry = (sj.settings ?? sj.items ?? []).find((x: any) => x.key === "supportPhone");
+    const settingsToEdit = [
+      ...(supportEmailEntry ? [{ id: supportEmailEntry.id, key: "supportEmail", slug: "supportEmail", value: "e2e@phause.test", status: "PUBLISHED" }] : []),
+      ...(supportPhoneEntry ? [{ id: supportPhoneEntry.id, key: "supportPhone", slug: "supportPhone", value: "", status: "PUBLISHED" }] : []),
+    ];
+    if (settingsToEdit.length) await statusFor(context, "POST", "/api/cms/settings", { settings: settingsToEdit });
     await new Promise(r => setTimeout(r, 250));
-    await statusFor(context, "POST", "/api/cms/settings", { settings: [{ key: "supportEmail", value: supportEmail ?? "", status: "PUBLISHED" }, { key: "supportPhone", value: supportPhone ?? "", status: "PUBLISHED" }] });
+    const settingsToRestore = [
+      ...(supportEmailEntry ? [{ id: supportEmailEntry.id, key: "supportEmail", slug: "supportEmail", value: supportEmailEntry.value ?? "", status: "PUBLISHED" }] : []),
+      ...(supportPhoneEntry ? [{ id: supportPhoneEntry.id, key: "supportPhone", slug: "supportPhone", value: supportPhoneEntry.value ?? "", status: "PUBLISHED" }] : []),
+    ];
+    if (settingsToRestore.length) await statusFor(context, "POST", "/api/cms/settings", { settings: settingsToRestore });
     rows.push({ content: "settings", edit: "supportEmail/supportPhone empty", live: "PASS", restored: "PASS", errors: "none" });
 }
 
@@ -114,7 +123,7 @@ async function navigationFooterTest(context: BrowserContext) {
     const footerGet = await statusFor(context, "GET", "/api/footer"); const fj: any = await footerGet.json();
     const originalFooter = fj.footer;
     await statusFor(context, "PUT", "/api/footer", { title: "E2E Footer", description: "E2E footer description", copyright: originalFooter?.copyright ?? "", links: originalFooter?.links ?? [] });
-    await new Promise(r => setTimeout(r, 500)); await browserPage.goto(BASE+"/?e2e-footer="+Date.now(),{waitUntil:"domcontentloaded"}); await browserPage.waitForTimeout(750); const foot=await browserPage.locator("body").innerText();
+    await new Promise(r => setTimeout(r, 1500)); await browserPage.goto(BASE+"/?e2e-footer="+Date.now(),{waitUntil:"domcontentloaded"}); await browserPage.waitForTimeout(1000); const foot=await browserPage.locator("body").innerText();
     await statusFor(context, "PUT", "/api/footer", { title: originalFooter?.title ?? "Phause", description: originalFooter?.description ?? "", copyright: originalFooter?.copyright ?? "", links: originalFooter?.links ?? [] });
     rows.push({ content: "navigation/footer", edit: "add nav/rename footer description", live: html.includes("E2E Navigation") && foot.includes("E2E footer description") ? "PASS" : "FAIL", restored: "PASS", errors: html.includes("E2E Navigation")&&foot.includes("E2E footer description") ? "none" : "live text missing" });
     console.log(`navigation live=${html.includes("E2E Navigation")} footer live=${foot.includes("E2E footer description")}`);
@@ -141,6 +150,13 @@ async function roleTest(context: BrowserContext) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     await login(context);
     context.on("response", (r) => { if (r.status() >= 400 && r.url().includes("/api/cms/")) unexpectedErrors.push(`${r.status()} ${r.url()}`) });
+    context.on("page", async (page) => {
+        page.on("console", msg => {
+            const text = msg.text();
+            if (msg.type() === "error") browserConsoleErrors.push(text);
+            else console.log(`PAGE LOG: ${text}`);
+        });
+    });
     await pageBlockEdit(context, "home", "/");
     for (const [slug, route] of [["services", "/services"], ["about", "/about"], ["how-it-works", "/how-it-works"], ["solutions", "/solutions"], ["subscription", "/subscription"], ["contact", "/contact"], ["security-policy", "/security-policy"]] as const) await pageBlockEdit(context, slug, route);
     await faqTest(context); await blogTest(context); await seoSettingsTest(context); await navigationFooterTest(context); await draftPageTest(context); await roleTest(context);
@@ -150,5 +166,7 @@ async function roleTest(context: BrowserContext) {
     for (const row of rows) console.log(`${row.content}\t${row.edit}\t${row.live}\t${row.restored}\t${unexpectedErrors.length ? "FAIL" : "none"}`);
     console.log("\nUnexpected 4xx/5xx:");
     console.log(unexpectedErrors.length ? unexpectedErrors.join("\n") : "none");
-    if (rows.some(r => r.live === "FAIL" || r.restored === "FAIL") || unexpectedErrors.length) process.exit(1);
+    console.log("\nBrowser console errors:");
+    console.log(browserConsoleErrors.length ? browserConsoleErrors.join("\n") : "none");
+    if (rows.some(r => r.live === "FAIL" || r.restored === "FAIL") || unexpectedErrors.length || browserConsoleErrors.length) process.exit(1);
 })().catch((error) => { console.error(error); process.exit(1) });

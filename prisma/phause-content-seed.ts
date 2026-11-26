@@ -249,6 +249,16 @@ export async function applyPhauseContentPack(prisma: PrismaClient, options: { dr
 
   await prisma.$transaction(async (tx) => {
     await seedPages(tx as unknown as Tx, contentPack, migrate);
+    if (migrate) {
+      await tx.page.updateMany({
+        where: { slug: { in: ["docs", "blog"] } },
+        data: { status: "PUBLISHED", publishedAt: new Date(), deletedAt: null, version: { increment: 1 } },
+      });
+      await tx.page.updateMany({
+        where: { slug: "resources" },
+        data: { status: "DRAFT", publishedAt: null, deletedAt: null },
+      });
+    }
     await seedDocs(tx as unknown as Tx, contentPack, migrate);
     await seedSeo(tx as unknown as Tx, contentPack, migrate);
     await seedFaqs(tx as unknown as Tx, contentPack, migrate);

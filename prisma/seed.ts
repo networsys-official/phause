@@ -96,25 +96,18 @@ async function ensureBootstrapAdmin() {
 	}
 
 	const existing = await prisma.user.findUnique({ where: { email: SEED_ADMIN_EMAIL } });
-	const passwordHash = SEED_ADMIN_FORCE_PASSWORD || !existing
-		? await bcrypt.hash(SEED_ADMIN_PASSWORD, 12)
-		: undefined;
+	const passwordHash = await bcrypt.hash(SEED_ADMIN_PASSWORD, 12);
 
 	await prisma.user.upsert({
 		where: { email: SEED_ADMIN_EMAIL },
-		update: {
-			role: Role.SUPER_ADMIN,
-			status: UserStatus.ACTIVE,
-			emailVerified: existing?.emailVerified ? existing.emailVerified : new Date(),
-			failedLoginAttempts: 0,
-			lockedUntil: null,
-			...(passwordHash ? { passwordHash } : {}),
-		},
+		update: existing && SEED_ADMIN_FORCE_PASSWORD
+			? { passwordHash }
+			: {},
 		create: {
 			name: "Phause Admin",
 			email: SEED_ADMIN_EMAIL,
 			emailVerified: new Date(),
-			passwordHash: await bcrypt.hash(SEED_ADMIN_PASSWORD, 12),
+			passwordHash: passwordHash as string,
 			role: Role.SUPER_ADMIN,
 			status: UserStatus.ACTIVE,
 		},
