@@ -136,7 +136,7 @@ export default function Navbar({ initialBrandName = "Phause", initialLogoUrl = "
               <>
                 <button
                   type="button"
-                  onClick={() => router.push(ROUTES.subscription)}
+                  onClick={() => window.location.assign("https://phause-sumit.vercel.app")}
                   className="rounded-full border border-phause-cyan/40 px-5 py-2.5 text-sm font-semibold text-phause-cyan transition-all duration-300 hover:bg-phause-cyan/10 hover:shadow-[0_0_20px_rgba(0,216,201,0.35)]"
                 >
                   Go to Workplace
