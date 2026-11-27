@@ -9,9 +9,12 @@ export default function TestimonialsCmsPage() {
   const [items, setItems] = useState<Array<Record<string, string>>>([]);
 
   useEffect(() => {
-    void fetch("/api/cms/testimonials")
+    void fetch("/api/cms/pages?slug=about")
       .then((response) => response.json())
-      .then((payload) => setItems(Array.isArray(payload.items) ? payload.items : []))
+      .then((payload) => {
+        const block = (payload.page?.blocks ?? []).find((entry: Record<string, unknown>) => String(entry.type ?? "").replace(/[_-]+/g, "").toLowerCase() === "testimonial");
+        setItems(Array.isArray(block?.props?.items) ? block.props.items as Array<Record<string, string>> : []);
+      })
       .catch(() => setItems([]));
   }, []);
 

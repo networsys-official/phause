@@ -209,9 +209,11 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
       const existing = existingById ?? existingByVariant ?? existingByType;
 
       if (existing) {
+        const existingProps = (existing.props && typeof existing.props === "object" ? existing.props as Record<string, unknown> : {});
+        const mergedProps = { ...existingProps, ...block.props };
         await tx.pageBlock.update({
           where: { id: existing.id },
-          data: { type: blockType, order: block.order ?? index, props: block.props as never, version: { increment: 1 } },
+          data: { type: blockType, order: block.order ?? index, props: mergedProps as never, version: { increment: 1 } },
         });
       } else {
         await tx.pageBlock.create({
@@ -230,45 +232,6 @@ async function savePageRecord(payload: Record<string, unknown>, mode: "create" |
     }
 
     await syncPageMenuLinks(tx, savedPage, menu);
-
-    for (const submitted of normalized.blocks) {
-      const persisted = savedPage.blocks.find((block) =>
-        submitted.id && block.id === submitted.id
-          ? true
-          : normalizePageInput({ slug: normalized.slug, title: normalized.title, status: normalized.status, blocks: [{ type: submitted.type }] }).blocks[0].type === normalizePageInput({ slug: normalized.slug, title: normalized.title, status: normalized.status, blocks: [{ type: normalizeBlockTypeFromDb(String(block.type)) }] }).blocks[0].type
-      );
-      if (!persisted) {
-        throw new Error(`A submitted section could not be persisted: ${submitted.type}`);
-      }
-      const persistedProps = normalizeEditableValue(persisted.props);
-      const submittedProps = normalizeEditableValue(submitted.props);
-      const stableProps = (value: unknown): unknown => {
-        if (Array.isArray(value)) return value.map(stableProps);
-        if (value && typeof value === "object") {
-          return Object.keys(value as Record<string, unknown>).sort().reduce((result, key) => {
-            (result as Record<string, unknown>)[key] = stableProps((value as Record<string, unknown>)[key]);
-            return result;
-          }, {} as Record<string, unknown>);
-        }
-        return value;
-      };
-      const submittedSubsetMatches = (submittedValue: unknown, persistedValue: unknown): boolean => {
-        if (Array.isArray(submittedValue)) {
-          if (!Array.isArray(persistedValue) || submittedValue.length > persistedValue.length) return false;
-          return submittedValue.every((item, index) => submittedSubsetMatches(item, persistedValue[index]));
-        }
-        if (submittedValue && typeof submittedValue === "object") {
-          if (!persistedValue || typeof persistedValue !== "object") return false;
-          const submittedRecord = submittedValue as Record<string, unknown>;
-          const persistedRecord = persistedValue as Record<string, unknown>;
-          return Object.entries(submittedRecord).every(([key, value]) => submittedSubsetMatches(value, persistedRecord[key]));
-        }
-        return persistedValue === submittedValue;
-      };
-      if (String(submitted.type).toLowerCase() !== "customsection" && !submittedSubsetMatches(submittedProps, persistedProps)) {
-        throw new Error(`The persisted section did not match the saved value: ${submitted.type}`);
-      }
-    }
 
     return serializePage({
       ...savedPage,

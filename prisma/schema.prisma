@@ -66,19 +66,19 @@ model VerificationToken {
 }
 
 model Page {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  title       String
-  status      ContentStatus @default(DRAFT)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  publishedAt DateTime?
-  deletedAt   DateTime?
-  version     Int           @default(0)
-  seoId       String?       @unique
-  AuditLog    AuditLog[]    @relation("PageAuditLog")
-  seo         Seo?          @relation(fields: [seoId], references: [id])
-  blocks      PageBlock[]
+  id              String           @id @default(cuid())
+  slug            String           @unique
+  title           String
+  status          ContentStatus    @default(DRAFT)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  publishedAt     DateTime?
+  deletedAt       DateTime?
+  version         Int              @default(0)
+  seoId           String?          @unique
+  AuditLog        AuditLog[]       @relation("PageAuditLog")
+  seo             Seo?             @relation(fields: [seoId], references: [id])
+  blocks          PageBlock[]
   navigationItems NavigationItem[]
   footerLinks     FooterLink[]
 
@@ -490,57 +490,6 @@ model CrawlUrl {
   @@index([status, fetchedAt])
 }
 
-model SubscriptionPage {
-  id              String   @id @default(cuid())
-  title           String
-  slug            String   @unique
-  metaTitle       String?
-  metaDescription String?
-  ogImage         String?
-  active          Boolean  @default(true)
-  sectionOrder    Json     @default("[]")
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model SubscriptionHeroSection {
-  id               String  @id @default(cuid())
-  badgeText        String
-  badgeIcon        String  @default("sparkles")
-  badgeVisible     Boolean @default(true)
-  heading          String
-  highlightedWord  String
-  subtitle         String
-  backgroundImage  String?
-  ctaPrimaryText   String
-  ctaPrimaryUrl    String
-  ctaSecondaryText String?
-  ctaSecondaryUrl  String?
-  accentColor      String  @default("cyan")
-  overlayColor     String  @default("#05090f")
-  visible          Boolean @default(true)
-  sortOrder        Int     @default(0)
-}
-
-model SubscriptionTrustItem {
-  id          String  @id @default(cuid())
-  icon        String  @default("badge")
-  title       String
-  description String?
-  visible     Boolean @default(true)
-  sortOrder   Int     @default(0)
-}
-
-model SubscriptionPricingSection {
-  id          String  @id @default(cuid())
-  title       String
-  subtitle    String?
-  badgeText   String?
-  accentColor String  @default("cyan")
-  visible     Boolean @default(true)
-  sortOrder   Int     @default(0)
-}
-
 model SubscriptionPlan {
   id             String        @id @default(cuid())
   slug           String?       @unique
@@ -576,129 +525,6 @@ model PlanFeature {
   plan      SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@index([planId, sortOrder])
-}
-
-model SubscriptionComparisonSection {
-  id        String  @id @default(cuid())
-  title     String
-  subtitle  String?
-  visible   Boolean @default(true)
-  sortOrder Int     @default(0)
-}
-
-model SubscriptionComparisonRow {
-  id                String  @id @default(cuid())
-  name              String
-  freeValue         String
-  starterValue      String
-  professionalValue String
-  businessValue     String
-  enterpriseValue   String
-  sortOrder         Int     @default(0)
-  active            Boolean @default(true)
-}
-
-model SubscriptionFaqSection {
-  id        String  @id @default(cuid())
-  title     String
-  subtitle  String?
-  visible   Boolean @default(true)
-  sortOrder Int     @default(0)
-}
-
-model SubscriptionFaqItem {
-  id        String  @id @default(cuid())
-  question  String
-  answer    String
-  sortOrder Int     @default(0)
-  active    Boolean @default(true)
-
-  @@index([active, sortOrder])
-}
-
-model SubscriptionTestimonialSection {
-  id        String  @id @default(cuid())
-  title     String
-  subtitle  String?
-  visible   Boolean @default(true)
-  sortOrder Int     @default(0)
-}
-
-model SubscriptionTestimonialItem {
-  id          String  @id @default(cuid())
-  name        String
-  company     String?
-  designation String?
-  image       String?
-  rating      Int     @default(5)
-  review      String
-  active      Boolean @default(true)
-  sortOrder   Int     @default(0)
-
-  @@index([active, sortOrder])
-}
-
-model SubscriptionCtaSection {
-  id              String  @id @default(cuid())
-  title           String
-  description     String?
-  buttonText      String
-  buttonUrl       String
-  backgroundImage String?
-  visible         Boolean @default(true)
-  sortOrder       Int     @default(0)
-}
-
-model SubscriptionSection {
-  id          String  @id @default(cuid())
-  sectionType String
-  title       String?
-  enabled     Boolean @default(true)
-  sortOrder   Int     @default(0)
-  props       Json    @default("{}")
-
-  @@unique([sectionType])
-  @@index([enabled, sortOrder])
-}
-
-model SubscriptionComparisonFeature {
-  id           String  @id @default(cuid())
-  featureName  String
-  free         String  @default("")
-  starter      String  @default("")
-  professional String  @default("")
-  business     String  @default("")
-  enterprise   String  @default("")
-  sortOrder    Int     @default(0)
-  active       Boolean @default(true)
-
-  @@index([active, sortOrder])
-}
-
-model SubscriptionFaq {
-  id        String   @id @default(cuid())
-  question  String
-  answer    String
-  active    Boolean  @default(true)
-  sortOrder Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([active, sortOrder])
-}
-
-model SubscriptionTestimonial {
-  id           String  @id @default(cuid())
-  customerName String
-  designation  String?
-  company      String?
-  image        String?
-  review       String
-  rating       Int     @default(5)
-  sortOrder    Int     @default(0)
-  active       Boolean @default(true)
-
-  @@index([active, sortOrder])
 }
 
 model ContentPatch {

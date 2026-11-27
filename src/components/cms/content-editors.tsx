@@ -177,214 +177,63 @@ export function normalizeEditableSectionItems(sectionType: string, items: unknow
 
 export function PageSectionEditor({ page, blocks, media }: { page: { id: string; slug: string; title: string; status: string; version?: number; showInHeader?: boolean; headerLabel?: string; headerPosition?: number; showInFooter?: boolean; footerGroup?: string; footerLabel?: string; footerPosition?: number }; blocks: Array<{ id: string; type: string; order: number; props: Record<string, unknown> }>; media: Array<{ id: string; title: string; url: string; mimeType: string }> }) {
   const router = useRouter();
-  const initialSectionsRef = useRef(blocks.map((block) => normalizeBlockRecord(block)));
+  const initialRef = useRef(blocks.map((block) => normalizeBlockRecord(block)));
   const [sections, setSections] = useState(() => blocks.map((block) => normalizeBlockRecord(block)));
-  const [message, setMessage] = useState("");
-  const [toast, setToast] = useState<{ type: "success" | "info" | "warning" | "error"; message: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "success" | "error">("idle");
-  const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [pageVersion, setPageVersion] = useState(page.version ?? 1);
-  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
-  const [conflictReloadAvailable, setConflictReloadAvailable] = useState(false);
-  const [publishedForms, setPublishedForms] = useState<Array<{ slug: string; name: string }>>([]);
   const [draft, setDraft] = useState<PageMenuDraft>({
     showInHeader: page.showInHeader ?? false,
     headerLabel: page.headerLabel ?? page.title,
     headerPosition: page.headerPosition ?? 0,
     showInFooter: page.showInFooter ?? false,
-    footerGroup: page.footerGroup === "QUICK_LINKS" || page.footerGroup === "SERVICES" || page.footerGroup === "LEGAL" ? page.footerGroup : "QUICK_LINKS",
+    footerGroup: page.footerGroup === "SERVICES" || page.footerGroup === "LEGAL" ? page.footerGroup : "QUICK_LINKS",
     footerLabel: page.footerLabel ?? page.title,
     footerPosition: page.footerPosition ?? 0,
   });
+  const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "error" | "info"; message: string } | null>(null);
+  const [publishedForms, setPublishedForms] = useState<Array<{ slug: string; name: string }>>([]);
 
   useEffect(() => {
-    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!hasUnsavedChanges) return;
-
-      event.preventDefault();
-      event.returnValue = "";
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  useEffect(() => {
-    let mounted = true;
     fetch("/api/cms/forms").then((response) => response.json()).then((payload) => {
-      if (mounted && Array.isArray(payload.forms)) setPublishedForms(payload.forms.filter((form: { status?: string }) => form.status === "PUBLISHED").map((form: { slug: string; name: string }) => ({ slug: form.slug, name: form.name })));
+      if (Array.isArray(payload.forms)) setPublishedForms(payload.forms.filter((form: { status?: string }) => form.status === "PUBLISHED").map((form: { slug: string; name: string }) => ({ slug: form.slug, name: form.name })));
     }).catch(() => undefined);
-    return () => { mounted = false; };
   }, []);
 
   useEffect(() => {
     if (!toast) return;
-
-    const timeout = window.setTimeout(() => setToast(null), 3000);
+    const timeout = window.setTimeout(() => setToast(null), 5000);
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const updateSection = (id: string, field: string, value: string | boolean | number) => {
-    setSections((current) =>
-      current.map((section) =>
-        section.id === id
-          ? {
-              ...section,
-              props: {
-                ...section.props,
-                [field]: value,
-              },
-            }
-          : section,
-      ),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
+  const updateSection = (id: string, patch: Record<string, unknown>) => {
+    setSections((current) => current.map((section) => section.id === id ? {
+      ...section,
+      props: { ...section.props, ...patch },
+    } : section));
+    setDirty(true);
   };
 
-  const updateContactDetail = (id: string, detailIndex: number, field: "label" | "value" | "note", value: string) => {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== id) return section;
-
-        const nextDetails = serializeContactDetails(section.props.details);
-        nextDetails[detailIndex] = {
-          ...nextDetails[detailIndex],
-          id: nextDetails[detailIndex]?.id ?? `contact-detail-${detailIndex + 1}`,
-          [field]: value,
-        };
-
-        return {
-          ...section,
-          props: {
-            ...section.props,
-            details: nextDetails,
-          },
-        };
-      }),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
+  const updateItem = (sectionId: string, itemIndex: number, patch: Record<string, unknown>) => {
+    setSections((current) => current.map((section) => {
+      if (section.id !== sectionId) return section;
+      const items = normalizeEditableSectionItems(String(section.type), section.props.items);
+      items[itemIndex] = { ...items[itemIndex], ...patch };
+      return { ...section, props: { ...section.props, items } };
+    }));
+    setDirty(true);
   };
 
-  const updateSectionItem = (id: string, itemIndex: number, field: string, value: string) => {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== id) return section;
-
-        const nextItems = normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, index) => {
-          if (index !== itemIndex) return item;
-          return { ...item, [field]: value };
-        });
-
-        return {
-          ...section,
-          props: {
-            ...section.props,
-            items: nextItems,
-          },
-        };
-      }),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
-  };
-
-  const addSectionItem = (id: string) => {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== id) return section;
-
-        const nextItems = normalizeEditableSectionItems(String(section.type ?? ""), section.props.items);
-        const isFaq = String(section.type ?? "").toLowerCase() === "faq";
-        nextItems.push({
-          id: `item-${nextItems.length + 1}`,
-          title: isFaq ? "New question" : "New item",
-          description: isFaq ? "Add answer" : "Add description",
-          question: isFaq ? "New question" : "",
-          answer: isFaq ? "Add answer" : "",
-          icon: "",
-        });
-
-        return {
-          ...section,
-          props: {
-            ...section.props,
-            items: nextItems,
-          },
-        };
-      }),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
-  };
-
-  const removeSectionItem = (id: string, itemIndex: number) => {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== id) return section;
-
-        const nextItems = normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).filter((_, index) => index !== itemIndex);
-        return {
-          ...section,
-          props: {
-            ...section.props,
-            items: nextItems,
-          },
-        };
-      }),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
-  };
-
-  const addContactDetail = (id: string) => {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== id) return section;
-
-        const nextDetails = serializeContactDetails(section.props.details);
-        nextDetails.push({
-          id: `contact-detail-${nextDetails.length + 1}`,
-          label: `Detail ${nextDetails.length + 1}`,
-          value: "",
-          note: "",
-        });
-
-        return {
-          ...section,
-          props: {
-            ...section.props,
-            details: nextDetails,
-          },
-        };
-      }),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
-  };
-
-  const removeContactDetail = (id: string, detailIndex: number) => {
-    setSections((current) =>
-      current.map((section) => {
-        if (section.id !== id) return section;
-
-        const nextDetails = serializeContactDetails(section.props.details);
-        nextDetails.splice(detailIndex, 1);
-
-        return {
-          ...section,
-          props: {
-            ...section.props,
-            details: nextDetails,
-          },
-        };
-      }),
-    );
-    setHasUnsavedChanges(true);
-    setMessage("");
+  const moveItem = (sectionId: string, itemIndex: number, direction: -1 | 1) => {
+    setSections((current) => current.map((section) => {
+      if (section.id !== sectionId) return section;
+      const items = normalizeEditableSectionItems(String(section.type), section.props.items);
+      const target = itemIndex + direction;
+      if (target < 0 || target >= items.length) return section;
+      [items[itemIndex], items[target]] = [items[target], items[itemIndex]];
+      return { ...section, props: { ...section.props, items } };
+    }));
+    setDirty(true);
   };
 
   const moveSection = (index: number, direction: -1 | 1) => {
@@ -393,1043 +242,158 @@ export function PageSectionEditor({ page, blocks, media }: { page: { id: string;
       const target = index + direction;
       if (target < 0 || target >= next.length) return current;
       [next[index], next[target]] = [next[target], next[index]];
-      return next.map((section, idx) => ({ ...section, order: idx, props: { ...section.props, order: idx, position: idx } }));
+      return next.map((section, order) => ({ ...section, order, props: { ...section.props, order, position: order } }));
     });
-    setHasUnsavedChanges(true);
-    setMessage("");
-  };
-
-  const validateSections = (list: typeof sections) => {
-    const nextErrors: Record<string, Record<string, string>> = {};
-
-    list.forEach((section) => {
-      const sectionErrors = validatePageSectionProps(section, list, media.map((item) => item.url));
-
-      if (Object.keys(sectionErrors).length > 0) {
-        nextErrors[section.id] = sectionErrors;
-      }
-    });
-
-    if (detectDuplicatePosition(list.map((section) => ({ id: section.id, position: section.props.position ?? section.order })))) {
-      const duplicatePositionMessage = "⚠️ Duplicate position found";
-      setSaveState("error");
-      setToast({ type: "warning", message: duplicatePositionMessage });
-      setMessage("⚠️ Position already exists.");
-      return nextErrors;
-    }
-
-    return nextErrors;
+    setDirty(true);
   };
 
   const save = async () => {
-    const nextErrors = validateSections(sections);
-    setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0) {
-      setSaveState("error");
-      setToast({ type: "error", message: "❌ Save failed" });
-      setMessage("❌ Failed to save changes.");
-      return;
-    }
-
-    if (!hasPageChanges(sections, initialSectionsRef.current)) {
-      setSaveState("idle");
-      setToast({ type: "info", message: "ℹ️ No changes detected" });
-      setMessage("ℹ️ No changes detected.");
-      return;
-    }
-
-    setIsLoading(true);
-    setSaveState("saving");
-    setMessage("");
+    setSaving(true);
+    setToast(null);
+    const payload = {
+      id: page.id,
+      version: pageVersion,
+      slug: page.slug,
+      title: page.title,
+      status: page.status,
+      showInHeader: draft.showInHeader,
+      headerLabel: draft.headerLabel || page.title,
+      headerPosition: draft.headerPosition,
+      showInFooter: draft.showInFooter,
+      footerGroup: draft.footerGroup,
+      footerLabel: draft.footerLabel || page.title,
+      footerPosition: draft.footerPosition,
+      blocks: sections.map((section, index) => ({
+        id: section.id,
+        type: String(section.type).toLowerCase(),
+        order: index,
+        props: {
+          ...section.props,
+          position: Number(section.props.position ?? index),
+          visibility: section.props.visibility !== false,
+        },
+      })),
+    };
 
     try {
-      const payload = {
-        id: page.id,
-        version: pageVersion,
-        slug: page.slug,
-        title: page.title,
-        status: page.status,
-        showInHeader: draft.showInHeader,
-        headerLabel: draft.headerLabel || page.title,
-        headerPosition: draft.headerPosition,
-        showInFooter: draft.showInFooter,
-        footerGroup: draft.footerGroup,
-        footerLabel: draft.footerLabel || page.title,
-        footerPosition: draft.footerPosition,
-        blocks: sections
-          .map((section, index) => ({
-            id: section.id,
-            type: String(section.type ?? "").toLowerCase(),
-            order: index,
-            props: {
-              ...section.props,
-              position: Number(section.props.position ?? index),
-              visibility: section.props.visibility !== false,
-              title: typeof section.props.title === "string" ? section.props.title : "",
-              subtitle: typeof section.props.subtitle === "string" ? section.props.subtitle : "",
-              description: typeof section.props.description === "string" ? section.props.description : "",
-              buttonText: typeof section.props.buttonText === "string" ? section.props.buttonText : typeof section.props.ctaPrimary === "string" ? section.props.ctaPrimary : "",
-              buttonLink: typeof section.props.buttonLink === "string" ? section.props.buttonLink : typeof section.props.ctaPrimaryHref === "string" ? section.props.ctaPrimaryHref : "",
-              image: typeof section.props.image === "string" ? section.props.image : "",
-              details: section.type === "contact" ? serializeContactDetails(section.props.details) : section.props.details,
-            },
-          }))
-          .sort((left, right) => left.order - right.order),
-      };
-
-      const saved = await requestJson<CmsSaveResponse>("/api/cms/pages", "PUT", payload);
-      if (!saved.success || !saved.page) throw new Error("The server did not return the saved page.");
-      if (typeof saved.page.version === "number") setPageVersion(saved.page.version);
-      window.localStorage.setItem("phause:cms-page-updated", String(Date.now()));
-      setSaveState("success");
-      setHasUnsavedChanges(false);
+      let saved: CmsSaveResponse;
+      try {
+        saved = await requestJson<CmsSaveResponse>("/api/cms/pages", "PUT", payload);
+      } catch (error) {
+        const reason = error instanceof Error ? error.message : "Page save failed.";
+        if (/changed in another tab|version conflict/i.test(reason)) {
+          const latest = await requestJson<{ success: boolean; page?: CmsSaveResponse["page"] }>("/api/cms/pages?slug=" + encodeURIComponent(page.slug), "GET");
+          if (!latest.page) throw error;
+          setPageVersion(latest.page.version);
+          saved = await requestJson<CmsSaveResponse>("/api/cms/pages", "PUT", { ...payload, version: latest.page.version });
+        } else {
+          throw error;
+        }
+      }
+      if (!saved.success || !saved.page) throw new Error("The server did not confirm the saved page.");
+      setPageVersion(saved.page.version);
       setSections(saved.page.blocks.map((block) => normalizeBlockRecord(block)));
-      initialSectionsRef.current = saved.page.blocks.map((block) => normalizeBlockRecord(block));
-      setMessage("✅ Changes saved successfully.");
-      setToast({ type: "success", message: "✅ Home page updated successfully" });
+      initialRef.current = saved.page.blocks.map((block) => normalizeBlockRecord(block));
+      setDirty(false);
+      window.localStorage.setItem("phause:cms-page-updated", String(Date.now()));
+      setToast({ type: "success", message: `✅ ${page.title} page updated successfully` });
       router.refresh();
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Page save failed.";
-      setSaveState("error");
-      setToast({ type: "error", message });
-      setMessage(message);
+      const reason = error instanceof Error ? error.message : "Page save failed.";
+      setToast({ type: "error", message: reason });
     } finally {
-      setIsLoading(false);
+      setSaving(false);
     }
   };
 
-  const addFormBlock = (formSlug: string) => {
-    if (!formSlug) return;
-    setSections((current) => [...current, { id: `form-${Date.now()}`, type: "form", order: current.length, props: { formSlug, title: "", position: current.length, visibility: true } }]);
-    setHasUnsavedChanges(true);
+  const addItem = (sectionId: string) => {
+    setSections((current) => current.map((section) => {
+      if (section.id !== sectionId) return section;
+      const items = normalizeEditableSectionItems(String(section.type), section.props.items);
+      items.push({ id: `item-${items.length + 1}`, title: "New item", description: "", question: "", answer: "", icon: "" });
+      return { ...section, props: { ...section.props, items } };
+    }));
+    setDirty(true);
   };
 
-  const leaveWithoutSaving = () => {
-    setHasUnsavedChanges(false);
-    setShowLeaveDialog(false);
-    router.refresh();
+  const removeItem = (sectionId: string, itemIndex: number) => {
+    setSections((current) => current.map((section) => {
+      if (section.id !== sectionId) return section;
+      const items = normalizeEditableSectionItems(String(section.type), section.props.items).filter((_, index) => index !== itemIndex);
+      return { ...section, props: { ...section.props, items } };
+    }));
+    setDirty(true);
   };
 
-  const safeButtonClasses = "inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-2.5 text-sm font-semibold text-slate-950 transition-all hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50";
+  const knownSectionFields = new Set(["title", "subtitle", "description", "buttonText", "buttonLink", "secondaryButtonText", "secondaryButtonLink", "eyebrow", "image", "visibility", "position", "items", "details", "ctaPrimary", "ctaPrimaryHref", "ctaSecondary", "ctaSecondaryHref"]);
 
   return (
     <div className="space-y-6">
-      {showLeaveDialog ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
-            <h3 className="text-xl font-bold text-white">You have unsaved changes.</h3>
-            <p className="mt-2 text-sm text-slate-300">Do you want to leave without saving?</p>
-            <div className="mt-6 flex justify-end gap-3">
-              <button type="button" onClick={() => setShowLeaveDialog(false)} className="rounded-xl border border-white/10 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950" aria-label="Stay on this page">Stay</button>
-              <button type="button" onClick={leaveWithoutSaving} className="rounded-xl bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-rose-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950" aria-label="Discard changes and leave">Discard Changes</button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {conflictReloadAvailable ? (
-        <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-          <span>Someone else changed this page. Your unsaved text is still here.</span>
-          <button type="button" onClick={() => { if (window.confirm("Reload latest page? Unsaved text in this editor will be replaced.")) router.refresh(); }} className="rounded-lg border border-amber-300/40 px-3 py-1.5 font-semibold text-amber-100">Reload latest</button>
-        </div>
-      ) : null}
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">Page sections</h2>
-            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
-            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
-              <option value="">Add Form block</option>
-              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={save}
-            disabled={isLoading}
-            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
-            aria-busy={isLoading}
-            className={cn(
-              safeButtonClasses,
-              isLoading ? "cursor-wait" : "cursor-pointer",
-            )}
-          >
-            {isLoading || saveState === "saving" ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
-                <span>Saving...</span>
-              </>
-            ) : saveState === "success" ? (
-              <>
-                <span aria-hidden="true">✓</span>
-                <span>Saved successfully</span>
-              </>
-            ) : saveState === "error" ? (
-              <>
-                <span aria-hidden="true">↻</span>
-                <span>Try again</span>
-              </>
-            ) : (
-              <span>Save all sections</span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {sections.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
-          No sections available yet. Add a section to start editing content.
-        </div>
-      ) : null}
-
-      {sections.map((section, index) => (
-        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
-              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
-              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
-              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={section.props.visibility !== false}
-                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
-                  aria-label={`Toggle visibility for section ${index + 1}`}
-                />
-                Visible
-              </label>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Title</span>
-              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
-              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Subtitle</span>
-              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-2">
-              <span className="mb-1 block font-medium text-white">Description</span>
-              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button text</span>
-              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button link</span>
-              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Editable items</div>
-                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
-                  </div>
-                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
-                  ) : null}
-
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
-                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
-                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
-                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
-
-                    return (
-                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
-                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
-                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
-                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
-                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
-                            </label>
-                          ) : null}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
-                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
-                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {String(section.type ?? "").toLowerCase() === "contact" ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Contact details</div>
-                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
-                  </div>
-                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {serializeContactDetails(section.props.details).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
-                  ) : null}
-
-                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
-                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
-                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
-                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
-                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Position</span>
-              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
-              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
-            </label>
-          </div>
-        </div>
-      ))}
-
-      <PageMenuFields
-        page={page}
-        draft={draft}
-        setDraft={setDraft}
-        markChanged={() => setHasUnsavedChanges(true)}
-      />
+      {toast ? <div role="status" className={`rounded-xl border px-4 py-3 text-sm ${toast.type === "success" ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-100" : toast.type === "error" ? "border-rose-400/30 bg-rose-400/10 text-rose-100" : "border-cyan-400/30 bg-cyan-400/10 text-cyan-100"}`}>{toast.message}</div> : null}
+      {dirty ? <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">You have unsaved section changes.</div> : null}
 
       <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
         <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">Page sections</h2>
-            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
-            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
-              <option value="">Add Form block</option>
-              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={save}
-            disabled={isLoading}
-            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
-            aria-busy={isLoading}
-            className={cn(
-              safeButtonClasses,
-              isLoading ? "cursor-wait" : "cursor-pointer",
-            )}
-          >
-            {isLoading || saveState === "saving" ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
-                <span>Saving...</span>
-              </>
-            ) : saveState === "success" ? (
-              <>
-                <span aria-hidden="true">✓</span>
-                <span>Saved successfully</span>
-              </>
-            ) : saveState === "error" ? (
-              <>
-                <span aria-hidden="true">↻</span>
-                <span>Try again</span>
-              </>
-            ) : (
-              <span>Save all sections</span>
-            )}
-          </button>
+          <div><h2 className="text-xl font-bold text-white">Page sections</h2><p className="text-sm text-slate-400">Edit every block prop, nested item, link, and visibility setting.</p></div>
+          <button type="button" onClick={save} disabled={saving} className="rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950 disabled:opacity-50">{saving ? "Saving..." : "Save all sections"}</button>
         </div>
       </div>
 
-      {sections.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
-          No sections available yet. Add a section to start editing content.
-        </div>
-      ) : null}
-
-      {sections.map((section, index) => (
-        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
-              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
+      {sections.map((section, index) => {
+        const props = section.props;
+        const items = normalizeEditableSectionItems(String(section.type), props.items);
+        const unknownEntries = Object.entries(props).filter(([key]) => !knownSectionFields.has(key));
+        return (
+          <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+            <div className="mb-5 flex items-center justify-between"><div><div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div><h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3></div>
+              <div className="flex gap-2"><button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded border border-white/10 px-2 py-1 text-white">↑</button><button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded border border-white/10 px-2 py-1 text-white">↓</button><label className="text-xs text-slate-200"><input type="checkbox" checked={props.visibility !== false} onChange={(event) => updateSection(section.id, { visibility: event.target.checked })}/> Visible</label></div>
             </div>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
-              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
-              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={section.props.visibility !== false}
-                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
-                  aria-label={`Toggle visibility for section ${index + 1}`}
-                />
-                Visible
-              </label>
-            </div>
-          </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Title</span>
-              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
-              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
-            </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm text-slate-300">Eyebrow<input aria-label="Eyebrow" value={String(props.eyebrow ?? props.tag ?? "")} onChange={(event) => updateSection(section.id, { eyebrow: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Title<input required aria-label={`Title for section ${index + 1}`} value={String(props.title ?? "")} onChange={(event) => updateSection(section.id, { title: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Subtitle<input aria-label="Subtitle" value={String(props.subtitle ?? "")} onChange={(event) => updateSection(section.id, { subtitle: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Image<input aria-label="Image" value={String(props.image ?? props.imageUrl ?? props.mediaUrl ?? "")} onChange={(event) => updateSection(section.id, { image: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300 md:col-span-2">Description<textarea aria-label="Description" rows={4} value={typeof props.description === "object" ? JSON.stringify(props.description, null, 2) : String(props.description ?? "")} onChange={(event) => updateSection(section.id, { description: typeof props.description === "object" ? (() => { try { return JSON.parse(event.target.value); } catch { return props.description; } })() : event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Primary button text<input aria-label="Primary button text" value={String(props.buttonText ?? props.ctaPrimary ?? "")} onChange={(event) => updateSection(section.id, { buttonText: event.target.value, ctaPrimary: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Primary button link<input aria-label="Primary button link" value={String(props.buttonLink ?? props.ctaPrimaryHref ?? "")} onChange={(event) => updateSection(section.id, { buttonLink: event.target.value, ctaPrimaryHref: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Secondary button text<input aria-label="Secondary button text" value={String(props.secondaryButtonText ?? props.ctaSecondary ?? "")} onChange={(event) => updateSection(section.id, { secondaryButtonText: event.target.value, ctaSecondary: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Secondary button link<input aria-label="Secondary button link" value={String(props.secondaryButtonLink ?? props.ctaSecondaryHref ?? "")} onChange={(event) => updateSection(section.id, { secondaryButtonLink: event.target.value, ctaSecondaryHref: event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
+              <label className="text-sm text-slate-300">Position<input type="number" value={Number(props.position ?? index)} onChange={(event) => updateSection(section.id, { position: Number(event.target.value) })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" /></label>
 
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Subtitle</span>
-              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
-            </label>
+              {unknownEntries.map(([key, value]) => (
+                <label key={key} className="text-sm text-slate-300 md:col-span-2">{key}{typeof value === "boolean" ? <input aria-label={key} type="checkbox" checked={value} onChange={(event) => updateSection(section.id, { [key]: event.target.checked })} className="ml-2" /> : typeof value === "object" ? <textarea aria-label={key} rows={3} value={JSON.stringify(value, null, 2)} onChange={(event) => { try { updateSection(section.id, { [key]: JSON.parse(event.target.value) }); } catch {} }} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 font-mono text-xs text-white" /> : <input aria-label={key} value={String(value ?? "")} onChange={(event) => updateSection(section.id, { [key]: value === null ? event.target.value : typeof value === "number" ? Number(event.target.value) : event.target.value })} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white" />}</label>
+              ))}
 
-            <label className="block text-sm text-slate-300 md:col-span-2">
-              <span className="mb-1 block font-medium text-white">Description</span>
-              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button text</span>
-              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button link</span>
-              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Editable items</div>
-                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
-                  </div>
-                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
-                  ) : null}
-
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
-                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
-                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
-                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
-
-                    return (
-                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
-                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
-                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
-                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
-                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
-                            </label>
-                          ) : null}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
-                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
-                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {String(section.type ?? "").toLowerCase() === "contact" ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Contact details</div>
-                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
-                  </div>
-                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {serializeContactDetails(section.props.details).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
-                  ) : null}
-
-                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
-                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
-                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
-                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
-                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
+              {(Array.isArray(props.items) || items.length > 0) ? (
+                <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 p-4">
+                  <div className="mb-3 flex items-center justify-between"><b className="text-white">List items</b><button type="button" onClick={() => addItem(section.id)} className="rounded border border-cyan-400/40 px-3 py-1 text-cyan-200">Add item</button></div>
+                  <div className="space-y-3">{items.map((item, itemIndex) => (
+                    <div key={String(item.id ?? itemIndex)} className="rounded-xl border border-white/10 p-3">
+                      <div className="mb-2 flex justify-end gap-2"><button type="button" onClick={() => moveItem(section.id, itemIndex, -1)} className="rounded border border-white/10 px-2 text-white">↑</button><button type="button" onClick={() => moveItem(section.id, itemIndex, 1)} className="rounded border border-white/10 px-2 text-white">↓</button><button type="button" onClick={() => removeItem(section.id, itemIndex)} className="rounded border border-red-500/40 px-2 text-red-200">Remove</button></div>
+                      <div className="grid gap-3 md:grid-cols-2">{Object.entries(item).map(([key, value]) => (
+                        <label key={key} className="text-xs text-slate-300 md:col-span-1">{key}{typeof value === "object" ? <textarea aria-label={`Item ${itemIndex + 1} ${key}`} rows={3} value={JSON.stringify(value, null, 2)} onChange={(event) => { try { updateItem(section.id, itemIndex, { [key]: JSON.parse(event.target.value) }); } catch {} }} className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 px-2 py-2 font-mono text-xs text-white" /> : <input aria-label={`Item ${itemIndex + 1} ${key}`} value={String(value ?? "")} onChange={(event) => updateItem(section.id, itemIndex, { [key]: typeof value === "number" ? Number(event.target.value) : event.target.value })} className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950 px-2 py-2 text-white" />}</label>
+                      ))}</div>
                     </div>
-                  ))}
+                  ))}</div>
                 </div>
-              </div>
-            ) : null}
+              ) : null}
 
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Position</span>
-              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
-              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
-            </label>
-          </div>
-        </div>
-      ))}
-
-      <PageMenuFields
-        page={page}
-        draft={draft}
-        setDraft={setDraft}
-        markChanged={() => setHasUnsavedChanges(true)}
-      />
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">Page sections</h2>
-            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
-            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
-              <option value="">Add Form block</option>
-              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={save}
-            disabled={isLoading}
-            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
-            aria-busy={isLoading}
-            className={cn(
-              safeButtonClasses,
-              isLoading ? "cursor-wait" : "cursor-pointer",
-            )}
-          >
-            {isLoading || saveState === "saving" ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
-                <span>Saving...</span>
-              </>
-            ) : saveState === "success" ? (
-              <>
-                <span aria-hidden="true">✓</span>
-                <span>Saved successfully</span>
-              </>
-            ) : saveState === "error" ? (
-              <>
-                <span aria-hidden="true">↻</span>
-                <span>Try again</span>
-              </>
-            ) : (
-              <span>Save all sections</span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {sections.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
-          No sections available yet. Add a section to start editing content.
-        </div>
-      ) : null}
-
-      {sections.map((section, index) => (
-        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
-              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
-              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
-              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={section.props.visibility !== false}
-                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
-                  aria-label={`Toggle visibility for section ${index + 1}`}
-                />
-                Visible
-              </label>
+              {String(section.type).toLowerCase() === "contact" ? (
+                <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 p-4"><div className="mb-3 flex items-center justify-between"><b className="text-white">Contact details</b><button type="button" onClick={() => updateSection(section.id, { details: [...serializeContactDetails(props.details), { id: `contact-detail-${serializeContactDetails(props.details).length + 1}`, label: "", value: "", note: "" }] })} className="rounded border border-cyan-400/40 px-3 py-1 text-cyan-200">Add item</button></div>
+                  <div className="space-y-3">{serializeContactDetails(props.details).map((detail, detailIndex) => (
+                    <div key={detail.id} className="grid gap-2 md:grid-cols-4"><input aria-label="Contact label" value={detail.label} onChange={(event) => { const details = serializeContactDetails(props.details); details[detailIndex] = { ...details[detailIndex], label: event.target.value }; updateSection(section.id, { details }); }} className="rounded border border-white/10 bg-slate-950 px-2 py-2 text-white"/><input aria-label="Contact value" value={detail.value} onChange={(event) => { const details = serializeContactDetails(props.details); details[detailIndex] = { ...details[detailIndex], value: event.target.value }; updateSection(section.id, { details }); }} className="rounded border border-white/10 bg-slate-950 px-2 py-2 text-white"/><input aria-label="Contact note" value={detail.note} onChange={(event) => { const details = serializeContactDetails(props.details); details[detailIndex] = { ...details[detailIndex], note: event.target.value }; updateSection(section.id, { details }); }} className="rounded border border-white/10 bg-slate-950 px-2 py-2 text-white"/><button type="button" onClick={() => { const details = serializeContactDetails(props.details).filter((_, i) => i !== detailIndex); updateSection(section.id, { details }); }} className="rounded border border-red-500/40 text-red-200">Remove</button></div>
+                  ))}</div>
+                </div>
+              ) : null}
             </div>
           </div>
+        );
+      })}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Title</span>
-              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
-              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
-            </label>
+      <PageMenuFields page={page} draft={draft} setDraft={setDraft} markChanged={() => setDirty(true)} />
 
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Subtitle</span>
-              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-2">
-              <span className="mb-1 block font-medium text-white">Description</span>
-              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button text</span>
-              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button link</span>
-              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Editable items</div>
-                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
-                  </div>
-                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
-                  ) : null}
-
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
-                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
-                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
-                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
-
-                    return (
-                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
-                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
-                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
-                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
-                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
-                            </label>
-                          ) : null}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
-                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
-                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {String(section.type ?? "").toLowerCase() === "contact" ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Contact details</div>
-                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
-                  </div>
-                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {serializeContactDetails(section.props.details).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
-                  ) : null}
-
-                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
-                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
-                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
-                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
-                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Position</span>
-              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
-              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
-            </label>
-          </div>
-        </div>
-      ))}
-
-      <PageMenuFields
-        page={page}
-        draft={draft}
-        setDraft={setDraft}
-        markChanged={() => setHasUnsavedChanges(true)}
-      />
-
-      <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold text-white">Page sections</h2>
-            <p className="text-sm text-slate-400">Configure block content, visibility, ordering, and image assets.</p>
-            <select aria-label="Add Form block" defaultValue="" onChange={(event) => { addFormBlock(event.target.value); event.target.value = ""; }} className="mt-2 rounded-xl border border-cyan-400/30 bg-slate-950 px-3 py-2 text-sm text-cyan-100">
-              <option value="">Add Form block</option>
-              {publishedForms.map((form) => <option key={form.slug} value={form.slug}>{form.name}</option>)}
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={save}
-            disabled={isLoading}
-            aria-label={saveState === "saving" ? "Saving page sections" : "Save all sections"}
-            aria-busy={isLoading}
-            className={cn(
-              safeButtonClasses,
-              isLoading ? "cursor-wait" : "cursor-pointer",
-            )}
-          >
-            {isLoading || saveState === "saving" ? (
-              <>
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-950 border-t-transparent" aria-hidden="true" />
-                <span>Saving...</span>
-              </>
-            ) : saveState === "success" ? (
-              <>
-                <span aria-hidden="true">✓</span>
-                <span>Saved successfully</span>
-              </>
-            ) : saveState === "error" ? (
-              <>
-                <span aria-hidden="true">↻</span>
-                <span>Try again</span>
-              </>
-            ) : (
-              <span>Save all sections</span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {sections.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center text-slate-400">
-          No sections available yet. Add a section to start editing content.
-        </div>
-      ) : null}
-
-      {sections.map((section, index) => (
-        <div key={section.id} className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div>
-              <div className="text-xs uppercase tracking-[0.22em] text-cyan-300">{section.type}</div>
-              <h3 className="mt-1 text-lg font-bold text-white">Section {index + 1}</h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" aria-label={`Move section ${index + 1} up`} onClick={() => moveSection(index, -1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↑</button>
-              <button type="button" aria-label={`Move section ${index + 1} down`} onClick={() => moveSection(index, 1)} className="rounded-full border border-white/10 bg-slate-950 px-2.5 py-1.5 text-xs text-slate-200 transition-all duration-200 hover:border-cyan-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300">↓</button>
-              <label className="flex items-center gap-2 rounded-full border border-white/10 bg-slate-950 px-3 py-1.5 text-xs text-slate-200">
-                <input
-                  type="checkbox"
-                  checked={section.props.visibility !== false}
-                  onChange={(event) => updateSection(section.id, "visibility", event.target.checked)}
-                  className="h-3.5 w-3.5 rounded border-white/10 text-cyan-400"
-                  aria-label={`Toggle visibility for section ${index + 1}`}
-                />
-                Visible
-              </label>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Title</span>
-              <input required value={String(section.props.title ?? "")} onChange={(event) => updateSection(section.id, "title", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Title for section ${index + 1}`} />
-              {errors[section.id]?.title ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].title}</span> : null}
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Subtitle</span>
-              <input value={String(section.props.subtitle ?? "")} onChange={(event) => updateSection(section.id, "subtitle", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Subtitle for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-2">
-              <span className="mb-1 block font-medium text-white">Description</span>
-              <textarea value={String(section.props.description ?? "")} onChange={(event) => updateSection(section.id, "description", event.target.value)} rows={4} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Description for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button text</span>
-              <input value={String(section.props.buttonText ?? "")} onChange={(event) => updateSection(section.id, "buttonText", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Button link</span>
-              <input value={String(section.props.buttonLink ?? "")} onChange={(event) => updateSection(section.id, "buttonLink", event.target.value)} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Button text for section ${index + 1}`} />
-            </label>
-
-            {Array.isArray(section.props.items) || ["homephilosophy", "homereasons", "homeservices", "homeoffers", "homeprocess", "faq", "testimonials", "stats", "pricing", "team"].includes(String(section.type ?? "").toLowerCase()) ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Editable items</div>
-                    <p className="text-xs text-slate-400">Edit each card, row, or FAQ entry in this section.</p>
-                  </div>
-                  <button type="button" onClick={() => addSectionItem(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No items yet. Add one to start editing this section.</div>
-                  ) : null}
-
-                  {normalizeEditableSectionItems(String(section.type ?? ""), section.props.items).map((item, itemIndex) => {
-                    const isFaq = String(section.type ?? "").toLowerCase() === "faq";
-                    const titleValue = String(item.title ?? item.question ?? item.label ?? "");
-                    const descriptionValue = String(item.description ?? item.answer ?? item.value ?? item.text ?? "");
-
-                    return (
-                      <div key={String(item.id ?? `item-${itemIndex + 1}`)} className="rounded-xl border border-white/10 bg-slate-900 p-3">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <span className="text-xs uppercase tracking-[0.18em] text-cyan-300">Item {itemIndex + 1}</span>
-                          <button type="button" onClick={() => removeSectionItem(section.id, itemIndex)} className="rounded-lg border border-red-500/40 bg-red-500/10 px-2.5 py-1 text-xs text-red-200">Remove</button>
-                        </div>
-
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Title</span>
-                              <input value={titleValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "title", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Question</span>
-                              <input value={String(item.question ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "question", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-1">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Icon</span>
-                              <input value={String(item.icon ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "icon", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" placeholder="shield, eye, lock" />
-                            </label>
-                          ) : null}
-
-                          {!isFaq ? (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Description</span>
-                              <textarea value={descriptionValue} onChange={(event) => updateSectionItem(section.id, itemIndex, "description", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          ) : (
-                            <label className="block text-xs text-slate-300 md:col-span-2">
-                              <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Answer</span>
-                              <textarea value={String(item.answer ?? "")} onChange={(event) => updateSectionItem(section.id, itemIndex, "answer", event.target.value)} rows={3} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : null}
-
-            {String(section.type ?? "").toLowerCase() === "contact" ? (
-              <div className="md:col-span-2 rounded-2xl border border-cyan-500/20 bg-slate-950/50 p-4">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <div className="text-sm font-semibold text-white">Contact details</div>
-                    <p className="text-xs text-slate-400">Email, phone, office, and working hours</p>
-                  </div>
-                  <button type="button" onClick={() => addContactDetail(section.id)} className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-200 transition-all duration-200 hover:border-cyan-300 hover:bg-cyan-500/15">Add item</button>
-                </div>
-
-                <div className="space-y-3">
-                  {serializeContactDetails(section.props.details).length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-white/10 bg-slate-900/80 p-3 text-sm text-slate-400">No contact details yet. Add a new card to start editing.</div>
-                  ) : null}
-
-                  {serializeContactDetails(section.props.details).map((detail, detailIndex) => (
-                    <div key={detail.id || `${section.id}-detail-${detailIndex}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-900 p-3 md:grid-cols-[1fr_1.5fr_1.5fr_auto]">
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Label</span>
-                        <input value={detail.label} onChange={(event) => updateContactDetail(section.id, detailIndex, "label", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Value</span>
-                        <input value={detail.value} onChange={(event) => updateContactDetail(section.id, detailIndex, "value", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <label className="block text-xs text-slate-300">
-                        <span className="mb-1 block text-[11px] uppercase tracking-[0.18em] text-slate-400">Note</span>
-                        <input value={detail.note} onChange={(event) => updateContactDetail(section.id, detailIndex, "note", event.target.value)} className="w-full rounded-lg border border-white/10 bg-slate-950 px-2.5 py-2 text-sm text-white focus:border-cyan-400 focus:outline-none" />
-                      </label>
-
-                      <button type="button" onClick={() => removeContactDetail(section.id, detailIndex)} className="self-end rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs font-medium text-red-200 transition-all duration-200 hover:bg-red-500/15">Remove</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-
-            <label className="block text-sm text-slate-300 md:col-span-1">
-              <span className="mb-1 block font-medium text-white">Position</span>
-              <input type="number" value={Number(section.props.position ?? index)} onChange={(event) => updateSection(section.id, "position", Number(event.target.value))} className="w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-white transition-all duration-200 focus:border-cyan-400 focus:outline-none focus:ring-2 focus:ring-cyan-500/30" aria-label={`Position for section ${index + 1}`} />
-              {errors[section.id]?.position ? <span className="mt-1 block text-xs text-rose-400">{errors[section.id].position}</span> : null}
-            </label>
-          </div>
-        </div>
-      ))}
-
-      <div aria-live="polite" aria-atomic="true" className="sr-only">
-        {toast ? toast.message : ""}
-      </div>
-
-      {toast ? (
-        <div
-          role="status"
-          aria-live="polite"
-          className={`fixed bottom-5 right-5 z-50 rounded-xl border px-4 py-3 text-sm shadow-lg ${
-                       toast.type === "success"
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
-              : toast.type === "info"
-                ? "border-cyan-500/30 bg-cyan-500/10 text-cyan-200"
-                : toast.type === "warning"
-                  ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-                  : "border-rose-500/30 bg-rose-500/10 text-rose-200"
-          }`}
-        >
-          {toast.message}
-        </div>
-      ) : null}
-
-      {message ? <div className="text-sm text-cyan-200">{message}</div> : null}
+      <div className="flex justify-end"><button type="button" onClick={save} disabled={saving} className="rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 disabled:opacity-50">{saving ? "Saving..." : "Save all sections"}</button></div>
     </div>
   );
 }
@@ -1445,7 +409,7 @@ export function NavigationEditor({ navigation }: { navigation: { key: string; la
       setMessage(error instanceof Error ? error.message : "Navigation save failed.");
     }
   };
-  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Navigation</h2><div className="mt-4 space-y-3">{items.map((item, index) => <div key={item.id ?? `${item.href}-${index}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-950 p-3 md:grid-cols-[1fr_1fr_100px]"><div className="space-y-1"><input value={item.label} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, label: event.target.value } : entry))} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation label" />{item.pageId ? <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-200">Linked to page: {item.pageTitle ?? item.label}</span> : null}</div><input value={item.href} readOnly={Boolean(item.pageId)} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, href: event.target.value } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation URL" /><input type="number" value={item.position} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, position: Number(event.target.value) } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation order" /></div>)}</div><button type="button" onClick={save} className="mt-5 rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">Save navigation</button>{message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}</div>;
+  return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6"><h2 className="text-xl font-bold text-white">Navigation</h2><div className="mt-4 space-y-3">{items.map((item, index) => <div key={item.id ?? `${item.href}-${index}`} className="grid gap-3 rounded-xl border border-white/10 bg-slate-950 p-3 md:grid-cols-[1fr_1fr_100px]"><div className="space-y-1"><input value={item.label} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, label: event.target.value } : entry))} className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation label" />{item.pageId ? <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-1 text-xs text-cyan-200">Linked to page: {item.pageTitle ?? item.label}</span> : null}</div><input value={item.href} readOnly={Boolean(item.pageId)} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, href: event.target.value } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation URL" /><input type="number" value={item.position} onChange={(event) => setItems((current) => current.map((entry, entryIndex) => entryIndex === index ? { ...entry, position: Number(event.target.value) } : entry))} className="rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-white" aria-label="Navigation order" /></div>)}</div><button type="button" onClick={save} className="mt-5 rounded-xl bg-cyan-500 px-4 py-3 text-slate-950">Save navigation</button>{message ? <div className="mt-3 text-sm text-cyan-200">{message}</div> : null}</div>;
 }
 
 export function FooterEditor({ footer }: { footer: FooterRecord }) {
@@ -1716,7 +680,7 @@ export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string
     <div className="flex items-center justify-between"><h2 className="text-xl font-bold text-white">Forms</h2><button type="button" onClick={() => setView("create")} className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Create form</button></div>
     <div className="mt-4 space-y-2">{forms.map((form) => <div key={form.id} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3">
       <div className="font-semibold text-white">{form.name}</div>
-      <div className="text-xs text-slate-400">/{form.slug} · {form.status} · {form.fields.length} fields</div>
+      <div className="mt-1 truncate text-xs text-cyan-300">/{form.slug} · {form.status} · {form.fields.length} fields</div>
       {form.status === "PUBLISHED" ? <>
         <div className="mt-1 text-xs text-cyan-200">Used on: {form.usedOn?.length ? form.usedOn.join(", ") : "none"}</div>
         <div className="mt-2 flex gap-2"><span className="text-xs text-cyan-200">/forms/{form.slug}</span><button type="button" onClick={() => void navigator.clipboard?.writeText(`${window.location.origin}/forms/${form.slug}`)} className="rounded-lg border border-cyan-400/30 px-2 py-1 text-xs text-cyan-200">Copy link</button><a href={`/forms/${form.slug}`} className="rounded-lg border border-white/15 px-2 py-1 text-xs text-white">Open</a></div>

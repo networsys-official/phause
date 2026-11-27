@@ -83,6 +83,7 @@ const DEFAULT_PAGE_SLUGS = [
 	"docs",
 	"blog",
 	"contact",
+	"subscription",
 ] as const;
 
 const SEED_ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL?.trim().toLowerCase();
@@ -259,6 +260,34 @@ async function ensureCmsDefaults() {
 		await prisma.footerLink.createMany({
 			data: defaultFooterSeed.links.map((item) => ({ footerId: created.id, label: item.label, href: item.href, position: item.position, type: "LINK", status: "PUBLISHED", version: 1 })),
 		});
+	}
+
+	const subscription = await prisma.page.findUnique({ where: { slug: "subscription" } });
+	if (subscription) {
+		const block = await prisma.pageBlock.findFirst({ where: { pageId: subscription.id, type: "CUSTOM_SECTION", deletedAt: null } });
+		if (!block) {
+			await prisma.pageBlock.create({
+				data: {
+					pageId: subscription.id,
+					type: "CUSTOM_SECTION",
+					order: 0,
+					props: {
+						page: { title: "Subscription", slug: "subscription", metaTitle: "Phause | Pricing & Plans", metaDescription: "Five tiers. One platform. Zero compromises.", ogImage: null, active: true, sectionOrder: ["hero", "trust", "pricing", "comparison", "faq", "testimonials", "cta"] },
+						hero: { badgeText: "Pricing & Plans", badgeIcon: "sparkles", badgeVisible: true, heading: "Security that scales with you", highlightedWord: "scales", subtitle: "Five tiers. One platform. Zero compromises.", backgroundImage: null, ctaPrimaryText: "Choose a plan", ctaPrimaryUrl: "#pricing", ctaSecondaryText: "Talk to us", ctaSecondaryUrl: "/contact", accentColor: "cyan", overlayColor: "#05090f", visible: true, sortOrder: 0 },
+						trustItems: [],
+						pricing: { title: "Plans that scale with your security", subtitle: "Find the right level of protection.", badgeText: "Pricing", accentColor: "cyan", visible: true, sortOrder: 0 },
+						comparison: { title: "Compare every dimension", subtitle: "Compare limits and features.", visible: true, sortOrder: 0 },
+						comparisonRows: [],
+						faq: { title: "Frequently asked questions", subtitle: "Answers about plans and billing.", visible: true, sortOrder: 0 },
+						faqs: [],
+						testimonials: { title: "Customer stories", subtitle: "Why teams choose Phause.", visible: false, sortOrder: 0 },
+						testimonialItems: [],
+						cta: { title: "Still unsure? Talk to a human.", description: "Our security engineers will map your environment to the right tier.", buttonText: "Book a free consultation", buttonUrl: "/contact", backgroundImage: null, visible: true, sortOrder: 0 },
+					},
+					version: 1,
+				},
+			});
+		}
 	}
 }
 

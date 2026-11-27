@@ -5,7 +5,7 @@ export default defineConfig({
   retries: 1,
   reporter: "list",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: `http://127.0.0.1:${process.env.E2E_PORT ?? "3000"}`,
     trace: "on-first-retry",
     headless: true,
   },

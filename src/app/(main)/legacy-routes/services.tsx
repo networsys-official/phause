@@ -244,15 +244,6 @@ export default function ServicesPage() {
             .then((payload) => setPage(payload.page ?? null))
             .catch(() => setPage(null));
 
-        fetch("/api/cms/services?published=true")
-            .then((response) => response.json())
-            .then((payload) => {
-                if (Array.isArray(payload.items)) {
-                    setCmsServices(payload.items.filter((item: Record<string, unknown>) => String(item.status ?? "DRAFT").toUpperCase() === "PUBLISHED"));
-                }
-            })
-            .catch(() => setCmsServices([]));
-
         fetch("/api/cms/faqs")
             .then((response) => response.json())
             .then((payload) => {
@@ -295,17 +286,6 @@ export default function ServicesPage() {
             icon: resolveIcon(iconName, serviceIconLookup, ShieldCheck),
         } as Service;
     });
-
-    const resourceServices = cmsServices.length > 0 ? cmsServices.map((item, index) => ({
-        number: String(index + 1).padStart(2, "0"),
-        title: String(item.title ?? ""),
-        description: String(item.description ?? ""),
-        image: String(item.image ?? ""),
-        overview: String(item.description ?? ""),
-        features: [],
-        suitableFor: "",
-        icon: ShieldCheck,
-    } as Service)) : [];
 
     const cmsProcessSteps = toArray(processBlock?.items ?? []).map((item, index) => {
         const record = item as Record<string, unknown>;
@@ -353,7 +333,7 @@ export default function ServicesPage() {
         answer: String((item as Record<string, unknown>).answer ?? ""),
     }));
 
-    const renderedServices = resourceServices.length ? resourceServices : cmsServicesMapped.length ? cmsServicesMapped : [];
+    const renderedServices = cmsServicesMapped.length ? cmsServicesMapped : [];
     const renderedProcessSteps = cmsProcessSteps.length ? cmsProcessSteps : [];
     const renderedAudiences = cmsAudiences.length ? cmsAudiences : [];
     const renderedBenefits = cmsBenefits.length ? cmsBenefits : [];
@@ -486,7 +466,7 @@ export default function ServicesPage() {
                     </motion.div>
 
                     <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-6">
-                        {renderedServices.map((service, index) => (
+                        {cmsServicesMapped.map((service, index) => (
                             <motion.article
                                 key={`${service.number}-${index}`}
                                 id={slugify(service.title)}
