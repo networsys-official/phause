@@ -463,6 +463,7 @@ function SearchDialog({
 
 export default function DocsPage() {
   const [cmsDocs, setCmsDocs] = useState<Array<Record<string, unknown>>>([]);
+  const [docsClosingNote, setDocsClosingNote] = useState("");
 
   useEffect(() => {
     fetch("/api/cms/pages?slug=docs")
@@ -493,8 +494,6 @@ export default function DocsPage() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [pageCopied, setPageCopied] = useState(false);
   const [activeHeading, setActiveHeading] = useState<string>("");
-  const [docsClosingNote, setDocsClosingNote] = useState("");
-
   const doc = DOC_MAP[active] ?? DOCS[0];
   const loc = findLocation(active);
   const index = ORDER.indexOf(active);

@@ -14,13 +14,9 @@ import {
     BILLING_CYCLE_STORAGE_KEY,
     type Plan,
     formatPrice,
-    mapApiPlanToPlan,
 } from "@/app/(main)/subscription/plans";
 
-import { usePlanStore } from "@/store/plan.store";
 import { ROUTES } from "@/lib/routes";
-import { getBlockProp } from "@/features/cms/page-builder";
-import type { SubscriptionPlanResponse } from "@/types/plan";
 import type { AdminPlan } from "@/features/subscription/admin-plan-schema";
 import { loadSubscriptionPlans } from "@/features/subscription/public-plans";
 

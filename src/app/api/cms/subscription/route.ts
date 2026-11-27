@@ -14,7 +14,14 @@ export async function GET() {
     }),
   ]);
   const block = page?.blocks.find((entry) => String(entry.type).replace(/[_-]+/g, "").toLowerCase() === "customsection");
-  return NextResponse.json({ success: true, page: page ? { title: page.title, slug: page.slug, metaTitle: page.seo?.title ?? null, metaDescription: page.seo?.description ?? null, active: page.status === "PUBLISHED", sectionOrder: (block?.props as Record<string, unknown>)?.page ? ((block?.props as any).page.sectionOrder ?? []) : [] } : null, plans, ...(block?.props as Record<string, unknown> ?? {}) });
+  const blockProps = (block?.props ?? {}) as Record<string, unknown>;
+  const pagePayload = blockProps.page && typeof blockProps.page === "object"
+    ? blockProps.page as { sectionOrder?: unknown }
+    : null;
+  const sectionOrder = Array.isArray(pagePayload?.sectionOrder)
+    ? pagePayload.sectionOrder.filter((entry): entry is string => typeof entry === "string")
+    : [];
+  return NextResponse.json({ success: true, page: page ? { title: page.title, slug: page.slug, metaTitle: page.seo?.title ?? null, metaDescription: page.seo?.description ?? null, active: page.status === "PUBLISHED", sectionOrder } : null, plans, ...blockProps });
 }
 
 export async function PUT() {

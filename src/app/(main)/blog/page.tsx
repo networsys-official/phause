@@ -7,11 +7,27 @@ import { ArrowRight, CalendarDays, Clock3, Search } from "lucide-react";
 import { getBlockProp } from "@/features/cms/page-builder";
 import { blogCategories } from "@/lib/blog";
 
+type BlogPostView = {
+  slug: string;
+  title: string;
+  excerpt: string;
+  category: string;
+  date: string;
+  readTime: string;
+  image: string;
+  thumbnailImage: string;
+  featuredImage: string;
+  ogImage: string;
+  imageAlt: string;
+  author: string;
+  content: string[];
+};
+
 export default function BlogPage() {
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [page, setPage] = useState<Record<string, unknown> | null>(null);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<BlogPostView[]>([]);
 
   useEffect(() => {
     fetch("/api/cms/pages?slug=blog")

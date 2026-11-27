@@ -5,6 +5,7 @@ export const PHAUSE_CONTENT_MARKER = "contentPack:phause-v2";
 
 type Pack = typeof contentPack;
 type Tx = Parameters<Parameters<PrismaClient["$transaction"]>[0]>[0];
+type SeedRecord = Record<string, unknown>;
 
 function cleanProps(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value ?? {})) as Prisma.InputJsonValue;
@@ -42,7 +43,7 @@ async function audit(tx: Tx, entityType: string, entityId: string, action: Audit
 
 async function seedPages(tx: Tx, pack: Pack, migrate: boolean) {
   for (const [slug, pageDataUnknown] of Object.entries(pack.pages)) {
-    const pageData = pageDataUnknown as Record<string, any>;
+    const pageData = pageDataUnknown as SeedRecord;
     if (slug === "privacy-policy" || slug === "cookie-policy" || slug === "terms-of-service" || slug === "responsible-disclosure") continue;
 
     const existing = await tx.page.findUnique({ where: { slug }, include: { blocks: { where: { deletedAt: null } } } });
@@ -65,7 +66,7 @@ async function seedPages(tx: Tx, pack: Pack, migrate: boolean) {
         if (slug === "home" && block.variant === "challenge") props = { ...props, position: 1 };
         if (slug === "home" && block.type === "faq") props = { ...props, title: block.title, items: block.items };
         if (slug === "contact" && block.type === "form") {
-          const cf = pack.forms.contact as Record<string, any>;
+          const cf = pack.forms.contact as SeedRecord;
           props = { formSlug: block.formSlug, title: cf.title, intro: cf.intro, messagePlaceholder: cf.messagePlaceholder, submitButton: cf.submitButton, privacyNote: cf.privacyNote, successMessage: cf.successMessage, errorMessage: cf.errorMessage };
         }
         if (slug === "home" && block.type === "hero") {
@@ -87,14 +88,16 @@ async function seedPages(tx: Tx, pack: Pack, migrate: boolean) {
 }
 
 async function seedSeo(tx: Tx, pack: Pack, migrate: boolean) {
-  for (const entryUnknown of pack.seo as Array<Record<string, any>>) {
+  for (const entryUnknown of pack.seo as SeedRecord[]) {
     const slug = String(entryUnknown.slug);
     const route = String(entryUnknown.route);
     const canonical = route === "/" ? "https://phause.com/" : `https://phause.com${route}`;
+    const seoTitle = typeof entryUnknown.title === "string" ? entryUnknown.title : null;
+    const seoDescription = typeof entryUnknown.description === "string" ? entryUnknown.description : null;
     const seo = await tx.seo.upsert({
       where: { slug },
-      update: migrate ? { title: entryUnknown.title ?? undefined, description: entryUnknown.description ?? undefined, canonical, status: "PUBLISHED", deletedAt: null } : {},
-      create: { slug, title: entryUnknown.title ?? null, description: entryUnknown.description ?? null, canonical, status: "PUBLISHED", publishedAt: new Date() },
+      update: migrate ? { title: seoTitle, description: seoDescription, canonical, status: "PUBLISHED", deletedAt: null } : {},
+      create: { slug, title: seoTitle, description: seoDescription, canonical, status: "PUBLISHED", publishedAt: new Date() },
     });
 
     const page = await tx.page.findUnique({ where: { slug } });
@@ -117,7 +120,7 @@ async function seedFaqs(tx: Tx, pack: Pack, migrate: boolean) {
 }
 
 async function seedPosts(tx: Tx, pack: Pack, migrate: boolean) {
-  const posts = pack.posts as Array<Record<string, any>>;
+  const posts = pack.posts as SeedRecord[];
   for (const post of posts) {
     const categoryName = post.slug === "turn-phishing-campaign-results-into-learning" ? "Reporting and Improvement" : String(post.category ?? "CMS");
     const categorySlug = categoryName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$|/g, "");
@@ -128,40 +131,48 @@ async function seedPosts(tx: Tx, pack: Pack, migrate: boolean) {
     });
 
     const slug = String(post.slug);
+    const title = String(post.title ?? "");
+    const excerpt = typeof post.metaDescription === "string" ? post.metaDescription : typeof post.excerpt === "string" ? post.excerpt : null;
+    const cleanedHtml = typeof post.contentHtml === "string" ? post.contentHtml.replace(/<p>PHAUSE\s*\|\s*WEBSITE CONTENT LIBRARY\s*\|<\/p>/gi, "").replace(/PHAUSE\s*\|\s*WEBSITE CONTENT LIBRARY\s*\|/gi, "") : post.contentHtml;
+    const body = typeof cleanedHtml === "string" ? cleanedHtml : null;
+    const imageAlt = typeof post.featuredImageAlt === "string" ? post.featuredImageAlt : null;
+    const seoTitle = typeof post.seoTitle === "string" ? post.seoTitle : title;
     const seo = await tx.seo.upsert({
       where: { slug: `${slug}-seo` },
-      update: migrate ? { title: post.seoTitle ?? post.title, description: post.metaDescription ?? post.excerpt, canonical: `https://phause.com/blog/${slug}`, status: "PUBLISHED", deletedAt: null } : {},
-      create: { slug: `${slug}-seo`, title: post.seoTitle ?? post.title, description: post.metaDescription ?? post.excerpt, canonical: `https://phause.com/blog/${slug}`, status: "PUBLISHED", publishedAt: new Date() },
+      update: migrate ? { title: seoTitle, description: excerpt, canonical: `https://phause.com/blog/${slug}`, status: "PUBLISHED", deletedAt: null } : {},
+      create: { slug: `${slug}-seo`, title: seoTitle, description: excerpt, canonical: `https://phause.com/blog/${slug}`, status: "PUBLISHED", publishedAt: new Date() },
     });
 
     const existing = await tx.post.findUnique({ where: { slug }, include: { categories: true } });
-    const cleanedHtml = typeof post.contentHtml === "string" ? post.contentHtml.replace(/<p>PHAUSE\s*\|\s*WEBSITE CONTENT LIBRARY\s*\|<\/p>/gi, "").replace(/PHAUSE\s*\|\s*WEBSITE CONTENT LIBRARY\s*\|/gi, "") : post.contentHtml;
     const saved = await tx.post.upsert({
       where: { slug },
-      update: migrate ? { title: post.title, excerpt: post.metaDescription ?? post.excerpt, body: cleanedHtml, imageAlt: post.featuredImageAlt ?? null, status: "PUBLISHED", deletedAt: null, publishedAt: new Date(), seoId: seo.id, featuredImageId: null, thumbnailImageId: null, ogImageId: null, version: { increment: 1 }, categories: { set: [{ id: category.id }] } } : {},
-      create: { slug, title: post.title, excerpt: post.metaDescription ?? post.excerpt, body: cleanedHtml, imageAlt: post.featuredImageAlt ?? null, status: "PUBLISHED", publishedAt: new Date(), seoId: seo.id, version: 1, categories: { connect: [{ id: category.id }] } },
+      update: migrate ? { title, excerpt, body, imageAlt, status: "PUBLISHED", deletedAt: null, publishedAt: new Date(), seoId: seo.id, featuredImageId: null, thumbnailImageId: null, ogImageId: null, version: { increment: 1 }, categories: { set: [{ id: category.id }] } } : {},
+      create: { slug, title, excerpt, body, imageAlt, status: "PUBLISHED", publishedAt: new Date(), seoId: seo.id, version: 1, categories: { connect: [{ id: category.id }] } },
     });
     await audit(tx, "Post", saved.id, existing ? "UPDATE" : "CREATE", { old: existing ? { title: existing.title, excerpt: existing.excerpt, body: existing.body } : null, category: categoryName, readingTime: post.readingTime, seoTitle: post.seoTitle }, { postId: saved.id });
   }
 }
 
 async function seedForm(tx: Tx, pack: Pack, migrate: boolean) {
-  const formData = pack.forms.contact as Record<string, any>;
-  const existing = await tx.form.findUnique({ where: { slug: formData.slug } });
-  const oldFields = Array.isArray(existing?.fields) ? existing.fields as Array<Record<string, any>> : [];
+  const formData = pack.forms.contact as SeedRecord;
+  const formSlug = String(formData.slug ?? "contact");
+  const formTitle = String(formData.title ?? "Contact");
+  const existing = await tx.form.findUnique({ where: { slug: formSlug } });
+  const oldFields = Array.isArray(existing?.fields) ? existing.fields as SeedRecord[] : [];
   const oldByKey = new Map(oldFields.map((field) => [String(field.key), field]));
 
-  const fields = formData.fields.map((field: Record<string, any>) => {
+  const formFields = Array.isArray(formData.fields) ? formData.fields as SeedRecord[] : [];
+  const fields = formFields.map((field) => {
     const suggested = String(field.suggestedKey ?? "");
     const key = oldByKey.has(suggested) ? suggested : suggested === "category" && oldByKey.has("subject") ? "subject" : suggested;
-    const placeholder = suggested === "message" ? formData.messagePlaceholder : suggested === "category" ? "General question" : "";
-    return { key, label: field.label, type: field.type === "tel" ? "tel" : field.type, placeholder, required: field.required === true, ...(Array.isArray(field.options) ? { options: field.options } : {}) };
+    const placeholder = suggested === "message" ? String(formData.messagePlaceholder ?? "") : suggested === "category" ? "General question" : "";
+    return { key, label: String(field.label ?? ""), type: field.type === "tel" ? "tel" : String(field.type ?? "text"), placeholder, required: field.required === true, ...(Array.isArray(field.options) ? { options: field.options } : {}) };
   });
 
   const saved = await tx.form.upsert({
-    where: { slug: formData.slug },
-    update: migrate ? { name: formData.title, fields: cleanProps(fields), status: "PUBLISHED", deletedAt: null, publishedAt: new Date(), version: { increment: 1 } } : {},
-    create: { slug: formData.slug, name: formData.title, fields: cleanProps(fields), status: "PUBLISHED", publishedAt: new Date(), version: 1 },
+    where: { slug: formSlug },
+    update: migrate ? { name: formTitle, fields: cleanProps(fields), status: "PUBLISHED", deletedAt: null, publishedAt: new Date(), version: { increment: 1 } } : {},
+    create: { slug: formSlug, name: formTitle, fields: cleanProps(fields), status: "PUBLISHED", publishedAt: new Date(), version: 1 },
   });
   await audit(tx, "Form", saved.id, existing ? "UPDATE" : "CREATE", { old: existing ? { name: existing.name, fields: existing.fields, status: existing.status } : null, successMessage: formData.successMessage, errorMessage: formData.errorMessage, privacyNote: formData.privacyNote }, { formId: saved.id });
 }
@@ -205,7 +216,7 @@ async function seedNavigation(tx: Tx, migrate: boolean) {
 }
 
 async function seedDocs(tx: Tx, pack: Pack, migrate: boolean) {
-  const docs = pack.docs as Record<string, any>;
+  const docs = pack.docs as SeedRecord;
   const existing = await tx.page.findUnique({ where: { slug: "docs" }, include: { blocks: { where: { deletedAt: null } } } });
   const page = existing ?? await tx.page.create({ data: { slug: "docs", title: "Docs", status: "PUBLISHED", publishedAt: new Date(), version: 1 } });
 
@@ -218,11 +229,12 @@ async function seedDocs(tx: Tx, pack: Pack, migrate: boolean) {
   }
 
   if (migrate || !(await tx.pageBlock.findFirst({ where: { pageId: page.id, type: "CUSTOM_SECTION", deletedAt: null } }))) {
-    await tx.pageBlock.create({ data: { pageId: page.id, type: "CUSTOM_SECTION", order: 1, props: cleanProps({ title: "Documentation", closingNote: docs.closingNote, items: docs.navigation.map((group: Record<string, any>) => ({ category: group.category, articles: group.articles })) }), version: 1 } });
+    await tx.pageBlock.create({ data: { pageId: page.id, type: "CUSTOM_SECTION", order: 1, props: cleanProps({ title: "Documentation", closingNote: docs.closingNote, items: (Array.isArray(docs.navigation) ? docs.navigation as SeedRecord[] : []).map((group) => ({ category: group.category, articles: group.articles })) }), version: 1 } });
   }
 
   if (migrate || !(await tx.pageBlock.findFirst({ where: { pageId: page.id, type: "RICHTEXT", deletedAt: null } }))) {
-    await tx.pageBlock.create({ data: { pageId: page.id, type: "RICHTEXT", order: 2, props: cleanProps({ title: docs.quickStart.title, slug: docs.quickStart.slug, status: docs.quickStart.status, category: docs.quickStart.category, sections: docs.quickStart.sections }), version: 1 } });
+    const quickStart = typeof docs.quickStart === "object" && docs.quickStart !== null ? docs.quickStart as SeedRecord : {};
+    await tx.pageBlock.create({ data: { pageId: page.id, type: "RICHTEXT", order: 2, props: cleanProps({ title: quickStart.title, slug: quickStart.slug, status: quickStart.status, category: quickStart.category, sections: quickStart.sections }), version: 1 } });
   }
   await audit(tx, "Page", page.id, "UPDATE", { old: existing ? { status: existing.status, blockCount: existing.blocks.length } : null, docs: true }, { pageId: page.id });
 }

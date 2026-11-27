@@ -673,11 +673,11 @@ export function SettingsEditor({ settings }: { settings: Array<{ id: string; key
 
 export function FormsEditor({ forms }: { forms: Array<{ id: string; name: string; slug: string; status: string; fields: unknown[]; usedOn?: string[] }> }) {
   const searchParams = useSearchParams();
-  const [view, setView] = useState(searchParams.get("view") === "create" ? "create" : "list");
-  useEffect(() => { setView(searchParams.get("view") === "create" ? "create" : "list"); }, [searchParams]);
+  const [createMode, setCreateMode] = useState(false);
+  const view = createMode || searchParams.get("view") === "create" ? "create" : "list";
   if (view === "create") return <FormCreateEditor existingSlugs={forms.map((form) => form.slug)} />;
   return <div className="rounded-3xl border border-white/10 bg-slate-900/80 p-6">
-    <div className="flex items-center justify-between"><h2 className="text-xl font-bold text-white">Forms</h2><button type="button" onClick={() => setView("create")} className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Create form</button></div>
+    <div className="flex items-center justify-between"><h2 className="text-xl font-bold text-white">Forms</h2><button type="button" onClick={() => setCreateMode(true)} className="rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-sm text-cyan-200">Create form</button></div>
     <div className="mt-4 space-y-2">{forms.map((form) => <div key={form.id} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3">
       <div className="font-semibold text-white">{form.name}</div>
       <div className="mt-1 truncate text-xs text-cyan-300">/{form.slug} · {form.status} · {form.fields.length} fields</div>

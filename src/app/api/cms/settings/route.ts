@@ -6,12 +6,6 @@ import { auth } from "@/auth";
 import { z } from "zod";
 
 import { prisma } from "@/infrastructure/database/prisma";
-import { hasCmsRequestAccess } from "@/lib/cms-access";
-import { logger } from "@/shared/lib/logger";
-
-function canAccess(request: NextRequest) {
-  return hasCmsRequestAccess(request.headers);
-}
 
 export async function GET() {
   const settings = await prisma.setting.findMany({

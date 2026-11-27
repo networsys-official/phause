@@ -1,11 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-import { hasCmsRequestAccess } from "@/lib/cms-access";
 import { prisma } from "@/infrastructure/database/prisma";
-
-function canAccess(request: NextRequest) {
-  return hasCmsRequestAccess(request.headers);
-}
 
 // 404 handler for removed CMS leads endpoints
 export async function GET() {

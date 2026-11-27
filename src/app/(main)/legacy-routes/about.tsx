@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import {
-  motion, useScroll, useTransform, useInView,
+  motion, useScroll, useTransform,
 } from "framer-motion";
 import {
-  Shield, ShieldCheck, Zap, Globe, Lock, Eye, Cloud, Code2, Users, Award,
+  Shield, Zap, Globe, Lock, Eye, Cloud, Code2, Users, Award,
   ArrowRight, ChevronDown, Star, Quote, Cpu, Target, HeartHandshake, Lightbulb,
-  GitBranch, Rocket, TrendingUp, Building2, Handshake, Fingerprint, Layers,
-  Workflow, CheckCircle2, Milestone, Flag,
+  Rocket, TrendingUp, Layers,
+  Workflow, Milestone, Flag,
 } from "lucide-react";
 
 import { getBlockProp } from "@/features/cms/page-builder";
@@ -293,77 +293,6 @@ function WhatWeDo({ items = [
   );
 }
 
-/* ══════════════════ COUNTERS ══════════════════ */
-function StatCounter({
-  val, suffix, label, icon: Icon, delay,
-}: { val: number; suffix: string; label: string; icon: React.ElementType; delay: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true });
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    if (!inView) return;
-    let start: number | null = null;
-    const duration = 2000;
-    const step = (t: number) => {
-      if (start === null) start = t;
-      const p = Math.min((t - start) / duration, 1);
-      setCount(Math.floor(p * val));
-      if (p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, [inView, val]);
-
-  return (
-    <motion.div
-      ref={ref}
-      initial={{ opacity: 0, y: 40, scale: 0.9 }}
-      animate={inView ? { opacity: 1, y: 0, scale: 1 } : {}}
-      transition={{ delay, duration: 0.6 }}
-      whileHover={{ y: -8 }}
-      className="glass rounded-3xl p-8 text-center relative overflow-hidden group hover:border-phause-cyan/40 transition-colors"
-    >
-      <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-32 h-32 rounded-full bg-phause-cyan/10 blur-[50px] group-hover:bg-phause-cyan/25 transition-all duration-500" />
-      <Icon className="w-8 h-8 text-phause-cyan mx-auto mb-4 relative z-10" />
-      <div className="text-4xl md:text-5xl font-black text-gradient relative z-10">
-        {count.toLocaleString()}
-        {suffix}
-      </div>
-      <div className="text-sm text-slate-400 mt-3 relative z-10">{label}</div>
-    </motion.div>
-  );
-}
-
-function Counters() {
-  return (
-    <section className="relative py-24">
-      <div className="absolute left-1/2 top-0 w-[700px] h-[400px] rounded-full bg-phause-teal/8 blur-[150px] -translate-x-1/2" />
-      <div className="max-w-7xl mx-auto px-6">
-        <SectionHeading
-          tag="By The Numbers"
-          title={<>Proof, not <span className="text-gradient">promises</span></>}
-          subtitle="Eight years of consistent, measurable delivery across the metrics that matter."
-        />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCounter icon={Building2} val={1250} suffix="+" label="Company Projects" delay={0} />
-          <StatCounter icon={Handshake} val={500} suffix="+" label="Active Clients" delay={0.12} />
-          <StatCounter icon={CheckCircle2} val={1180} suffix="+" label="Projects Delivered On Time" delay={0.24} />
-          <StatCounter icon={Users} val={150} suffix="+" label="Security Experts" delay={0.36} />
-        </div>
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
-          className="text-center text-sm text-slate-500 mt-8"
-        >
-          Figures verified as of Q3 2026 across all Phause operating regions.
-        </motion.p>
-      </div>
-    </section>
-  );
-}
-
 /* ══════════════════ WHY CHOOSE US ══════════════════ */
 function WhyChooseUs({ reasons = [
     {
@@ -539,8 +468,8 @@ function Testimonials({ testimonials = [] }: { testimonials?: Array<{ name: stri
 
 /* ══════════════════ JOURNEY TIMELINE ══════════════════ */
 function JourneyTimeline({ milestones = [] }: { milestones?: Array<{ year: string; title: string; icon: React.ElementType; desc: string }> }) {
-  if (milestones.length === 0) return null;
   const [activeYear, setActiveYear] = useState(0);
+  if (milestones.length === 0) return null;
 
   return (
     <section className="relative py-28 overflow-hidden">

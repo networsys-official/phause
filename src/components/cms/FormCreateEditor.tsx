@@ -83,7 +83,7 @@ export function FormCreateEditor({ existingSlugs }: { existingSlugs: string[] })
     if (typeof patch.label === "string" && !keyEdited.has(index)) {
       setFields((current) => current.map((field, fieldIndex) => {
         if (fieldIndex !== index) return field;
-        let generated = generateFieldKey(patch.label as string, current, index);
+        const generated = generateFieldKey(patch.label as string, current, index);
         return { ...field, label: patch.label as string, key: generated };
       }));
       return;
@@ -255,7 +255,7 @@ export function FormCreateEditor({ existingSlugs }: { existingSlugs: string[] })
           <h3 className="text-sm font-semibold text-slate-200">Show this form on a page <span className="text-slate-400">(publish only)</span></h3>
           <label htmlFor="placement-page" className="mt-2 block text-xs text-slate-400">Page</label>
           <select id="placement-page" value={placementPageSlug} onChange={(event) => { setPlacementPageSlug(event.target.value); setAfterBlockId(""); }} disabled={loading} className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 px-3 py-2.5 text-sm text-white">
-            <option value="">Don't place yet</option>
+            <option value="">Don&apos;t place yet</option>
             {pages.map((page) => { const protectedPage = ["home","about","contact","services","blog","docs","faq","subscription","registration"].includes(page.slug); return <option key={page.id} value={page.slug} disabled={protectedPage}>{page.title} ({page.status}){protectedPage ? " — protected system page" : ""}</option>; })}
           </select>
           {placementPageSlug ? (

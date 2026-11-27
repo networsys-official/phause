@@ -42,13 +42,6 @@ type Service = {
     suitableFor: string
 }
 
-
-const defaultHeroProps = {
-    eyebrow: undefined as string | undefined,
-    title: undefined as string | undefined,
-    description: undefined as string | undefined,
-}
-
 function normalizeCmsBlockType(value: string) {
     return String(value).replace(/[_-]+/g, "").toLowerCase();
 }
@@ -234,7 +227,6 @@ export default function ServicesPage() {
     const [selectedService, setSelectedService] = useState<Service | null>(null)
     const [activeFaq, setActiveFaq] = useState<number | null>(0)
     const [page, setPage] = useState<Record<string, unknown> | null>(null)
-    const [cmsServices, setCmsServices] = useState<Array<Record<string, unknown>>>([])
     const [cmsFaqs, setCmsFaqs] = useState<Array<{ question: string; answer: string }>>([])
     const reduceMotion = useReducedMotion()
 
@@ -333,7 +325,6 @@ export default function ServicesPage() {
         answer: String((item as Record<string, unknown>).answer ?? ""),
     }));
 
-    const renderedServices = cmsServicesMapped.length ? cmsServicesMapped : [];
     const renderedProcessSteps = cmsProcessSteps.length ? cmsProcessSteps : [];
     const renderedAudiences = cmsAudiences.length ? cmsAudiences : [];
     const renderedBenefits = cmsBenefits.length ? cmsBenefits : [];
